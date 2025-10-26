@@ -28,3 +28,21 @@ export type Section = {
 	title: string;
 	data: Song[];
 };
+
+export type SongInfoItem = {
+	label: string;
+	value: string;
+}
+
+export type ModalProps = {
+	modalInfo: any;
+	setModalInfo: (visible: any) => void;
+};
+
+export type MetronomeProps = {
+	label: string;
+	value: number;
+	index: number;
+	containerStyle: Object;
+	contentStyle: Object;
+};

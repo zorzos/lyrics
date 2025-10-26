@@ -1,15 +1,23 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import InfoModal from "@/components/ui/InfoModal";
 import LyricsRenderer from "@/components/ui/LyricsRenderer";
+import Metronome from "@/components/ui/Metronome";
 import Tag from "@/components/ui/Tag";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { TagType } from "@/types";
 import { formatDuration } from "@/utils/dateUtils";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 import { useLocalSearchParams, useNavigation } from "expo-router";
-import { useLayoutEffect } from "react";
+import { useLayoutEffect, useState } from "react";
 import { StyleSheet, TouchableOpacity } from "react-native";
 
 export default function SongDetailScreen() {
+	const [modalInfo, setModalInfo] = useState<any>(undefined);
+	const colorScheme = useColorScheme();
+	const currentTheme = Colors[colorScheme ?? "light"];
 	const { title, lyrics, tags, duration } = useLocalSearchParams();
 	const durationNumber = Number(Array.isArray(duration) ? duration[0] : duration);
 
@@ -29,34 +37,78 @@ export default function SongDetailScreen() {
 		});
 	}, [navigation, title]);
 
+	const songData = [
+		{ label: "Duration", value: formatDuration(durationNumber), opensModal: false },
+		{ label: "Shows", value: 7, opensModal: true },
+		0,
+		{ label: "Key", value: 'G# (-2)', opensModal: false },
+	];
+
+	const songDataComponents = [
+		<Metronome
+			key={2}
+			label="BPM"
+			value={120}
+			index={2}
+			containerStyle={{
+				borderColor: 'white',
+				width: `${85 / 4}%`
+			}}
+			contentStyle={{ fontSize: 12 }}
+		/>
+	];
+
+	const renderInfo = (item: any, index: number) => {
+		const isTouchable = item.opensModal;
+		const Wrapper: React.ElementType = isTouchable ? TouchableOpacity : ThemedView;
+		const labelText = isTouchable ?
+			<ThemedView
+				style={{
+					flexDirection: 'row',
+					alignItems: 'center',
+					gap: 2
+				}}
+			>
+				<ThemedText style={{ fontSize: 12 }}>{item.label}</ThemedText>
+				<MaterialIcons
+					color={currentTheme.text}
+					size={12}
+					name="open-in-new"
+				/>
+			</ThemedView>
+			: item.label;
+
+		return (
+			<Wrapper
+				key={`song-data-${index}`}
+				style={[
+					styles.songItem,
+					{
+						width: `${85 / songData.length}%`,
+						borderWidth: 1
+					},
+				]}
+				onPress={
+					item.opensModal
+						? () => setModalInfo(item)
+						: undefined
+				}
+			>
+				<ThemedText style={styles.songItemText}>{labelText}</ThemedText>
+				<ThemedText style={styles.songItemText}>{item.value}</ThemedText>
+			</Wrapper>
+		);
+	};
+
 	return (
 		<>
-			<ThemedView style={styles.informationContainer}>
-				<ThemedView
-					style={{
-						flexDirection: "row",
-						justifyContent: "space-evenly",
-						marginBottom: 8,
-					}}
-				>
-					{[...Array(5).keys()].map((_, index) => (
-						<TouchableOpacity
-							key={index}
-							style={{
-								flexDirection: "column",
-								borderWidth: 2,
-								borderColor: ['red', 'blue', 'green', 'orange', 'purple'][index],
-								borderRadius: 8,
-								alignItems: 'center',
-								padding: 5,
-							}}
-						>
-							<ThemedText style={{ fontSize: 14 }}>{['Duration', 'Shows', 'Recent', '1', '2'][index]}</ThemedText>
-							<ThemedText style={{ fontSize: 14 }}>{formatDuration(durationNumber)}</ThemedText>
-						</TouchableOpacity>
-					))}
-					
-				</ThemedView>
+			<ThemedView
+				style={styles.songDataItemContainer}
+			>
+				{[songData[0], songData[1], null, songData[3]].map((item, index) => (
+					index === 2 ?
+						songDataComponents[0] : renderInfo(item, index)
+				))}
 			</ThemedView>
 			<ThemedView style={styles.tagsContainer}>
 				{finalTags.map((tag: TagType) => (
@@ -68,6 +120,10 @@ export default function SongDetailScreen() {
 				))}
 			</ThemedView>
 			<LyricsRenderer lyrics={Array.isArray(lyrics) ? lyrics[0] : lyrics} />
+			<InfoModal
+				modalInfo={modalInfo}
+				setModalInfo={setModalInfo}
+			/>
 		</>
 	);
 }
@@ -85,5 +141,20 @@ const styles = StyleSheet.create({
 		padding: 2,
 	},
 	informationContainer: {
+	},
+	songDataItemContainer: {
+		flexDirection: "row",
+		justifyContent: "space-evenly",
+		marginBottom: 8,
+	},
+	songItem: {
+		flexDirection: "column",
+		borderColor: 'white',
+		borderRadius: 8,
+		alignItems: 'center',
+		padding: 6,
+	},
+	songItemText: {
+		fontSize: 12,
 	}
 });
