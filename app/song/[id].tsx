@@ -8,6 +8,7 @@ import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Show, TagType } from "@/types";
 import { formatDuration } from "@/utils/dateUtils";
+import { getSingleParam } from "@/utils/paramUtils";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 import { useLocalSearchParams, useNavigation } from "expo-router";
@@ -18,27 +19,23 @@ export default function SongDetailScreen() {
 	const [modalInfo, setModalInfo] = useState<any>(undefined);
 	const colorScheme = useColorScheme();
 	const currentTheme = Colors[colorScheme ?? "light"];
-	const {
-		duration,
-		lyrics,
-		shows,
-		tags,
-		title,
-	} = useLocalSearchParams();
-	const durationNumber = Number(Array.isArray(duration) ? duration[0] : duration);
+	const { duration, lyrics, shows, tags, title } = useLocalSearchParams();
+	const durationNumber = Number(
+		Array.isArray(duration) ? duration[0] : duration
+	);
 
 	let finalShows: Show[] = [];
 	try {
-		const rawShows = Array.isArray(shows) ? shows[0] : shows;
+		const rawShows = getSingleParam(shows);
 		finalShows = rawShows ? JSON.parse(rawShows) : [];
 	} catch (error) {
-		console.log("Failed to parse shows", shows);
+		console.log("Failed to parse shows", error);
 		finalShows = [];
 	}
 
 	let finalTags: TagType[] = [];
 	try {
-		const rawTags = Array.isArray(tags) ? tags[0] : tags;
+		const rawTags = getSingleParam(tags);
 		finalTags = rawTags ? JSON.parse(rawTags) : [];
 	} catch (error) {
 		console.error("Failed to parse tags:", error);
@@ -53,15 +50,33 @@ export default function SongDetailScreen() {
 	}, [navigation, title]);
 
 	const songData = [
-		{ label: "Duration", value: formatDuration(durationNumber), opensModal: false },
-		{ label: "Shows", value: finalShows.length, modalValue: finalShows, opensModal: true },
+		{
+			label: "Duration",
+			value: formatDuration(durationNumber),
+			opensModal: false,
+		},
+		{
+			label: "Shows",
+			value: finalShows.length,
+			modalValue: finalShows,
+			opensModal: true,
+		},
 		0,
 		{
-			label: "Key (-2)", value: <ThemedView style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-				<ThemedText style={{ fontSize: 12 }}>A</ThemedText>
-				<MaterialIcons size={20} name="arrow-right-alt" color="white" />
-				<ThemedText style={{ fontSize: 12 }}>C</ThemedText>
-			</ThemedView>, opensModal: false
+			label: "Key (-2)",
+			value: (
+				<ThemedView
+					style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+					<ThemedText style={{ fontSize: 12 }}>A</ThemedText>
+					<MaterialIcons
+						size={20}
+						name="arrow-right-alt"
+						color="white"
+					/>
+					<ThemedText style={{ fontSize: 12 }}>C</ThemedText>
+				</ThemedView>
+			),
+			opensModal: false,
 		},
 	];
 
@@ -71,24 +86,25 @@ export default function SongDetailScreen() {
 			label="BPM"
 			value={120}
 			containerStyle={{
-				borderColor: 'white',
-				width: `${85 / 4}%`
+				borderColor: "white",
+				width: `${85 / 4}%`,
 			}}
 			contentStyle={{ fontSize: 12 }}
-		/>
+		/>,
 	];
 
 	const renderInfo = (item: any, index: number) => {
 		const isTouchable = item.opensModal;
-		const Wrapper: React.ElementType = isTouchable ? TouchableOpacity : ThemedView;
-		const labelText = isTouchable ?
+		const Wrapper: React.ElementType = isTouchable
+			? TouchableOpacity
+			: ThemedView;
+		const labelText = isTouchable ? (
 			<ThemedView
 				style={{
-					flexDirection: 'row',
-					alignItems: 'center',
-					gap: 2
-				}}
-			>
+					flexDirection: "row",
+					alignItems: "center",
+					gap: 2,
+				}}>
 				<ThemedText style={{ fontSize: 12 }}>{item.label}</ThemedText>
 				<MaterialIcons
 					color={currentTheme.text}
@@ -96,7 +112,9 @@ export default function SongDetailScreen() {
 					name="open-in-new"
 				/>
 			</ThemedView>
-			: item.label;
+		) : (
+			item.label
+		);
 
 		return (
 			<Wrapper
@@ -105,15 +123,10 @@ export default function SongDetailScreen() {
 					styles.songItem,
 					{
 						width: `${85 / songData.length}%`,
-						borderWidth: 1
+						borderWidth: 1,
 					},
 				]}
-				onPress={
-					item.opensModal
-						? () => setModalInfo(item)
-						: undefined
-				}
-			>
+				onPress={item.opensModal ? () => setModalInfo(item) : undefined}>
 				<ThemedText style={styles.songItemText}>{labelText}</ThemedText>
 				<ThemedText style={styles.songItemText}>{item.value}</ThemedText>
 			</Wrapper>
@@ -122,13 +135,10 @@ export default function SongDetailScreen() {
 
 	return (
 		<>
-			<ThemedView
-				style={styles.songDataItemContainer}
-			>
-				{[songData[0], songData[1], null, songData[3]].map((item, index) => (
-					index === 2 ?
-						songDataComponents[0] : renderInfo(item, index)
-				))}
+			<ThemedView style={styles.songDataItemContainer}>
+				{[songData[0], songData[1], null, songData[3]].map((item, index) =>
+					index === 2 ? songDataComponents[0] : renderInfo(item, index)
+				)}
 			</ThemedView>
 			<ThemedView style={styles.tagsContainer}>
 				{finalTags.map((tag: TagType) => (
@@ -160,8 +170,7 @@ const styles = StyleSheet.create({
 	individualTagContainer: {
 		padding: 2,
 	},
-	informationContainer: {
-	},
+	informationContainer: {},
 	songDataItemContainer: {
 		flexDirection: "row",
 		justifyContent: "space-evenly",
@@ -169,12 +178,12 @@ const styles = StyleSheet.create({
 	},
 	songItem: {
 		flexDirection: "column",
-		borderColor: 'white',
+		borderColor: "white",
 		borderRadius: 8,
-		alignItems: 'center',
+		alignItems: "center",
 		padding: 6,
 	},
 	songItemText: {
 		fontSize: 12,
-	}
+	},
 });

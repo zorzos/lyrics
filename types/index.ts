@@ -33,7 +33,7 @@ export type Section = {
 export type SongInfoItem = {
 	label: string;
 	value: string;
-}
+};
 
 export type ModalProps = {
 	modalInfo: any;
@@ -43,6 +43,8 @@ export type ModalProps = {
 export type MetronomeProps = {
 	label: string;
 	value: number;
-	containerStyle: Object;
-	contentStyle: Object;
+	containerStyle: object;
+	contentStyle: object;
 };
+
+export type TagColorMap = Record<string, string>;
