@@ -16,6 +16,7 @@ export interface Song {
 	lyrics: string;
 	tags?: TagType[];
 	song_order?: number; // optional: order within a show
+	shows?: Show[];
 }
 
 export type Show = {
@@ -42,7 +43,6 @@ export type ModalProps = {
 export type MetronomeProps = {
 	label: string;
 	value: number;
-	index: number;
 	containerStyle: Object;
 	contentStyle: Object;
 };

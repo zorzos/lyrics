@@ -18,7 +18,7 @@ const DEFAULT_FONT_SIZE = 14;
 const MAX_FONT_SIZE = 36;
 const ICON_SIZE = 18;
 
-export default function LyricsRenderer({ lyrics } : { lyrics: string }) {
+export default function LyricsRenderer({ lyrics }: { lyrics: string }) {
     const { colors } = useTheme();
     const colorScheme = useColorScheme();
     const currentTheme = Colors[colorScheme ?? "light"];
@@ -32,7 +32,7 @@ export default function LyricsRenderer({ lyrics } : { lyrics: string }) {
 
     const isIncreaseDisabled = fontSize === MAX_FONT_SIZE;
     const isDecreaseDisabled = fontSize === MIN_FONT_SIZE;
-    
+
     return (
         <ThemedView style={{ backgroundColor: colors.card, flex: 1 }}>
             {/* Font size controls */}
@@ -120,9 +120,9 @@ const lyricStyles = StyleSheet.create({
 
 const styles = StyleSheet.create({
     scrollViewContainer: {
-		paddingHorizontal: "1.5%",
+        paddingHorizontal: "1.5%",
         paddingBottom: "10%",
-	},
+    },
     controls: {
         flexDirection: "row",
         alignItems: "center",

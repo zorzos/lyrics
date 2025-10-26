@@ -6,7 +6,7 @@ import Metronome from "@/components/ui/Metronome";
 import Tag from "@/components/ui/Tag";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { TagType } from "@/types";
+import { Show, TagType } from "@/types";
 import { formatDuration } from "@/utils/dateUtils";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
@@ -18,30 +18,51 @@ export default function SongDetailScreen() {
 	const [modalInfo, setModalInfo] = useState<any>(undefined);
 	const colorScheme = useColorScheme();
 	const currentTheme = Colors[colorScheme ?? "light"];
-	const { title, lyrics, tags, duration } = useLocalSearchParams();
+	const {
+		duration,
+		lyrics,
+		shows,
+		tags,
+		title,
+	} = useLocalSearchParams();
 	const durationNumber = Number(Array.isArray(duration) ? duration[0] : duration);
+
+	let finalShows: Show[] = [];
+	try {
+		const rawShows = Array.isArray(shows) ? shows[0] : shows;
+		finalShows = rawShows ? JSON.parse(rawShows) : [];
+	} catch (error) {
+		console.log("Failed to parse shows", shows);
+		finalShows = [];
+	}
 
 	let finalTags: TagType[] = [];
 	try {
 		const rawTags = Array.isArray(tags) ? tags[0] : tags;
 		finalTags = rawTags ? JSON.parse(rawTags) : [];
-	} catch (e) {
-		console.error("Failed to parse tags:", e);
+	} catch (error) {
+		console.error("Failed to parse tags:", error);
 		finalTags = [];
 	}
 
 	const navigation = useNavigation();
 	useLayoutEffect(() => {
 		navigation.setOptions({
-			title: title || "Song Details",
+			title,
 		});
 	}, [navigation, title]);
 
 	const songData = [
 		{ label: "Duration", value: formatDuration(durationNumber), opensModal: false },
-		{ label: "Shows", value: 7, opensModal: true },
+		{ label: "Shows", value: finalShows.length, modalValue: finalShows, opensModal: true },
 		0,
-		{ label: "Key", value: 'G# (-2)', opensModal: false },
+		{
+			label: "Key (-2)", value: <ThemedView style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+				<ThemedText style={{ fontSize: 12 }}>A</ThemedText>
+				<MaterialIcons size={20} name="arrow-right-alt" color="white" />
+				<ThemedText style={{ fontSize: 12 }}>C</ThemedText>
+			</ThemedView>, opensModal: false
+		},
 	];
 
 	const songDataComponents = [
@@ -49,7 +70,6 @@ export default function SongDetailScreen() {
 			key={2}
 			label="BPM"
 			value={120}
-			index={2}
 			containerStyle={{
 				borderColor: 'white',
 				width: `${85 / 4}%`

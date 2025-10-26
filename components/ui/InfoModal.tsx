@@ -1,14 +1,36 @@
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { ModalProps } from "@/types";
+import { ModalProps, Show } from "@/types";
 import { ThemedText } from "../themed-text";
 
+import { formatDate } from "@/utils/dateUtils";
 import { DarkTheme, DefaultTheme } from "@react-navigation/native";
-import { Modal, Pressable, StyleSheet, TouchableOpacity } from "react-native";
+import {
+    FlatList,
+    Modal,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    TouchableOpacity
+} from "react-native";
 
 export default function InfoModal(modalProps: ModalProps) {
     const { modalInfo, setModalInfo } = modalProps;
     const colorScheme = useColorScheme();
     const theme = colorScheme === "dark" ? DarkTheme : DefaultTheme;
+
+    const renderModalValue = () => (
+        <ScrollView>
+            <FlatList
+                data={modalInfo?.modalValue}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }: { item: Show }) => (
+                    <ThemedText style={styles.modalValue}>
+                        {`${item.title} ${formatDate(new Date(item.date))}`}
+                    </ThemedText>
+                )}
+            />
+        </ScrollView>
+    );
 
     return (
         <Modal
@@ -29,7 +51,7 @@ export default function InfoModal(modalProps: ModalProps) {
                     onPress={(e) => e.stopPropagation()}
                 >
                     <ThemedText>{modalInfo?.label}</ThemedText>
-                    <ThemedText>{modalInfo?.value}</ThemedText>
+                    <ThemedText>{renderModalValue()}</ThemedText>
                     <TouchableOpacity
                         onPress={() => setModalInfo(false)}
                         style={{
@@ -79,6 +101,8 @@ const styles = StyleSheet.create({
         borderWidth: 2,
         borderColor: 'white',
         alignItems: 'center'
-
+    },
+    modalValue: {
+        fontSize: 14
     }
 });

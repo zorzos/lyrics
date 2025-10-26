@@ -79,28 +79,26 @@ export default function Shows() {
 			<FlatList
 				data={shows}
 				keyExtractor={(item) => item.id}
-				renderItem={({ item }) => {
-					return (
-						<Link
-							href={{
-								pathname: "/show/[id]",
-								params: { id: item.id, title: item.title },
-							}}
-							asChild>
-							<TouchableOpacity style={styles.item}>
-								<ThemedText style={styles.text}>{`${item.title.substring(
-									0,
-									15
-								)} ${formatDate(new Date(item.date))}`}</ThemedText>
-								<MaterialIcons
-									color={currentTheme.text}
-									size={28}
-									name="play-arrow"
-								/>
-							</TouchableOpacity>
-						</Link>
-					);
-				}}
+				renderItem={({ item }) => (
+					<Link
+						href={{
+							pathname: "/show/[id]",
+							params: { id: item.id, title: item.title },
+						}}
+						asChild>
+						<TouchableOpacity style={styles.item}>
+							<ThemedText style={styles.text}>{`${item.title.substring(
+								0,
+								15
+							)} ${formatDate(new Date(item.date))}`}</ThemedText>
+							<MaterialIcons
+								color={currentTheme.text}
+								size={28}
+								name="play-arrow"
+							/>
+						</TouchableOpacity>
+					</Link>
+				)}
 			/>
 		</ThemedView>
 	);

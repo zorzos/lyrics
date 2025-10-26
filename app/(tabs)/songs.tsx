@@ -78,6 +78,7 @@ export default function Songs() {
 								lyrics: item.lyrics,
 								tags: JSON.stringify(item.tags),
 								duration: item.duration,
+								shows: JSON.stringify(item.shows)
 							},
 						}}
 						asChild>

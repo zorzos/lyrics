@@ -8,7 +8,6 @@ import { ThemedView } from "../themed-view";
 export default function Metronome({
     label,
     value,
-    index,
     containerStyle,
     contentStyle,
 }: MetronomeProps) {
@@ -45,13 +44,13 @@ export default function Metronome({
 
     return (
         <TouchableOpacity
-            key={`song-data-${index}`}
+            key="song-data-2"
             style={[styles.container, containerStyle]}
             onPress={toggleMetronome}
         >
             <ThemedView style={styles.view}>
                 <ThemedText style={styles.label}>{label}</ThemedText>
-                <Animated.View
+                {/* <Animated.View
                     style={[
                         styles.ledIndicator,
                         {
@@ -59,7 +58,7 @@ export default function Metronome({
                             backgroundColor: running ? "red" : "#FFF",
                         },
                     ]}
-                />
+                /> */}
             </ThemedView>
             <ThemedText style={contentStyle}>{value}</ThemedText>
         </TouchableOpacity>
