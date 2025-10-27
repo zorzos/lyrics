@@ -9,6 +9,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { getSongs } from "@/lib/queries/songs";
 import { Section, Song } from "@/types";
+import { generateHref } from "@/utils/paramUtils";
 import { useTheme } from "@react-navigation/native";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "expo-router";
@@ -70,19 +71,21 @@ export default function Songs() {
 				keyExtractor={(item) => item.title}
 				renderItem={({ item }) => (
 					<Link
-						href={{
-							pathname: "/song/[id]",
-							params: {
-								id: item.id,
-								title: item.title,
-								lyrics: item.lyrics,
-								tags: JSON.stringify(item.tags),
-								duration: item.duration,
-								shows: JSON.stringify(item.shows)
-							},
-						}}
+						href={generateHref("viewSong", {
+							id: item.id,
+							title: item.title,
+							lyrics: item.lyrics,
+							tags: JSON.stringify(item.tags),
+							duration: item.duration,
+							shows: JSON.stringify(item.shows),
+						})}
 						asChild>
-						<TouchableOpacity style={{ padding: 10 }}>
+						<TouchableOpacity
+							style={{
+								padding: 10,
+								borderBottomWidth: 1,
+								borderBottomColor: "lightgray",
+							}}>
 							<ThemedText style={{ color: colors.text, fontSize: 16 }}>
 								{item.title}
 							</ThemedText>

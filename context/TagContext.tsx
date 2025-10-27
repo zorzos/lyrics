@@ -40,8 +40,6 @@ export const TagProvider = ({ children }: { children: React.ReactNode }) => {
 					table: "tags",
 				},
 				(payload) => {
-					console.log("🔄 Tags change detected:", payload);
-
 					setTagColorMap((prev) => {
 						const updated = { ...prev };
 

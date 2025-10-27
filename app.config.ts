@@ -10,11 +10,11 @@ export default ({ config }: { config: ExpoConfig }) => ({
 	version: "1.0.0",
 	platforms: ["ios", "android"],
 	orientation: "portrait",
-	// icon: "./assets/icon.png",
+	icon: "./assets/images/icon.jpg",
 	splash: {
-		// image: "./assets/splash.png",
+		image: "./assets/images/icon.jpg",
 		resizeMode: "contain",
-		backgroundColor: "#ffffff",
+		backgroundColor: "#000",
 	},
 	assetBundlePatterns: ["**/*"],
 	extra: {

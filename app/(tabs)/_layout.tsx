@@ -9,6 +9,7 @@ import { PlatformPressable } from "@react-navigation/elements";
 import { TouchableOpacity } from "react-native";
 
 import { isAdmin } from "@/lib/supabase";
+import { generateHref } from "@/utils/paramUtils";
 
 export default function TabLayout() {
 	const colorScheme = useColorScheme();
@@ -33,10 +34,7 @@ export default function TabLayout() {
 					headerRight: () =>
 						isAdmin && (
 							<Link
-								href={{
-									pathname: "/show/edit",
-								}}
-								disabled
+								href={generateHref("editShow", {})}
 								asChild>
 								<TouchableOpacity>
 									<MaterialIcons
@@ -67,9 +65,7 @@ export default function TabLayout() {
 					headerRight: () =>
 						isAdmin && (
 							<Link
-								href={{
-									pathname: "/song/edit",
-								}}
+								href={generateHref("editSong", {})}
 								asChild>
 								<TouchableOpacity>
 									<MaterialIcons

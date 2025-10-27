@@ -1,7 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { getSongs } from "@/lib/queries/songs";
-import { getSingleParam } from "@/utils/paramUtils";
+import { generateHref, getSingleParam } from "@/utils/paramUtils";
 
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useTheme } from "@react-navigation/native";
@@ -17,11 +17,11 @@ import {
 
 export default function ShowDetailScreen() {
 	const { colors } = useTheme();
-	const params = useLocalSearchParams<{
+	const { id, title } = useLocalSearchParams<{
 		id?: string | string[];
 		title: string | string[];
 	}>();
-	let showId: string | undefined = getSingleParam(params.id);
+	let showId: string | undefined = getSingleParam(id);
 
 	const navigation = useNavigation();
 	const {
@@ -36,9 +36,9 @@ export default function ShowDetailScreen() {
 
 	useLayoutEffect(() => {
 		navigation.setOptions({
-			title: params.title || "Show Details",
+			title: title || "Show Details",
 		});
-	}, [navigation, params.title]);
+	}, [navigation, title]);
 
 	if (isLoading)
 		return (
@@ -64,22 +64,18 @@ export default function ShowDetailScreen() {
 				paddingHorizontal: "2.5%",
 				paddingTop: "2.5%",
 			}}>
-			{/* <ThemedText>Show Details</ThemedText> */}
 			<FlatList
 				data={songs}
 				keyExtractor={(item) => item.id}
 				renderItem={({ item }) => {
 					return (
 						<Link
-							href={{
-								pathname: "/song/[id]",
-								params: {
-									id: item.id,
-									title: item.title,
-									lyrics: item.lyrics,
-									tags: JSON.stringify(item.tags),
-								},
-							}}
+							href={generateHref("viewSong", {
+								id: item.id,
+								title: item.title,
+								lyrics: item.lyrics,
+								tags: JSON.stringify(item.tags),
+							})}
 							asChild>
 							<TouchableOpacity style={styles.item}>
 								<ThemedText style={styles.text}>{item.title}</ThemedText>

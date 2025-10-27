@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useEffect, useLayoutEffect, useState } from "react";
 import {
+	ActivityIndicator,
 	ScrollView,
 	StyleSheet,
 	Text,
@@ -33,6 +34,7 @@ export default function EditSongScreen() {
 	);
 
 	const [loading, setLoading] = useState(false);
+	const [fetchingSong, setFetchingSong] = useState(false);
 
 	const navigation = useNavigation();
 	useLayoutEffect(() => {
@@ -51,29 +53,37 @@ export default function EditSongScreen() {
 
 		async function fetchSong() {
 			if (!id) return;
-			const { data, error } = await supabase
-				.from("songs")
-				.select(
-					`id,title,artist,duration,lyrics,song_tags(tags(id,name,color))`
-				)
-				.eq("id", id)
-				.single();
+			setFetchingSong(true);
+			try {
+				const { data, error } = await supabase
+					.from("songs")
+					.select(
+						`id,title,artist,duration,lyrics,song_tags(tags(id,name,color))`
+					)
+					.eq("id", id)
+					.single();
 
-			if (error) console.error(error);
-			else if (data) {
-				setTitle(data.title);
-				setArtist(data.artist);
-				setDuration(data.duration?.toString() ?? "");
-				setLyrics(data.lyrics ?? "");
+				if (error) console.error(error);
+				else if (data) {
+					setTitle(data.title);
+					setArtist(data.artist);
+					setDuration(data.duration?.toString() ?? "");
+					setLyrics(data.lyrics ?? "");
 
-				// select tags
-				const tagMap: Record<string, boolean> = {};
-				data.song_tags?.forEach((st: any) => {
-					st.tags.forEach((tag: TagType) => {
-						tagMap[tag.id] = true;
+					// select tags
+					const tagMap: Record<string, boolean> = {};
+					data.song_tags?.forEach((st: any) => {
+						if (st.tags) {
+							const tagsArray = Array.isArray(st.tags) ? st.tags : [st.tags];
+							tagsArray.forEach((tag: TagType) => {
+								tagMap[tag.id] = true;
+							});
+						}
 					});
-				});
-				setSelectedTagIds(tagMap);
+					setSelectedTagIds(tagMap);
+				}
+			} finally {
+				setFetchingSong(false);
 			}
 		}
 
@@ -98,7 +108,7 @@ export default function EditSongScreen() {
 			Toast.show({
 				type: "error",
 				text1: "Title is required",
-				position: "top",
+				position: "bottom",
 				visibilityTime: 2000,
 			});
 			return null;
@@ -108,7 +118,7 @@ export default function EditSongScreen() {
 			Toast.show({
 				type: "error",
 				text1: "Artist is required",
-				position: "top",
+				position: "bottom",
 				visibilityTime: 2000,
 			});
 			return null;
@@ -164,20 +174,30 @@ export default function EditSongScreen() {
 				if (newTags.length) await supabase.from("song_tags").insert(newTags);
 			}
 
+			const idString = Array.isArray(id) ? id[0] : id;
+			await queryClient.invalidateQueries({ queryKey: ["allSongs"] });
+			// Update cache
+			queryClient.setQueryData<Song[]>(["allSongs"], (oldData) => {
+				if (!oldData) return [{ id: idString!, ...payload } as Song];
+
+				return oldData.map((song) =>
+					song.id === idString ? { ...song, ...payload } : song
+				);
+			});
+
+			router.back();
 			Toast.show({
 				type: "success",
 				text1: "Song saved!",
-				position: "top",
+				position: "bottom",
 				visibilityTime: 2000,
 			});
-			await queryClient.invalidateQueries({ queryKey: ["allSongs"] });
-			router.back();
 		} catch (e: any) {
 			console.error(e);
 			Toast.show({
 				type: "error",
 				text1: `Error, ${e.message}` || "Failed to save song",
-				position: "top",
+				position: "bottom",
 				visibilityTime: 2000,
 			});
 		} finally {
@@ -190,68 +210,82 @@ export default function EditSongScreen() {
 	};
 
 	return (
-		<ScrollView
-			style={styles.container}
-			contentContainerStyle={{ padding: 16 }}>
-			<ThemedText>Title</ThemedText>
-			<TextInput
-				style={[styles.input, { color: colors.text }]}
-				value={title}
-				onChangeText={setTitle}
-			/>
+		<ThemedView
+			style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+			{fetchingSong ? (
+				<ActivityIndicator
+					size="large"
+					color={colors.primary}
+				/>
+			) : (
+				<ScrollView
+					style={styles.container}
+					contentContainerStyle={{ padding: 16 }}>
+					<ThemedText>Title</ThemedText>
+					<TextInput
+						style={[styles.input, { color: colors.text }]}
+						value={title}
+						onChangeText={setTitle}
+					/>
 
-			<ThemedText>Artist</ThemedText>
-			<TextInput
-				style={[styles.input, { color: colors.text }]}
-				value={artist}
-				onChangeText={setArtist}
-			/>
+					<ThemedText>Artist</ThemedText>
+					<TextInput
+						style={[styles.input, { color: colors.text }]}
+						value={artist}
+						onChangeText={setArtist}
+					/>
 
-			<ThemedText>Duration (seconds or mm:ss)</ThemedText>
-			<TextInput
-				style={[styles.input, { color: colors.text }]}
-				value={duration}
-				onChangeText={setDuration}
-				keyboardType="numeric"
-			/>
+					<ThemedText>Duration (seconds or mm:ss)</ThemedText>
+					<TextInput
+						style={[styles.input, { color: colors.text }]}
+						value={duration}
+						onChangeText={setDuration}
+						keyboardType="numeric"
+					/>
 
-			<ThemedText>Lyrics</ThemedText>
-			<TextInput
-				style={[styles.input, { height: 120, color: colors.text }]}
-				value={lyrics}
-				onChangeText={setLyrics}
-				multiline
-			/>
+					<ThemedText>Lyrics</ThemedText>
+					<TextInput
+						style={[styles.input, { height: 120, color: colors.text }]}
+						value={lyrics}
+						onChangeText={setLyrics}
+						multiline
+					/>
 
-			<ThemedText>Tags</ThemedText>
-			<ThemedView
-				style={[styles.tagsContainer, { backgroundColor: colors.background }]}>
-				{availableTags.map((tag) => (
-					<TouchableOpacity
-						key={tag.id}
+					<ThemedText>Tags</ThemedText>
+					<ThemedView
 						style={[
-							styles.tagCheckbox,
-							selectedTagIds[tag.id] && {
-								backgroundColor: tag.color || "#00F",
-							},
-						]}
-						onPress={() => toggleTag(tag.id)}>
-						<Text style={{ color: selectedTagIds[tag.id] ? "#FFF" : "#999" }}>
-							{tag.name}
-						</Text>
-					</TouchableOpacity>
-				))}
-			</ThemedView>
+							styles.tagsContainer,
+							{ backgroundColor: colors.background },
+						]}>
+						{availableTags.map((tag) => (
+							<TouchableOpacity
+								key={tag.id}
+								style={[
+									styles.tagCheckbox,
+									selectedTagIds[tag.id] && {
+										backgroundColor: tag.color || "#00F",
+									},
+								]}
+								onPress={() => toggleTag(tag.id)}>
+								<Text
+									style={{ color: selectedTagIds[tag.id] ? "#FFF" : "#999" }}>
+									{tag.name}
+								</Text>
+							</TouchableOpacity>
+						))}
+					</ThemedView>
 
-			<TouchableOpacity
-				style={styles.saveButton}
-				onPress={handleSave}
-				disabled={loading}>
-				<ThemedText style={{ color: "#FFF", textAlign: "center" }}>
-					{loading ? "Saving..." : "Save"}
-				</ThemedText>
-			</TouchableOpacity>
-		</ScrollView>
+					<TouchableOpacity
+						style={styles.saveButton}
+						onPress={handleSave}
+						disabled={loading}>
+						<ThemedText style={{ color: "#FFF", textAlign: "center" }}>
+							{loading ? "Saving..." : "Save"}
+						</ThemedText>
+					</TouchableOpacity>
+				</ScrollView>
+			)}
+		</ThemedView>
 	);
 }
 

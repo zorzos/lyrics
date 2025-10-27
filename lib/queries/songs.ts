@@ -1,7 +1,9 @@
 import { supabase } from "@/lib/supabase";
 import { Song } from "@/types";
 
-type RawSongTagRow = { tags?: { id: string; name: string; color?: string }[] } | null;
+type RawSongTagRow = {
+	tags?: { id: string; name: string; color?: string }[];
+} | null;
 type RawShowSongRow = { song_order?: number; songs?: any } | null;
 
 export async function getSongs(showId?: string): Promise<Song[]> {
@@ -30,7 +32,8 @@ export async function getSongs(showId?: string): Promise<Song[]> {
               shows (
                 id,
                 title,
-                date
+                date,
+				draft
               )
             )
           )
@@ -96,7 +99,8 @@ export async function getSongs(showId?: string): Promise<Song[]> {
             shows (
               id,
               title,
-              date
+              date,
+			  draft
             )
           )
         `

@@ -1,179 +1,473 @@
+import { useTheme } from "@react-navigation/native";
+import { useQueryClient } from "@tanstack/react-query";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
+import { useEffect, useLayoutEffect, useState } from "react";
+import {
+	ActivityIndicator,
+	StyleSheet,
+	Switch,
+	Text,
+	TextInput,
+	TouchableOpacity,
+} from "react-native";
+import DraggableFlatList, {
+	RenderItemParams,
+} from "react-native-draggable-flatlist";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { getSongs } from "@/lib/queries/songs";
 import { supabase } from "@/lib/supabase";
-import DateTimePicker from "@react-native-community/datetimepicker";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
-import { FlatList, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
+import { Show, Song } from "@/types";
+
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import Toast from "react-native-toast-message";
 
 export default function EditShowScreen() {
+	const { colors } = useTheme();
+	const queryClient = useQueryClient();
+	const { id } = useLocalSearchParams(); // optional, for edit
 	const router = useRouter();
-	const { id } = useLocalSearchParams(); // if id exists, we're editing
 
-	const [loading, setLoading] = useState(true);
-	const [saving, setSaving] = useState(false);
-	const [show, setShow] = useState({
-		name: "",
-		date: new Date(),
-		notes: "",
-		songs: [] as any[],
-	});
+	const [loading, setLoading] = useState(false);
+	const [fetchingShow, setFetchingShow] = useState(false);
 
-	// Fetch existing show if editing
+	const [title, setTitle] = useState("");
+	const [date, setDate] = useState(""); // ISO string
+	const [draft, setDraft] = useState(false);
+	const [parts, setParts] = useState(1);
+
+	const navigation = useNavigation();
+	useLayoutEffect(() => {
+		navigation.setOptions({
+			title: id ? "Edit Show" : "Add New Show",
+		});
+	}, [id, navigation]);
+
+	const [songsByPart, setSongsByPart] = useState<Song[][]>(
+		Array(parts).fill([]) // one array per part
+	);
+	const [availableSongs, setAvailableSongs] = useState<Song[]>([]);
+
 	useEffect(() => {
-		const fetchShow = async () => {
-			if (!id) {
-				setLoading(false);
-				return;
+		async function fetchSongs() {
+			const songs = await getSongs(); // your existing getSongs()
+			setAvailableSongs(songs);
+		}
+		fetchSongs();
+	}, []);
+
+	// Fetch show if editing
+	useEffect(() => {
+		async function fetchShow() {
+			if (!id) return;
+			setFetchingShow(true);
+			try {
+				const { data, error } = await supabase
+					.from("shows")
+					.select(
+						`
+            id, title, date, draft, parts,
+            show_songs(order, songs(id, title, artist, duration))
+          `
+					)
+					.eq("id", id)
+					.single();
+
+				if (error) throw error;
+				if (data) {
+					setTitle(data.title);
+					setDate(data.date);
+					setDraft(data.draft ?? false);
+					setParts(data.parts ?? 1);
+
+					// Map songs into parts
+					const groupedSongs: Song[][] = Array.from(
+						{ length: data.parts },
+						() => []
+					);
+					(data.show_songs ?? []).forEach((ss: any) => {
+						const partIndex = ss.order ? ss.order - 1 : 0;
+						groupedSongs[partIndex].push(ss.songs);
+					});
+					setSongsByPart(groupedSongs);
+				}
+			} catch (e) {
+				console.error(e);
+			} finally {
+				setFetchingShow(false);
 			}
-			const { data, error } = await supabase
-				.from("shows")
-				.select(`id, name, date, notes, show_songs(song_order, songs(*))`)
-				.eq("id", id)
-				.single();
-			if (!error && data) {
-				setShow({
-					name: data.name,
-					date: new Date(data.date),
-					notes: data.notes || "",
-					songs:
-						data.show_songs
-							?.sort((a: any, b: any) => a.song_order - b.song_order)
-							.map((ss: any) => ss.songs) ?? [],
-				});
-			}
-			setLoading(false);
-		};
+		}
 		fetchShow();
 	}, [id]);
 
 	const handleSave = async () => {
-		setSaving(true);
-		let showId = id;
+		setLoading(true);
+		try {
+			const payload: Partial<Show> = {
+				title,
+				date: new Date(date),
+				draft,
+				parts,
+			};
 
-		if (id) {
-			const { error } = await supabase
-				.from("shows")
-				.update({
-					name: show.name,
-					date: show.date.toISOString(),
-					notes: show.notes,
-				})
-				.eq("id", id);
-			if (error) console.error(error);
-		} else {
-			const { data, error } = await supabase
-				.from("shows")
-				.insert({
-					name: show.name,
-					date: show.date.toISOString(),
-					notes: show.notes,
-				})
-				.select("id")
-				.single();
-			if (error) console.error(error);
-			showId = data.id;
+			if (id) {
+				const { error } = await supabase
+					.from("shows")
+					.update(payload)
+					.eq("id", id);
+				if (error) throw error;
+
+				// Remove all show_songs
+				await supabase.from("show_songs").delete().eq("show_id", id);
+
+				// Insert songs per part
+				for (let partIndex = 0; partIndex < songsByPart.length; partIndex++) {
+					const partSongs = songsByPart[partIndex];
+					const inserts = partSongs.map((song, idx) => ({
+						show_id: id,
+						song_id: song.id,
+						order: partIndex + 1,
+						song_order: idx + 1,
+					}));
+					if (inserts.length > 0)
+						await supabase.from("show_songs").insert(inserts);
+				}
+
+				queryClient.invalidateQueries({ queryKey: ["shows"] });
+			} else {
+				const { data, error } = await supabase
+					.from("shows")
+					.insert(payload)
+					.select("id")
+					.single();
+				if (error) throw error;
+				const showId = data?.id;
+
+				for (let partIndex = 0; partIndex < songsByPart.length; partIndex++) {
+					const partSongs = songsByPart[partIndex];
+					const inserts = partSongs.map((song, idx) => ({
+						show_id: showId,
+						song_id: song.id,
+						order: partIndex + 1,
+						song_order: idx + 1,
+					}));
+					if (inserts.length > 0)
+						await supabase.from("show_songs").insert(inserts);
+				}
+
+				queryClient.invalidateQueries({ queryKey: ["shows"] });
+			}
+
+			Toast.show({ type: "success", text1: "Show saved!" });
+			router.back();
+		} catch (e: any) {
+			console.error(e);
+			Toast.show({ type: "error", text1: e.message || "Failed to save show" });
+		} finally {
+			setLoading(false);
 		}
-
-		// update show_songs table
-		await supabase.from("show_songs").delete().eq("show_id", showId);
-		if (show.songs.length > 0) {
-			const inserts = show.songs.map((song, index) => ({
-				show_id: showId,
-				song_id: song.id,
-				song_order: index + 1,
-			}));
-			await supabase.from("show_songs").insert(inserts);
-		}
-
-		setSaving(false);
-		router.back();
 	};
 
-	if (loading) return <ThemedText>Loading...</ThemedText>;
+	const renderSongItem = ({ item, drag, isActive }: RenderItemParams<Song>) => {
+		return (
+			<TouchableOpacity
+				style={{
+					padding: 12,
+					backgroundColor: isActive ? "#ddd" : "#fff",
+					marginBottom: 4,
+					borderRadius: 6,
+					borderWidth: 1,
+					borderColor: "#ccc",
+				}}
+				onLongPress={drag}>
+				<Text>{item.title}</Text>
+			</TouchableOpacity>
+		);
+	};
+
+	if (fetchingShow) {
+		return (
+			<ThemedView
+				style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+				<ActivityIndicator
+					size="large"
+					color={colors.primary}
+				/>
+			</ThemedView>
+		);
+	}
+
+	// console.log("AVAILABLE SONGS", availableSongs[1]);
 
 	return (
-		<ThemedView style={styles.container}>
-			<TextInput
-				style={styles.input}
-				placeholder="Show name"
-				value={show.name}
-				onChangeText={(text) => setShow({ ...show, name: text })}
-			/>
-			<DateTimePicker
-				value={show.date}
-				mode="date"
-				display="default"
-				onChange={(_, date) => setShow({ ...show, date: date || show.date })}
-			/>
-			<TextInput
-				style={[styles.input, { height: 80 }]}
-				multiline
-				placeholder="Notes"
-				value={show.notes}
-				onChangeText={(text) => setShow({ ...show, notes: text })}
-			/>
+		<GestureHandlerRootView style={{ flex: 1, paddingBottom: 16 }}>
+			<ThemedView style={{ flex: 1, padding: 16 }}>
+				<ThemedText>Title</ThemedText>
+				<TextInput
+					style={[styles.input, { color: colors.text }]}
+					value={title}
+					onChangeText={setTitle}
+				/>
 
-			<ThemedText style={{ marginTop: 16, marginBottom: 8 }}>Setlist</ThemedText>
-			<FlatList
-				data={show.songs}
-				keyExtractor={(item) => item.id.toString()}
-				renderItem={({ item }) => (
-					<View style={styles.songItem}>
-						<ThemedText>{item.title}</ThemedText>
-					</View>
-				)}
-			/>
+				<ThemedText>Date</ThemedText>
+				<TextInput
+					style={[styles.input, { color: colors.text }]}
+					value={date}
+					onChangeText={setDate}
+					placeholder="DD-MM-YYYY"
+				/>
 
-			<TouchableOpacity
-				style={styles.addButton}
-				onPress={() => console.log("TODO: open song selector modal")}
-			>
-				<ThemedText style={{ color: "#000" }}>+ Add Song</ThemedText>
-			</TouchableOpacity>
+				<ThemedView
+					style={{
+						flexDirection: "row",
+						alignItems: "center",
+						marginVertical: 8,
+					}}>
+					<ThemedText>Draft</ThemedText>
+					<Switch
+						value={draft}
+						onValueChange={setDraft}
+						thumbColor={draft ? colors.primary : "#fff"}
+						trackColor={{ false: "#ccc", true: colors.primary + "55" }}
+					/>
+				</ThemedView>
 
-			<TouchableOpacity
-				style={[styles.saveButton, { opacity: saving ? 0.5 : 1 }]}
-				onPress={handleSave}
-				disabled={saving}
-			>
-				<ThemedText style={{ color: "#000" }}>{id ? "Save Changes" : "Create Show"}</ThemedText>
-			</TouchableOpacity>
-		</ThemedView>
+				<ThemedView
+					style={{
+						flexDirection: "row",
+						justifyContent: "space-between",
+						marginBottom: 16,
+					}}>
+					{[1, 2, 3].map((p, index, availableParts) => {
+						const isSelected = parts === p;
+						return (
+							<TouchableOpacity
+								key={index}
+								style={[
+									styles.partSegment,
+									isSelected && { backgroundColor: colors.primary },
+									!isSelected && { borderColor: colors.text, borderWidth: 1 },
+									p === availableParts[0] && {
+										borderTopLeftRadius: 8,
+										borderBottomLeftRadius: 8,
+									},
+									p === availableParts[availableParts.length - 1] && {
+										borderTopRightRadius: 8,
+										borderBottomRightRadius: 8,
+									},
+								]}
+								onPress={() => {
+									setParts(p);
+									if (songsByPart.length < p) {
+										setSongsByPart((prev) => [
+											...prev,
+											...Array.from({ length: p - prev.length }, () => []),
+										]);
+									}
+								}}>
+								<Text
+									style={[
+										styles.partSegmentText,
+										{ color: isSelected ? colors.text : "#FFF" },
+									]}>
+									{p} Part{p > 1 ? "s" : ""}
+								</Text>
+							</TouchableOpacity>
+						);
+					})}
+				</ThemedView>
+				{Array.from({ length: parts }, (_, i) => (
+					<ThemedView
+						key={i}
+						style={{
+							marginBottom: 16,
+							borderWidth: 1,
+							borderColor: "#ccc",
+							borderRadius: 8,
+							overflow: "hidden",
+						}}>
+						<ThemedView
+							style={{
+								flexDirection: "row",
+								padding: 8,
+								backgroundColor: colors.background,
+								gap: 4,
+								alignItems: "center",
+								marginBottom: 8, // <-- TODO
+							}}>
+							<ThemedText style={{ fontWeight: "bold" }}>
+								Part {i + 1}
+							</ThemedText>
+							{songsByPart[i].length > 0 && (
+								<TouchableOpacity
+									onPress={() => console.log(`Editing Part ${i + 1}`)}>
+									<MaterialIcons
+										name="edit"
+										size={20}
+										color={colors.text}
+									/>
+								</TouchableOpacity>
+							)}
+						</ThemedView>
+
+						<DraggableFlatList
+							data={songsByPart[i]}
+							onDragEnd={({ data }) => {
+								setSongsByPart((prev) => {
+									const updated = [...prev];
+									updated[i] = data;
+									return updated;
+								});
+							}}
+							keyExtractor={(item) => item.id}
+							renderItem={renderSongItem}
+							ListEmptyComponent={
+								<TouchableOpacity
+									onPress={() => console.log(`ADDING SONGS TO PART ${i + 1}`)}
+									style={{
+										flexDirection: "row",
+										alignItems: "center",
+										justifyContent: "center",
+										padding: 16,
+
+										borderWidth: 1,
+										borderColor: "red",
+										borderRadius: 8,
+										margin: 4, // <--- TODO
+									}}>
+									<ThemedText>Tap here to add songs</ThemedText>
+									<MaterialIcons
+										name="add-circle-outline"
+										size={24}
+										color="white"
+									/>
+								</TouchableOpacity>
+							}
+						/>
+					</ThemedView>
+				))}
+
+				{/* {Array.from({ length: parts }, (_, i) => (
+					<ThemedView
+						key={i}
+						style={{
+							flex: 1, // allow this part to expand
+							marginBottom: 16,
+							borderWidth: 1,
+							borderColor: "#ccc",
+							borderRadius: 8,
+							overflow: "hidden",
+						}}>
+						<ThemedView
+							style={{
+								flexDirection: "row",
+								justifyContent: "space-between",
+								padding: 8,
+								backgroundColor: colors.background,
+							}}>
+							{console.log(`SONGS FOR PART ${i + 1}`, songsByPart[i])}
+							<ThemedText style={{ fontWeight: "bold" }}>
+								Part {i + 1}
+							</ThemedText>
+							{songsByPart[i].length > 0 && (
+								<TouchableOpacity
+									onPress={() => console.log(`Editing Part ${i + 1}`)}>
+									<MaterialIcons
+										name="edit"
+										size={20}
+										color={colors.text}
+									/>
+								</TouchableOpacity>
+							)}
+						</ThemedView>
+
+						<DraggableFlatList
+							data={songsByPart[i]}
+							onDragEnd={({ data }) => {
+								setSongsByPart((prev) => {
+									const updated = [...prev];
+									updated[i] = data;
+									return updated;
+								});
+							}}
+							keyExtractor={(item) => item.id}
+							renderItem={renderSongItem}
+							style={{ flex: 1 }}
+							contentContainerStyle={{
+								flexGrow: 1,
+								justifyContent:
+									songsByPart[i].length === 0 ? "center" : "flex-start",
+								alignItems: "center",
+								padding: 8,
+							}}
+							ListEmptyComponent={
+								<TouchableOpacity
+									onPress={() => console.log(`ADDING SONGS TO PART ${i + 1}`)}
+									style={{
+										flexDirection: "row",
+										alignItems: "center",
+										justifyContent: "center",
+										padding: 16,
+
+										borderWidth: 1,
+										borderColor: "red",
+										borderRadius: 8,
+									}}>
+									<ThemedText>Tap here to add songs</ThemedText>
+									<MaterialIcons
+										name="add-circle-outline"
+										size={24}
+										color="white"
+									/>
+								</TouchableOpacity>
+							}
+						/>
+					</ThemedView>
+				))} */}
+
+				<TouchableOpacity
+					style={styles.saveButton}
+					onPress={handleSave}
+					disabled={loading}>
+					<ThemedText style={{ color: "#fff", textAlign: "center" }}>
+						{loading ? "Saving..." : "Save"}
+					</ThemedText>
+				</TouchableOpacity>
+			</ThemedView>
+		</GestureHandlerRootView>
 	);
 }
 
 const styles = StyleSheet.create({
-	container: {
-		padding: 16,
-	},
 	input: {
 		borderWidth: 1,
-		borderColor: "#555",
-		borderRadius: 8,
+		borderColor: "#999",
+		borderRadius: 6,
 		padding: 8,
-		marginVertical: 6,
-		color: "#fff",
-	},
-	songItem: {
-		padding: 8,
-		borderWidth: 1,
-		borderColor: "#555",
-		borderRadius: 8,
-		marginVertical: 4,
-	},
-	addButton: {
-		backgroundColor: "#eee",
-		alignItems: "center",
-		padding: 10,
-		borderRadius: 8,
-		marginTop: 8,
+		marginBottom: 12,
 	},
 	saveButton: {
-		backgroundColor: "#fff",
-		alignItems: "center",
-		padding: 12,
-		borderRadius: 8,
+		backgroundColor: "#007AFF",
+		paddingVertical: 12,
+		borderRadius: 6,
 		marginTop: 16,
+	},
+	partsSelectorContainer: {
+		flexDirection: "row",
+		borderRadius: 8,
+		overflow: "hidden",
+		marginBottom: 16,
+	},
+	partSegment: {
+		flex: 1,
+		paddingVertical: 10,
+		alignItems: "center",
+	},
+	partSegmentText: {
+		fontSize: 14,
+		// color: "#333",
+		fontWeight: "500",
 	},
 });

@@ -1,6 +1,6 @@
 import {
 	ActivityIndicator,
-	FlatList,
+	SectionList,
 	StyleSheet,
 	TouchableOpacity,
 } from "react-native";
@@ -12,20 +12,11 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useQuery } from "@tanstack/react-query";
 
 import { Colors } from "@/constants/theme";
-import { supabase } from "@/lib/supabase";
-import { Show } from "@/types";
+import { getShows } from "@/lib/queries/shows";
 import { formatDate } from "@/utils/dateUtils";
+import { generateHref } from "@/utils/paramUtils";
+import { categoriseShows } from "@/utils/showUtils"; // your new helper
 import { Link } from "expo-router";
-
-async function getShows(): Promise<Show[]> {
-	const { data, error } = await supabase
-		.from("shows")
-		.select("id, title, date")
-		.order("date", { ascending: false });
-
-	if (error) throw error;
-	return data ?? [];
-}
 
 export default function Shows() {
 	const colorScheme = useColorScheme();
@@ -36,8 +27,8 @@ export default function Shows() {
 		isLoading,
 		isError,
 	} = useQuery({
-		queryKey: ["shows"],
-		queryFn: getShows,
+		queryKey: ["allShows"],
+		queryFn: () => getShows(),
 	});
 
 	if (isLoading) {
@@ -57,7 +48,7 @@ export default function Shows() {
 		);
 	}
 
-	if (isError) {
+	if (isError || !shows) {
 		return (
 			<ThemedView
 				style={{
@@ -74,23 +65,32 @@ export default function Shows() {
 		);
 	}
 
+	// Categorize using helper
+	const sections = categoriseShows(shows).filter(
+		(section) => section.data.length > 0
+	);
+
 	return (
 		<ThemedView style={styles.container}>
-			<FlatList
-				data={shows}
+			<SectionList
+				sections={sections}
 				keyExtractor={(item) => item.id}
+				renderSectionHeader={({ section: { title } }) => (
+					<ThemedText
+						style={[styles.sectionHeader, { color: currentTheme.text }]}>
+						{title}
+					</ThemedText>
+				)}
 				renderItem={({ item }) => (
 					<Link
-						href={{
-							pathname: "/show/[id]",
-							params: { id: item.id, title: item.title },
-						}}
+						href={generateHref("viewShow", { id: item.id, title: item.title })}
 						asChild>
 						<TouchableOpacity style={styles.item}>
-							<ThemedText style={styles.text}>{`${item.title.substring(
-								0,
-								15
-							)} ${formatDate(new Date(item.date))}`}</ThemedText>
+							<ThemedText style={[styles.text, { color: currentTheme.text }]}>
+								{`${item.title.substring(0, 15)} ${formatDate(
+									new Date(item.date)
+								)}`}
+							</ThemedText>
 							<MaterialIcons
 								color={currentTheme.text}
 								size={28}
@@ -105,20 +105,23 @@ export default function Shows() {
 }
 
 const styles = StyleSheet.create({
-	container: {
-		flex: 1,
-		paddingHorizontal: "2.5%",
+	container: { flex: 1, paddingHorizontal: "2.5%" },
+	sectionHeader: {
+		fontSize: 18,
+		fontWeight: "bold",
+		marginTop: 16,
+		marginBottom: 8,
 	},
 	item: {
 		paddingVertical: 12,
 		borderBottomWidth: 1,
-		borderBottomColor: "#ddd",
+		borderBottomColor: "#lightgray",
+		borderBottomEndRadius: 16,
+		borderBottomStartRadius: 16,
 		flexDirection: "row",
 		justifyContent: "space-between",
 		alignItems: "center",
 		flex: 1,
 	},
-	text: {
-		fontSize: 16,
-	},
+	text: { fontSize: 16 },
 });

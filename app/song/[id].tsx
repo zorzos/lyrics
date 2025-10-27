@@ -6,48 +6,53 @@ import Metronome from "@/components/ui/Metronome";
 import Tag from "@/components/ui/Tag";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { Show, TagType } from "@/types";
+import { Show, Song, TagType } from "@/types";
 import { formatDuration } from "@/utils/dateUtils";
-import { getSingleParam } from "@/utils/paramUtils";
+import { generateHref } from "@/utils/paramUtils";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { useLocalSearchParams, useNavigation } from "expo-router";
+import { Link, useLocalSearchParams, useNavigation } from "expo-router";
 import { useLayoutEffect, useState } from "react";
-import { StyleSheet, TouchableOpacity } from "react-native";
+import { ActivityIndicator, StyleSheet, TouchableOpacity } from "react-native";
 
 export default function SongDetailScreen() {
 	const [modalInfo, setModalInfo] = useState<any>(undefined);
 	const colorScheme = useColorScheme();
 	const currentTheme = Colors[colorScheme ?? "light"];
-	const { duration, lyrics, shows, tags, title } = useLocalSearchParams();
-	const durationNumber = Number(
-		Array.isArray(duration) ? duration[0] : duration
-	);
+	const { id } = useLocalSearchParams();
+	const queryClient = useQueryClient();
 
-	let finalShows: Show[] = [];
-	try {
-		const rawShows = getSingleParam(shows);
-		finalShows = rawShows ? JSON.parse(rawShows) : [];
-	} catch (error) {
-		console.log("Failed to parse shows", error);
-		finalShows = [];
-	}
+	// Reactive query to allSongs so updates reflect immediately
+	const { data: allSongs } = useQuery<Song[]>({
+		queryKey: ["allSongs"],
+		queryFn: () => queryClient.getQueryData<Song[]>(["allSongs"]) || [],
+		initialData: queryClient.getQueryData<Song[]>(["allSongs"]) || [],
+	});
 
-	let finalTags: TagType[] = [];
-	try {
-		const rawTags = getSingleParam(tags);
-		finalTags = rawTags ? JSON.parse(rawTags) : [];
-	} catch (error) {
-		console.error("Failed to parse tags:", error);
-		finalTags = [];
-	}
+	const song = allSongs?.find((s) => s.id === id);
+	const durationNumber = Number(song?.duration);
+
+	const finalShows: Show[] = song?.shows ?? [];
+	const finalTags: TagType[] = song?.tags ?? [];
 
 	const navigation = useNavigation();
 	useLayoutEffect(() => {
 		navigation.setOptions({
-			title,
+			title: song?.title ?? "Song Details",
+			headerRight: () => {
+				return (
+					<Link href={generateHref("editSong", { id })}>
+						<MaterialIcons
+							size={24}
+							name="edit"
+							color="white"
+						/>
+					</Link>
+				);
+			},
 		});
-	}, [navigation, title]);
+	}, [id, navigation, song]);
 
 	const songData = [
 		{
@@ -100,11 +105,7 @@ export default function SongDetailScreen() {
 			: ThemedView;
 		const labelText = isTouchable ? (
 			<ThemedView
-				style={{
-					flexDirection: "row",
-					alignItems: "center",
-					gap: 2,
-				}}>
+				style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
 				<ThemedText style={{ fontSize: 12 }}>{item.label}</ThemedText>
 				<MaterialIcons
 					color={currentTheme.text}
@@ -121,10 +122,7 @@ export default function SongDetailScreen() {
 				key={`song-data-${index}`}
 				style={[
 					styles.songItem,
-					{
-						width: `${85 / songData.length}%`,
-						borderWidth: 1,
-					},
+					{ width: `${85 / songData.length}%`, borderWidth: 1 },
 				]}
 				onPress={item.opensModal ? () => setModalInfo(item) : undefined}>
 				<ThemedText style={styles.songItemText}>{labelText}</ThemedText>
@@ -133,6 +131,18 @@ export default function SongDetailScreen() {
 		);
 	};
 
+	if (!song) {
+		return (
+			<ThemedView
+				style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+				<ActivityIndicator
+					size="large"
+					color={currentTheme.text}
+				/>
+			</ThemedView>
+		);
+	}
+
 	return (
 		<>
 			<ThemedView style={styles.songDataItemContainer}>
@@ -140,6 +150,7 @@ export default function SongDetailScreen() {
 					index === 2 ? songDataComponents[0] : renderInfo(item, index)
 				)}
 			</ThemedView>
+
 			<ThemedView style={styles.tagsContainer}>
 				{finalTags.map((tag: TagType) => (
 					<ThemedView
@@ -149,7 +160,9 @@ export default function SongDetailScreen() {
 					</ThemedView>
 				))}
 			</ThemedView>
-			<LyricsRenderer lyrics={Array.isArray(lyrics) ? lyrics[0] : lyrics} />
+
+			<LyricsRenderer lyrics={song?.lyrics ?? ""} />
+
 			<InfoModal
 				modalInfo={modalInfo}
 				setModalInfo={setModalInfo}

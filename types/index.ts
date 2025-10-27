@@ -23,6 +23,8 @@ export type Show = {
 	id: string;
 	title: string;
 	date: Date;
+	parts: number;
+	draft: boolean;
 };
 
 export type Section = {
@@ -48,3 +50,7 @@ export type MetronomeProps = {
 };
 
 export type TagColorMap = Record<string, string>;
+
+export type NetworkContextType = {
+	isOnline: boolean;
+};
