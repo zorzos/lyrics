@@ -4,6 +4,7 @@ import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useEffect, useLayoutEffect, useState } from "react";
 import {
 	ActivityIndicator,
+	Modal,
 	StyleSheet,
 	Switch,
 	Text,
@@ -21,20 +22,21 @@ import { getSongs } from "@/lib/queries/songs";
 import { supabase } from "@/lib/supabase";
 import { Show, Song } from "@/types";
 
+import { getTotalPartTime } from "@/utils/dateUtils";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Toast from "react-native-toast-message";
 
 export default function EditShowScreen() {
 	const { colors } = useTheme();
 	const queryClient = useQueryClient();
-	const { id } = useLocalSearchParams(); // optional, for edit
+	const { id } = useLocalSearchParams();
 	const router = useRouter();
 
 	const [loading, setLoading] = useState(false);
 	const [fetchingShow, setFetchingShow] = useState(false);
 
 	const [title, setTitle] = useState("");
-	const [date, setDate] = useState(""); // ISO string
+	const [date, setDate] = useState("");
 	const [draft, setDraft] = useState(false);
 	const [parts, setParts] = useState(1);
 
@@ -45,20 +47,20 @@ export default function EditShowScreen() {
 		});
 	}, [id, navigation]);
 
-	const [songsByPart, setSongsByPart] = useState<Song[][]>(
-		Array(parts).fill([]) // one array per part
-	);
+	const [songsByPart, setSongsByPart] = useState<Song[][]>(Array(parts).fill([]));
 	const [availableSongs, setAvailableSongs] = useState<Song[]>([]);
+
+	const [songsModalVisible, setSongsModalVisible] = useState(false);
+	const [activePart, setActivePart] = useState<number | null>(null);
 
 	useEffect(() => {
 		async function fetchSongs() {
-			const songs = await getSongs(); // your existing getSongs()
+			const songs = await getSongs();
 			setAvailableSongs(songs);
 		}
 		fetchSongs();
 	}, []);
 
-	// Fetch show if editing
 	useEffect(() => {
 		async function fetchShow() {
 			if (!id) return;
@@ -68,9 +70,9 @@ export default function EditShowScreen() {
 					.from("shows")
 					.select(
 						`
-            id, title, date, draft, parts,
-            show_songs(order, songs(id, title, artist, duration))
-          `
+							id, title, date, draft, parts,
+							show_songs(order, songs(id, title, artist, duration))
+						`
 					)
 					.eq("id", id)
 					.single();
@@ -290,17 +292,25 @@ export default function EditShowScreen() {
 						}}>
 						<ThemedView
 							style={{
-								flexDirection: "row",
-								padding: 8,
 								backgroundColor: colors.background,
-								gap: 4,
-								alignItems: "center",
-								marginBottom: 8, // <-- TODO
-							}}>
-							<ThemedText style={{ fontWeight: "bold" }}>
-								Part {i + 1}
-							</ThemedText>
-							{songsByPart[i].length > 0 && (
+								flexDirection: 'row',
+								alignItems: 'center',
+								justifyContent: 'space-between',
+								padding: 8
+							}}
+						>
+							<ThemedView
+								style={{
+									flexDirection: "row",
+									backgroundColor: colors.background,
+									gap: 4,
+									alignItems: "center",
+									margin: 4
+								}}>
+								<ThemedText style={{ fontWeight: "bold" }}>
+									Part {i + 1}
+								</ThemedText>
+								{/* {songsByPart[i].length > 0 && ( */}
 								<TouchableOpacity
 									onPress={() => console.log(`Editing Part ${i + 1}`)}>
 									<MaterialIcons
@@ -309,7 +319,14 @@ export default function EditShowScreen() {
 										color={colors.text}
 									/>
 								</TouchableOpacity>
-							)}
+								{/* )} */}
+							</ThemedView>
+							{/* {songsByPart[i].length > 0 && ( */}
+							<ThemedText
+								style={{ fontSize: 14 }}>
+								{getTotalPartTime(songsByPart[i])}
+							</ThemedText>
+							{/* )} */}
 						</ThemedView>
 
 						<DraggableFlatList
@@ -325,7 +342,11 @@ export default function EditShowScreen() {
 							renderItem={renderSongItem}
 							ListEmptyComponent={
 								<TouchableOpacity
-									onPress={() => console.log(`ADDING SONGS TO PART ${i + 1}`)}
+									onPress={() => {
+										setActivePart(i);
+										setSongsModalVisible(true);
+										console.log(`ADDING SONGS TO PART ${i + 1}`)
+									}}
 									style={{
 										flexDirection: "row",
 										alignItems: "center",
@@ -349,84 +370,6 @@ export default function EditShowScreen() {
 					</ThemedView>
 				))}
 
-				{/* {Array.from({ length: parts }, (_, i) => (
-					<ThemedView
-						key={i}
-						style={{
-							flex: 1, // allow this part to expand
-							marginBottom: 16,
-							borderWidth: 1,
-							borderColor: "#ccc",
-							borderRadius: 8,
-							overflow: "hidden",
-						}}>
-						<ThemedView
-							style={{
-								flexDirection: "row",
-								justifyContent: "space-between",
-								padding: 8,
-								backgroundColor: colors.background,
-							}}>
-							{console.log(`SONGS FOR PART ${i + 1}`, songsByPart[i])}
-							<ThemedText style={{ fontWeight: "bold" }}>
-								Part {i + 1}
-							</ThemedText>
-							{songsByPart[i].length > 0 && (
-								<TouchableOpacity
-									onPress={() => console.log(`Editing Part ${i + 1}`)}>
-									<MaterialIcons
-										name="edit"
-										size={20}
-										color={colors.text}
-									/>
-								</TouchableOpacity>
-							)}
-						</ThemedView>
-
-						<DraggableFlatList
-							data={songsByPart[i]}
-							onDragEnd={({ data }) => {
-								setSongsByPart((prev) => {
-									const updated = [...prev];
-									updated[i] = data;
-									return updated;
-								});
-							}}
-							keyExtractor={(item) => item.id}
-							renderItem={renderSongItem}
-							style={{ flex: 1 }}
-							contentContainerStyle={{
-								flexGrow: 1,
-								justifyContent:
-									songsByPart[i].length === 0 ? "center" : "flex-start",
-								alignItems: "center",
-								padding: 8,
-							}}
-							ListEmptyComponent={
-								<TouchableOpacity
-									onPress={() => console.log(`ADDING SONGS TO PART ${i + 1}`)}
-									style={{
-										flexDirection: "row",
-										alignItems: "center",
-										justifyContent: "center",
-										padding: 16,
-
-										borderWidth: 1,
-										borderColor: "red",
-										borderRadius: 8,
-									}}>
-									<ThemedText>Tap here to add songs</ThemedText>
-									<MaterialIcons
-										name="add-circle-outline"
-										size={24}
-										color="white"
-									/>
-								</TouchableOpacity>
-							}
-						/>
-					</ThemedView>
-				))} */}
-
 				<TouchableOpacity
 					style={styles.saveButton}
 					onPress={handleSave}
@@ -435,6 +378,50 @@ export default function EditShowScreen() {
 						{loading ? "Saving..." : "Save"}
 					</ThemedText>
 				</TouchableOpacity>
+				<Modal
+					visible={songsModalVisible}
+					animationType="slide"
+					transparent={true}
+					onRequestClose={() => setSongsModalVisible(false)}
+					style={{
+						flex: 1,
+					}}
+				>
+					<ThemedView
+						style={{
+							flex: 1,
+							backgroundColor: "rgba(0,0,0,0.5)",
+							justifyContent: "center",
+							alignItems: "center",
+						}}
+					>
+						<ThemedView
+							style={{
+								backgroundColor: colors.card,
+								borderRadius: 12,
+								padding: 20,
+								width: "80%",
+								alignItems: "center",
+							}}
+						>
+							<ThemedText style={{ marginBottom: 16, fontWeight: "bold" }}>
+								Add songs to Part {activePart !== null ? activePart + 1 : ""}
+							</ThemedText>
+
+							<TouchableOpacity
+								style={{
+									backgroundColor: colors.primary,
+									paddingVertical: 10,
+									paddingHorizontal: 20,
+									borderRadius: 8,
+								}}
+								onPress={() => setSongsModalVisible(false)}
+							>
+								<ThemedText style={{ color: "#fff" }}>Close</ThemedText>
+							</TouchableOpacity>
+						</ThemedView>
+					</ThemedView>
+				</Modal>
 			</ThemedView>
 		</GestureHandlerRootView>
 	);

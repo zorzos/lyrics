@@ -6,7 +6,7 @@ const env = process.env;
 export default ({ config }: { config: ExpoConfig }) => ({
 	...config,
 	name: "Lyrics DEV",
-	slug: "lyrics-dev",
+	slug: "lyrics-app",
 	version: "1.0.0",
 	platforms: ["ios", "android"],
 	orientation: "portrait",
@@ -14,7 +14,7 @@ export default ({ config }: { config: ExpoConfig }) => ({
 	splash: {
 		image: "./assets/images/icon.jpg",
 		resizeMode: "contain",
-		backgroundColor: "#000",
+		backgroundColor: "#000000",
 	},
 	assetBundlePatterns: ["**/*"],
 	extra: {

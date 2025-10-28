@@ -12,7 +12,7 @@ export interface Song {
 	id: string;
 	title: string;
 	artist: string;
-	duration?: number | null;
+	duration: number;
 	lyrics: string;
 	tags?: TagType[];
 	song_order?: number; // optional: order within a show

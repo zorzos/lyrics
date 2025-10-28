@@ -15,7 +15,8 @@
         "backgroundColor": "#E6F4FE"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.strangerpulse.app"
     },
     "web": {
       "output": "static"
@@ -46,6 +47,12 @@
       "eas": {
         "projectId": "18a96692-fc2b-4633-917a-e059cf2867e6"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/18a96692-fc2b-4633-917a-e059cf2867e6"
     }
   }
 }

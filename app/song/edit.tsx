@@ -16,6 +16,7 @@ import { ThemedView } from "@/components/themed-view";
 import { supabase } from "@/lib/supabase";
 import { Song, TagType } from "@/types";
 
+import { parseDurationToSeconds } from "@/utils/dateUtils";
 import Toast from "react-native-toast-message";
 
 export default function EditSongScreen() {
@@ -90,18 +91,6 @@ export default function EditSongScreen() {
 		fetchTags();
 		fetchSong();
 	}, [id]);
-
-	const parseDurationToSeconds = (text: string): number | null => {
-		if (!text) return null;
-		const trimmed = text.trim();
-		if (trimmed.includes(":")) {
-			const [mm, ss] = trimmed.split(":").map(Number);
-			if (!isNaN(mm) && !isNaN(ss)) return mm * 60 + ss;
-			return null;
-		}
-		const n = Number(trimmed);
-		return Number.isNaN(n) ? null : n;
-	};
 
 	const buildPayload = (): Omit<Song, "id"> | null => {
 		if (!title.trim()) {
