@@ -17,6 +17,8 @@ export async function getSongs(showId?: string): Promise<ShowSongsByParts> {
 						artist,
 						duration,
 						lyrics,
+						original_key,
+						sp_key,
 						song_tags (
 						tags (
 							id,
@@ -75,6 +77,8 @@ export async function getSongs(showId?: string): Promise<ShowSongsByParts> {
 					tags,
 					song_order: row.song_order ?? null,
 					shows,
+					original_key: song.original_key,
+					sp_key: song.sp_key
 				};
 
 				if (!grouped[partNumber]) grouped[partNumber] = [];
@@ -101,6 +105,8 @@ export async function getSongs(showId?: string): Promise<ShowSongsByParts> {
           artist,
           duration,
           lyrics,
+		  original_key,
+		  sp_key,
           song_tags (
             tags (
               id,
@@ -150,6 +156,8 @@ export async function getSongs(showId?: string): Promise<ShowSongsByParts> {
 					lyrics: song.lyrics,
 					tags,
 					shows,
+					original_key: song.original_key,
+					sp_key: song.sp_key
 				} as Song;
 			});
 

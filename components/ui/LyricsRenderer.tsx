@@ -1,5 +1,5 @@
 import { Colors } from "@/constants/theme";
-import { normaliseLyric, parseLyrics } from "@/utils/lyricsUtils";
+import { normaliseLyric, parseLyrics } from "@/utils/songUtils";
 import { ThemedText } from "../themed-text";
 import { ThemedView } from "../themed-view";
 

@@ -17,6 +17,8 @@ export interface Song {
 	tags?: TagType[];
 	song_order?: number; // optional: order within a show
 	shows?: Show[];
+	original_key: string;
+	sp_key?: string;
 }
 
 export type Show = {
@@ -43,7 +45,6 @@ export type ModalProps = {
 };
 
 export type MetronomeProps = {
-	label: string;
 	value: number;
 	containerStyle: object;
 	contentStyle: object;
@@ -68,3 +69,24 @@ export enum ShowInfoTypes {
 	TIME = "time",
 	TYPE = "type",
 }
+
+export type KeyProps = {
+	originalKey: string;
+	spKey?: string;
+	containerStyle: object;
+};
+
+export type KeyQuality = "major" | "minor";
+
+export interface KeyInfo {
+	name: string;       // normalized key name (C, C#, D, etc.)
+	quality: KeyQuality; // major or minor
+	semitone: number;    // semitone number 0-11
+}
+
+export type MusicalKey = {
+	label: string;
+	value: string;
+	containerStyle: object;
+	labelStyle: object;
+};

@@ -16,6 +16,7 @@ import { Link, useLocalSearchParams, useNavigation } from "expo-router";
 import { useLayoutEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, TouchableOpacity } from "react-native";
 
+import Key from "@/components/ui/Key";
 import { supabase } from "@/lib/supabase";
 
 export default function SongDetailScreen() {
@@ -81,47 +82,6 @@ export default function SongDetailScreen() {
 		});
 	}, [id, navigation, song]);
 
-	const songData = [
-		{
-			label: "Duration",
-			value: formatDuration(durationNumber),
-			opensModal: false,
-		},
-		{
-			label: "Shows",
-			value: finalShows.length,
-			modalValue: finalShows,
-			opensModal: true,
-		},
-		0,
-		{
-			label: "Key (-2)",
-			value: (
-				<ThemedView
-					style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-					<ThemedText style={{ fontSize: 12 }}>A</ThemedText>
-					<MaterialIcons
-						size={20}
-						name="arrow-right-alt"
-						color="white"
-					/>
-					<ThemedText style={{ fontSize: 12 }}>C</ThemedText>
-				</ThemedView>
-			),
-			opensModal: false,
-		},
-	];
-
-	const songDataComponents = [
-		<Metronome
-			key={2}
-			label="BPM"
-			value={120}
-			containerStyle={{ borderColor: "white", width: `${85 / 4}%` }}
-			contentStyle={{ fontSize: 12 }}
-		/>,
-	];
-
 	const renderInfo = (item: any, index: number) => {
 		const isTouchable = item.opensModal;
 		const Wrapper: React.ElementType = isTouchable
@@ -146,7 +106,7 @@ export default function SongDetailScreen() {
 				key={`song-data-${index}`}
 				style={[
 					styles.songItem,
-					{ width: `${85 / songData.length}%`, borderWidth: 1 },
+					{ width: `${85 / 4}%` },
 				]}
 				onPress={item.opensModal ? () => setModalInfo(item) : undefined}>
 				<ThemedText style={styles.songItemText}>{labelText}</ThemedText>
@@ -176,12 +136,36 @@ export default function SongDetailScreen() {
 		);
 	}
 
+	const songDataComponents = [
+		renderInfo({
+			label: "Duration",
+			value: formatDuration(durationNumber),
+			opensModal: false,
+		}, 0),
+		renderInfo({
+			label: "Shows",
+			value: finalShows.length,
+			modalValue: finalShows,
+			opensModal: true,
+		}, 1),
+		<Metronome
+			key={2}
+			value={120}
+			containerStyle={{ borderColor: "white", width: `${85 / 4}%` }}
+			contentStyle={{ fontSize: 12 }}
+		/>,
+		<Key
+			key={3}
+			originalKey={song.original_key}
+			spKey={song.sp_key}
+			containerStyle={{ borderColor: "white", width: `${85 / 4}%` }}
+		/>
+	];
+
 	return (
 		<>
 			<ThemedView style={styles.songDataItemContainer}>
-				{[songData[0], songData[1], null, songData[3]].map((item, index) =>
-					index === 2 ? songDataComponents[0] : renderInfo(item, index)
-				)}
+				{songDataComponents}
 			</ThemedView>
 
 			<ThemedView style={styles.tagsContainer}>
@@ -224,6 +208,7 @@ const styles = StyleSheet.create({
 		borderRadius: 8,
 		alignItems: "center",
 		padding: 6,
+		borderWidth: 1
 	},
 	songItemText: {
 		fontSize: 12,

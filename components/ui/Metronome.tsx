@@ -6,7 +6,6 @@ import { ThemedText } from "../themed-text";
 import { ThemedView } from "../themed-view";
 
 export default function Metronome({
-    label,
     value,
     containerStyle,
     contentStyle,
@@ -49,7 +48,7 @@ export default function Metronome({
             onPress={toggleMetronome}
         >
             <ThemedView style={styles.view}>
-                <ThemedText style={styles.label}>{label}</ThemedText>
+                <ThemedText style={styles.label}>BPM</ThemedText>
                 {/* <Animated.View
                     style={[
                         styles.ledIndicator,
