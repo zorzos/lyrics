@@ -16,41 +16,68 @@ import { Link, useLocalSearchParams, useNavigation } from "expo-router";
 import { useLayoutEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, TouchableOpacity } from "react-native";
 
+import { supabase } from "@/lib/supabase";
+
 export default function SongDetailScreen() {
-	const [modalInfo, setModalInfo] = useState<any>(undefined);
 	const colorScheme = useColorScheme();
 	const currentTheme = Colors[colorScheme ?? "light"];
 	const { id } = useLocalSearchParams();
 	const queryClient = useQueryClient();
 
-	// Reactive query to allSongs so updates reflect immediately
-	const { data: allSongs } = useQuery<Song[]>({
-		queryKey: ["allSongs"],
-		queryFn: () => queryClient.getQueryData<Song[]>(["allSongs"]) || [],
-		initialData: queryClient.getQueryData<Song[]>(["allSongs"]) || [],
-	});
+	const [modalInfo, setModalInfo] = useState<any>(undefined);
 
-	const song = allSongs?.find((s) => s.id === id);
-	const durationNumber = Number(song?.duration);
+	// Try to get the song from cache first
+	const cachedSongs = queryClient.getQueryData<Song[]>(["allSongs"]);
+
+	const {
+		data: song,
+		isLoading,
+		isError,
+	} = useQuery<Song | null>({
+		queryKey: ["song", id],
+		queryFn: async () => {
+			// Check cache first
+			const cachedSong = cachedSongs?.find((s) => s.id === id);
+			if (cachedSong) return cachedSong;
+
+			// Fetch from Supabase
+			const { data, error } = await supabase
+				.from("songs")
+				.select(`*, show_songs(*), song_tags(*, tags(*))`)
+				.eq("id", id)
+				.single();
+			if (error) {
+				console.error(error);
+				return error;
+			}
+
+			const transformed = {
+				...data,
+				tags: (data.song_tags ?? []).map((st: any) => st.tags),
+			};
+
+			return transformed ?? null;
+		},
+		enabled: !!id,
+	});
 
 	const finalShows: Show[] = song?.shows ?? [];
 	const finalTags: TagType[] = song?.tags ?? [];
+	const durationNumber = Number(song?.duration);
 
 	const navigation = useNavigation();
 	useLayoutEffect(() => {
 		navigation.setOptions({
 			title: song?.title ?? "Song Details",
-			headerRight: () => {
-				return (
-					<Link href={generateHref("editSong", { id })}>
-						<MaterialIcons
-							size={24}
-							name="edit"
-							color="white"
-						/>
-					</Link>
-				);
-			},
+			headerRight: () => (
+				<Link href={generateHref("editSong", { id })}>
+					<MaterialIcons
+						size={24}
+						name="edit"
+						color="white"
+					/>
+				</Link>
+			),
 		});
 	}, [id, navigation, song]);
 
@@ -90,10 +117,7 @@ export default function SongDetailScreen() {
 			key={2}
 			label="BPM"
 			value={120}
-			containerStyle={{
-				borderColor: "white",
-				width: `${85 / 4}%`,
-			}}
+			containerStyle={{ borderColor: "white", width: `${85 / 4}%` }}
 			contentStyle={{ fontSize: 12 }}
 		/>,
 	];
@@ -131,7 +155,7 @@ export default function SongDetailScreen() {
 		);
 	};
 
-	if (!song) {
+	if (isLoading) {
 		return (
 			<ThemedView
 				style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -139,6 +163,15 @@ export default function SongDetailScreen() {
 					size="large"
 					color={currentTheme.text}
 				/>
+			</ThemedView>
+		);
+	}
+
+	if (isError || !song) {
+		return (
+			<ThemedView
+				style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+				<ThemedText>Song not found</ThemedText>
 			</ThemedView>
 		);
 	}
@@ -172,9 +205,6 @@ export default function SongDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-	scrollViewContainer: {
-		paddingHorizontal: "1.5%",
-	},
 	tagsContainer: {
 		flexDirection: "row",
 		flexWrap: "wrap",
@@ -183,7 +213,6 @@ const styles = StyleSheet.create({
 	individualTagContainer: {
 		padding: 2,
 	},
-	informationContainer: {},
 	songDataItemContainer: {
 		flexDirection: "row",
 		justifyContent: "space-evenly",

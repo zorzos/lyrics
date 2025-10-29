@@ -55,6 +55,7 @@ export default function LyricsRenderer({ lyrics }: { lyrics: string }) {
 					flexDirection: "row",
 					alignItems: "center",
 					marginVertical: 2,
+					gap: 2,
 				}}>
 				{lineTags.map((tag) => {
 					const color = tagColors[tag.trim().toLowerCase()] ?? "transparent";
@@ -71,7 +72,6 @@ export default function LyricsRenderer({ lyrics }: { lyrics: string }) {
 						/>
 					);
 				})}
-
 				<ThemedText
 					style={{
 						fontSize,

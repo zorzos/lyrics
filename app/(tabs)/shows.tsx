@@ -83,7 +83,11 @@ export default function Shows() {
 				)}
 				renderItem={({ item }) => (
 					<Link
-						href={generateHref("viewShow", { id: item.id, title: item.title })}
+						href={generateHref("viewShow", {
+							id: item.id,
+							title: item.title,
+							date: item.date,
+						})}
 						asChild>
 						<TouchableOpacity style={styles.item}>
 							<ThemedText style={[styles.text, { color: currentTheme.text }]}>

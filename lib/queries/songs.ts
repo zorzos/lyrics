@@ -1,45 +1,43 @@
 import { supabase } from "@/lib/supabase";
-import { Song } from "@/types";
+import { ShowSongsByParts, Song } from "@/types";
 
-type RawSongTagRow = {
-	tags?: { id: string; name: string; color?: string }[];
-} | null;
-type RawShowSongRow = { song_order?: number; songs?: any } | null;
-
-export async function getSongs(showId?: string): Promise<Song[]> {
+export async function getSongs(showId?: string): Promise<ShowSongsByParts> {
 	try {
 		if (showId) {
-			// Fetch songs linked to a specific show (with the song_order)
+			// Fetch songs linked to a specific show (with song_order and part/order info)
 			const { data, error } = await supabase
 				.from("show_songs")
 				.select(
 					`
-          song_order,
-          songs (
-            id,
-            title,
-            artist,
-            duration,
-            lyrics,
-            song_tags (
-              tags (
-                id,
-                name,
-                color
-              )
-            ),
-            show_songs (
-              shows (
-                id,
-                title,
-                date,
-				draft
-              )
-            )
-          )
-        `
+					part,
+					song_order,
+					songs (
+						id,
+						title,
+						artist,
+						duration,
+						lyrics,
+						song_tags (
+						tags (
+							id,
+							name,
+							color
+						)
+						),
+						show_songs (
+							shows (
+								id,
+								title,
+								date,
+								draft,
+								parts
+							)
+						)
+					)
+				`
 				)
 				.eq("show_id", showId)
+				.order("part", { ascending: true })
 				.order("song_order", { ascending: true });
 
 			if (error) {
@@ -47,38 +45,53 @@ export async function getSongs(showId?: string): Promise<Song[]> {
 				throw error;
 			}
 
-			if (!data) return [];
+			if (!data) return { parts: [] };
 
-			return data.map((row: RawShowSongRow) => {
-				const song = row?.songs ?? {};
-				const rawTags: RawSongTagRow[] = song.song_tags ?? [];
+			// Group songs by part
+			const grouped: { [key: number]: Song[] } = {};
+
+			data.forEach((row: any) => {
+				const partNumber = row.order ?? 1;
+				const song = row.songs ?? {};
+				const rawTags: any[] = song.song_tags ?? [];
 				const tags = rawTags.flatMap((t) => (t?.tags ? t.tags : []));
 
-				// collect shows where this song appears
 				const shows =
 					(song.show_songs ?? [])
 						.map((ss: any) => ss?.shows)
 						.filter(Boolean)
 						.sort((a: any, b: any) => {
-							// handle null or invalid dates defensively
 							const da = a?.date ? new Date(a.date).getTime() : 0;
 							const db = b?.date ? new Date(b.date).getTime() : 0;
 							return db - da;
 						}) ?? [];
 
-				return {
+				const formattedSong: Song = {
 					id: song.id,
 					title: song.title,
 					artist: song.artist,
 					duration: song.duration,
 					lyrics: song.lyrics,
 					tags,
-					song_order: row?.song_order ?? null,
+					song_order: row.song_order ?? null,
 					shows,
-				} as Song;
+				};
+
+				if (!grouped[partNumber]) grouped[partNumber] = [];
+				grouped[partNumber].push(formattedSong);
 			});
+
+			// Convert grouped object to sorted parts array
+			const parts = Object.keys(grouped)
+				.sort((a, b) => Number(a) - Number(b))
+				.map((partNum) => ({
+					partNumber: Number(partNum),
+					songs: grouped[Number(partNum)],
+				}));
+
+			return { parts };
 		} else {
-			// Fetch all songs
+			// Fetch all songs without a show
 			const { data, error } = await supabase
 				.from("songs")
 				.select(
@@ -100,7 +113,7 @@ export async function getSongs(showId?: string): Promise<Song[]> {
               id,
               title,
               date,
-			  draft
+              draft
             )
           )
         `
@@ -112,10 +125,11 @@ export async function getSongs(showId?: string): Promise<Song[]> {
 				throw error;
 			}
 
-			if (!data) return [];
+			if (!data) return { parts: [] };
 
-			return data.map((song: any) => {
-				const rawTags: RawSongTagRow[] = song.song_tags ?? [];
+			// Put all songs into a single part for consistency
+			const songs: Song[] = data.map((song: any) => {
+				const rawTags: any[] = song.song_tags ?? [];
 				const tags = rawTags.flatMap((t) => (t?.tags ? t.tags : []));
 
 				const shows =
@@ -138,9 +152,10 @@ export async function getSongs(showId?: string): Promise<Song[]> {
 					shows,
 				} as Song;
 			});
+
+			return { parts: [{ partNumber: 1, songs }] };
 		}
 	} catch (err) {
-		// make sure the caller sees something useful
 		console.error("getSongs() failed:", err);
 		throw err;
 	}

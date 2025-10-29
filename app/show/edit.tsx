@@ -4,7 +4,6 @@ import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useEffect, useLayoutEffect, useState } from "react";
 import {
 	ActivityIndicator,
-	Modal,
 	StyleSheet,
 	Switch,
 	Text,
@@ -22,21 +21,25 @@ import { getSongs } from "@/lib/queries/songs";
 import { supabase } from "@/lib/supabase";
 import { Show, Song } from "@/types";
 
-import { getTotalPartTime } from "@/utils/dateUtils";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Toast from "react-native-toast-message";
+
+interface Part {
+	partNumber: number;
+	songs: Song[];
+}
 
 export default function EditShowScreen() {
 	const { colors } = useTheme();
 	const queryClient = useQueryClient();
-	const { id } = useLocalSearchParams();
+	const { id } = useLocalSearchParams(); // optional, for edit
 	const router = useRouter();
 
 	const [loading, setLoading] = useState(false);
 	const [fetchingShow, setFetchingShow] = useState(false);
 
 	const [title, setTitle] = useState("");
-	const [date, setDate] = useState("");
+	const [date, setDate] = useState(""); // ISO string
 	const [draft, setDraft] = useState(false);
 	const [parts, setParts] = useState(1);
 
@@ -47,20 +50,20 @@ export default function EditShowScreen() {
 		});
 	}, [id, navigation]);
 
-	const [songsByPart, setSongsByPart] = useState<Song[][]>(Array(parts).fill([]));
+	const [songsByPart, setSongsByPart] = useState<Part[]>([]);
 	const [availableSongs, setAvailableSongs] = useState<Song[]>([]);
-
-	const [songsModalVisible, setSongsModalVisible] = useState(false);
-	const [activePart, setActivePart] = useState<number | null>(null);
 
 	useEffect(() => {
 		async function fetchSongs() {
-			const songs = await getSongs();
-			setAvailableSongs(songs);
+			const songsByParts = await getSongs();
+			const allSongs: Song[] = songsByParts.parts.flatMap((part) => part.songs);
+			console.log("ALL SONGS", allSongs);
+			setAvailableSongs(allSongs);
 		}
 		fetchSongs();
 	}, []);
 
+	// Fetch show if editing
 	useEffect(() => {
 		async function fetchShow() {
 			if (!id) return;
@@ -70,9 +73,9 @@ export default function EditShowScreen() {
 					.from("shows")
 					.select(
 						`
-							id, title, date, draft, parts,
-							show_songs(order, songs(id, title, artist, duration))
-						`
+						id, title, date, draft, parts,
+						show_songs(order, songs(id, title, artist, duration))
+					`
 					)
 					.eq("id", id)
 					.single();
@@ -84,16 +87,17 @@ export default function EditShowScreen() {
 					setDraft(data.draft ?? false);
 					setParts(data.parts ?? 1);
 
-					// Map songs into parts
-					const groupedSongs: Song[][] = Array.from(
+					const groupedParts: Part[] = Array.from(
 						{ length: data.parts },
-						() => []
+						(_, i) => ({ partNumber: i + 1, songs: [] })
 					);
+
 					(data.show_songs ?? []).forEach((ss: any) => {
-						const partIndex = ss.order ? ss.order - 1 : 0;
-						groupedSongs[partIndex].push(ss.songs);
+						const index = ss.order ? ss.order - 1 : 0;
+						groupedParts[index].songs.push(ss.songs);
 					});
-					setSongsByPart(groupedSongs);
+
+					setSongsByPart(groupedParts);
 				}
 			} catch (e) {
 				console.error(e);
@@ -121,16 +125,13 @@ export default function EditShowScreen() {
 					.eq("id", id);
 				if (error) throw error;
 
-				// Remove all show_songs
 				await supabase.from("show_songs").delete().eq("show_id", id);
 
-				// Insert songs per part
-				for (let partIndex = 0; partIndex < songsByPart.length; partIndex++) {
-					const partSongs = songsByPart[partIndex];
-					const inserts = partSongs.map((song, idx) => ({
+				for (const part of songsByPart) {
+					const inserts = part.songs.map((song, idx) => ({
 						show_id: id,
 						song_id: song.id,
-						order: partIndex + 1,
+						order: part.partNumber,
 						song_order: idx + 1,
 					}));
 					if (inserts.length > 0)
@@ -147,12 +148,11 @@ export default function EditShowScreen() {
 				if (error) throw error;
 				const showId = data?.id;
 
-				for (let partIndex = 0; partIndex < songsByPart.length; partIndex++) {
-					const partSongs = songsByPart[partIndex];
-					const inserts = partSongs.map((song, idx) => ({
+				for (const part of songsByPart) {
+					const inserts = part.songs.map((song, idx) => ({
 						show_id: showId,
 						song_id: song.id,
-						order: partIndex + 1,
+						order: part.partNumber,
 						song_order: idx + 1,
 					}));
 					if (inserts.length > 0)
@@ -200,8 +200,6 @@ export default function EditShowScreen() {
 			</ThemedView>
 		);
 	}
-
-	// console.log("AVAILABLE SONGS", availableSongs[1]);
 
 	return (
 		<GestureHandlerRootView style={{ flex: 1, paddingBottom: 16 }}>
@@ -265,7 +263,10 @@ export default function EditShowScreen() {
 									if (songsByPart.length < p) {
 										setSongsByPart((prev) => [
 											...prev,
-											...Array.from({ length: p - prev.length }, () => []),
+											...Array.from({ length: p - prev.length }, (_, i) => ({
+												partNumber: prev.length + i + 1,
+												songs: [],
+											})),
 										]);
 									}
 								}}>
@@ -280,9 +281,10 @@ export default function EditShowScreen() {
 						);
 					})}
 				</ThemedView>
-				{Array.from({ length: parts }, (_, i) => (
+
+				{songsByPart.map((part, i) => (
 					<ThemedView
-						key={i}
+						key={part.partNumber}
 						style={{
 							marginBottom: 16,
 							borderWidth: 1,
@@ -292,49 +294,36 @@ export default function EditShowScreen() {
 						}}>
 						<ThemedView
 							style={{
+								flexDirection: "row",
+								padding: 8,
 								backgroundColor: colors.background,
-								flexDirection: 'row',
-								alignItems: 'center',
-								justifyContent: 'space-between',
-								padding: 8
-							}}
-						>
-							<ThemedView
-								style={{
-									flexDirection: "row",
-									backgroundColor: colors.background,
-									gap: 4,
-									alignItems: "center",
-									margin: 4
-								}}>
-								<ThemedText style={{ fontWeight: "bold" }}>
-									Part {i + 1}
-								</ThemedText>
-								{/* {songsByPart[i].length > 0 && ( */}
+								gap: 4,
+								alignItems: "center",
+								marginBottom: 8,
+							}}>
+							<ThemedText style={{ fontWeight: "bold" }}>
+								Part {part.partNumber}
+							</ThemedText>
+							{part.songs.length > 0 && (
 								<TouchableOpacity
-									onPress={() => console.log(`Editing Part ${i + 1}`)}>
+									onPress={() =>
+										console.log(`Editing Part ${part.partNumber}`)
+									}>
 									<MaterialIcons
 										name="edit"
 										size={20}
 										color={colors.text}
 									/>
 								</TouchableOpacity>
-								{/* )} */}
-							</ThemedView>
-							{/* {songsByPart[i].length > 0 && ( */}
-							<ThemedText
-								style={{ fontSize: 14 }}>
-								{getTotalPartTime(songsByPart[i])}
-							</ThemedText>
-							{/* )} */}
+							)}
 						</ThemedView>
 
 						<DraggableFlatList
-							data={songsByPart[i]}
+							data={part.songs}
 							onDragEnd={({ data }) => {
 								setSongsByPart((prev) => {
 									const updated = [...prev];
-									updated[i] = data;
+									updated[i].songs = data;
 									return updated;
 								});
 							}}
@@ -342,21 +331,18 @@ export default function EditShowScreen() {
 							renderItem={renderSongItem}
 							ListEmptyComponent={
 								<TouchableOpacity
-									onPress={() => {
-										setActivePart(i);
-										setSongsModalVisible(true);
-										console.log(`ADDING SONGS TO PART ${i + 1}`)
-									}}
+									onPress={() =>
+										console.log(`ADDING SONGS TO PART ${part.partNumber}`)
+									}
 									style={{
 										flexDirection: "row",
 										alignItems: "center",
 										justifyContent: "center",
 										padding: 16,
-
 										borderWidth: 1,
 										borderColor: "red",
 										borderRadius: 8,
-										margin: 4, // <--- TODO
+										margin: 4,
 									}}>
 									<ThemedText>Tap here to add songs</ThemedText>
 									<MaterialIcons
@@ -378,50 +364,6 @@ export default function EditShowScreen() {
 						{loading ? "Saving..." : "Save"}
 					</ThemedText>
 				</TouchableOpacity>
-				<Modal
-					visible={songsModalVisible}
-					animationType="slide"
-					transparent={true}
-					onRequestClose={() => setSongsModalVisible(false)}
-					style={{
-						flex: 1,
-					}}
-				>
-					<ThemedView
-						style={{
-							flex: 1,
-							backgroundColor: "rgba(0,0,0,0.5)",
-							justifyContent: "center",
-							alignItems: "center",
-						}}
-					>
-						<ThemedView
-							style={{
-								backgroundColor: colors.card,
-								borderRadius: 12,
-								padding: 20,
-								width: "80%",
-								alignItems: "center",
-							}}
-						>
-							<ThemedText style={{ marginBottom: 16, fontWeight: "bold" }}>
-								Add songs to Part {activePart !== null ? activePart + 1 : ""}
-							</ThemedText>
-
-							<TouchableOpacity
-								style={{
-									backgroundColor: colors.primary,
-									paddingVertical: 10,
-									paddingHorizontal: 20,
-									borderRadius: 8,
-								}}
-								onPress={() => setSongsModalVisible(false)}
-							>
-								<ThemedText style={{ color: "#fff" }}>Close</ThemedText>
-							</TouchableOpacity>
-						</ThemedView>
-					</ThemedView>
-				</Modal>
 			</ThemedView>
 		</GestureHandlerRootView>
 	);
@@ -454,7 +396,6 @@ const styles = StyleSheet.create({
 	},
 	partSegmentText: {
 		fontSize: 14,
-		// color: "#333",
 		fontWeight: "500",
 	},
 });

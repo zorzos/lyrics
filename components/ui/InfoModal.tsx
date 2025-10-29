@@ -20,7 +20,7 @@ export default function InfoModal(modalProps: ModalProps) {
 
 	const renderModalValue = () => (
 		<ScrollView>
-			<ThemedView>
+			<ThemedView style={styles.modalContentContainer}>
 				{modalInfo?.modalValue?.map((item: Show, index: number) => (
 					<ThemedText
 						key={index}
@@ -49,9 +49,9 @@ export default function InfoModal(modalProps: ModalProps) {
 					<TouchableOpacity
 						onPress={() => setModalInfo(false)}
 						style={{
-							padding: 12,
+							padding: 8,
 							backgroundColor: theme.colors.background,
-							borderRadius: 24,
+							borderRadius: 12,
 							alignItems: "center",
 							width: "40%",
 							borderWidth: 1,
@@ -78,7 +78,6 @@ const styles = StyleSheet.create({
 	},
 	inner: {
 		width: "85%",
-		maxHeight: "70%",
 		borderRadius: 10,
 		padding: 20,
 		shadowColor: "#000",
@@ -97,5 +96,9 @@ const styles = StyleSheet.create({
 	},
 	modalValue: {
 		fontSize: 14,
+	},
+	modalContentContainer: {
+		backgroundColor: "transparent",
+		gap: 4,
 	},
 });

@@ -1,6 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { getSongs } from "@/lib/queries/songs";
+import { ShowInfoTypes } from "@/types";
 import { generateHref, getSingleParam } from "@/utils/paramUtils";
 
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -17,11 +18,9 @@ import {
 
 export default function ShowDetailScreen() {
 	const { colors } = useTheme();
-	const { id, title } = useLocalSearchParams<{
-		id?: string | string[];
-		title: string | string[];
-	}>();
-	let showId: string | undefined = getSingleParam(id);
+	const { id, title, date } = useLocalSearchParams();
+	const showId: string | undefined = getSingleParam(id);
+	const showDate = getSingleParam(date);
 
 	const navigation = useNavigation();
 	const {
@@ -59,36 +58,119 @@ export default function ShowDetailScreen() {
 	return (
 		<ThemedView
 			style={{
-				flex: 1,
+				// flex: 1,
 				backgroundColor: colors.background,
 				paddingHorizontal: "2.5%",
-				paddingTop: "2.5%",
 			}}>
-			<FlatList
-				data={songs}
-				keyExtractor={(item) => item.id}
-				renderItem={({ item }) => {
-					return (
-						<Link
-							href={generateHref("viewSong", {
-								id: item.id,
-								title: item.title,
-								lyrics: item.lyrics,
-								tags: JSON.stringify(item.tags),
-							})}
-							asChild>
-							<TouchableOpacity style={styles.item}>
-								<ThemedText style={styles.text}>{item.title}</ThemedText>
-								<MaterialIcons
-									color="white"
-									size={28}
-									name="play-arrow"
-								/>
-							</TouchableOpacity>
-						</Link>
-					);
-				}}
-			/>
+			<ThemedView
+				style={{ gap: 8, paddingVertical: 8, backgroundColor: "transparent" }}>
+				<ThemedView
+					style={{
+						backgroundColor: "transparent",
+						flexDirection: "row",
+						justifyContent: "space-between",
+						gap: 8,
+					}}>
+					{[
+						{
+							label: "Date",
+							value: showDate ? new Date(showDate).toDateString() : "N/A",
+							type: ShowInfoTypes.DATE,
+						},
+						{
+							label: "Tap for Location",
+							value: null,
+							type: ShowInfoTypes.LOCATION,
+						},
+					].map((item, i) => {
+						const isLocation = item.type === ShowInfoTypes.LOCATION;
+						const Wrapper: React.ElementType = isLocation
+							? TouchableOpacity
+							: ThemedView;
+						return (
+							<Wrapper
+								key={i}
+								style={{
+									borderWidth: 1,
+									borderColor: "grey",
+									borderRadius: 8,
+									padding: 8,
+									flex: 1,
+									flexDirection: "column",
+									justifyContent: "center",
+									alignItems: isLocation ? "center" : "left",
+								}}
+								onPress={() => console.log("LOCATION MODAL HERE")}>
+								<ThemedText>{item.label}</ThemedText>
+								{item.value && <ThemedText>{item.value}</ThemedText>}
+							</Wrapper>
+						);
+					})}
+				</ThemedView>
+				<ThemedView
+					style={{
+						backgroundColor: "transparent",
+						flexDirection: "row",
+						justifyContent: "space-between",
+						gap: 8,
+					}}>
+					{[
+						{ label: "Type", value: "SP Gig", type: ShowInfoTypes.TYPE },
+						{
+							label: "Time",
+							value: showDate ? new Date(showDate).toLocaleTimeString() : "N/A",
+							type: ShowInfoTypes.TIME,
+						},
+					].map((item, i) => (
+						<ThemedView
+							key={i}
+							style={{
+								borderWidth: 1,
+								borderColor: "grey",
+								borderRadius: 8,
+								padding: 8,
+								flex: 1,
+							}}>
+							<ThemedText>{item.label}</ThemedText>
+							<ThemedText>{item.value}</ThemedText>
+						</ThemedView>
+					))}
+				</ThemedView>
+			</ThemedView>
+
+			{songs?.parts.map((part, i) => {
+				return (
+					<ThemedView
+						key={i}
+						style={{ backgroundColor: "transparent" }}>
+						<ThemedText style={{ fontSize: 18 }}>
+							Part {part.partNumber}
+						</ThemedText>
+						<FlatList
+							data={part.songs}
+							keyExtractor={(item) => item.id}
+							renderItem={({ item }) => {
+								return (
+									<Link
+										href={generateHref("viewSong", {
+											id: item.id,
+										})}
+										asChild>
+										<TouchableOpacity style={styles.item}>
+											<ThemedText style={styles.text}>{item.title}</ThemedText>
+											<MaterialIcons
+												color="white"
+												size={28}
+												name="play-arrow"
+											/>
+										</TouchableOpacity>
+									</Link>
+								);
+							}}
+						/>
+					</ThemedView>
+				);
+			})}
 		</ThemedView>
 	);
 }

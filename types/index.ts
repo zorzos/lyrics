@@ -54,3 +54,17 @@ export type TagColorMap = Record<string, string>;
 export type NetworkContextType = {
 	isOnline: boolean;
 };
+
+export type ShowSongsByParts = {
+	parts: {
+		partNumber: number;
+		songs: Song[];
+	}[];
+};
+
+export enum ShowInfoTypes {
+	DATE = "date",
+	LOCATION = "location",
+	TIME = "time",
+	TYPE = "type",
+}

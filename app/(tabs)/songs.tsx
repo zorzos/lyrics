@@ -24,7 +24,10 @@ export default function Songs() {
 		isError,
 	} = useQuery<Song[]>({
 		queryKey: ["allSongs"],
-		queryFn: () => getSongs(),
+		queryFn: async () => {
+			const result = await getSongs();
+			return result.parts.flatMap((parts) => parts.songs);
+		},
 	});
 
 	const memoizedSongs = useMemo(() => rawSongs ?? [], [rawSongs]);
