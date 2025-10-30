@@ -1,3 +1,5 @@
+import { Dispatch, SetStateAction } from "react";
+
 export interface TagType {
 	id: string;
 	name: string;
@@ -19,9 +21,10 @@ export interface Song {
 	shows?: Show[];
 	original_key: string;
 	sp_key?: string;
+	bpm: number;
 }
 
-export type Show = {
+export interface Show {
 	id: string;
 	title: string;
 	date: Date;
@@ -29,22 +32,22 @@ export type Show = {
 	draft: boolean;
 };
 
-export type Section = {
+export interface Section {
 	title: string;
 	data: Song[];
 };
 
-export type SongInfoItem = {
+export interface SongInfoItem {
 	label: string;
 	value: string;
 };
 
-export type ModalProps = {
+export interface ModalProps {
 	modalInfo: any;
 	setModalInfo: (visible: any) => void;
 };
 
-export type MetronomeProps = {
+export interface MetronomeProps {
 	value: number;
 	containerStyle: object;
 	contentStyle: object;
@@ -52,11 +55,11 @@ export type MetronomeProps = {
 
 export type TagColorMap = Record<string, string>;
 
-export type NetworkContextType = {
+export interface NetworkContextType {
 	isOnline: boolean;
 };
 
-export type ShowSongsByParts = {
+export interface ShowSongsByParts {
 	parts: {
 		partNumber: number;
 		songs: Song[];
@@ -70,7 +73,7 @@ export enum ShowInfoTypes {
 	TYPE = "type",
 }
 
-export type KeyProps = {
+export interface KeyProps {
 	originalKey: string;
 	spKey?: string;
 	containerStyle: object;
@@ -84,9 +87,24 @@ export interface KeyInfo {
 	semitone: number;    // semitone number 0-11
 }
 
-export type MusicalKey = {
+export interface MusicalKey {
 	label: string;
 	value: string;
 	containerStyle: object;
 	labelStyle: object;
+};
+
+export interface KeyPickerProps {
+	open: boolean;
+	setOpen: Dispatch<SetStateAction<boolean>>;
+	label: string;
+	value: string;
+	onChange: (val: string) => void;
+	removeKey?: string;
+	extraOptions?: {
+		label: string;
+		value: string;
+		containerStyle?: object;
+		labelStyle?: object;
+	}[];
 };

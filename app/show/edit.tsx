@@ -50,14 +50,15 @@ export default function EditShowScreen() {
 		});
 	}, [id, navigation]);
 
-	const [songsByPart, setSongsByPart] = useState<Part[]>([]);
+	const [songsByPart, setSongsByPart] = useState<Part[]>([{
+		partNumber: 1, songs: []
+	}]);
 	const [availableSongs, setAvailableSongs] = useState<Song[]>([]);
 
 	useEffect(() => {
 		async function fetchSongs() {
 			const songsByParts = await getSongs();
 			const allSongs: Song[] = songsByParts.parts.flatMap((part) => part.songs);
-			console.log("ALL SONGS", allSongs);
 			setAvailableSongs(allSongs);
 		}
 		fetchSongs();
@@ -260,15 +261,19 @@ export default function EditShowScreen() {
 								]}
 								onPress={() => {
 									setParts(p);
-									if (songsByPart.length < p) {
-										setSongsByPart((prev) => [
-											...prev,
-											...Array.from({ length: p - prev.length }, (_, i) => ({
+									console.log('songsByPart', songsByPart);
+									setSongsByPart((prev) => {
+										if (prev.length === p) return prev;
+										if (prev.length < p) {
+											const newParts = Array.from({ length: p - prev.length }, (_, i) => ({
 												partNumber: prev.length + i + 1,
 												songs: [],
-											})),
-										]);
-									}
+											}));
+											return [...prev, ...newParts];
+										} else {
+											return prev.slice(0, p);
+										}
+									});
 								}}>
 								<Text
 									style={[

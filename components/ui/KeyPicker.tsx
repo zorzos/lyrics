@@ -2,7 +2,7 @@ import { ThemedText } from "@/components/themed-text";
 import { getMusicalKeys } from "@/constants/keys";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { MusicalKey } from "@/types";
+import { KeyPickerProps } from "@/types";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useTheme } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
@@ -10,41 +10,28 @@ import { StyleSheet } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import { ThemedView } from "../themed-view";
 
-interface KeyPickerProps {
-    label: string;
-    value: string;
-    onChange: (val: string) => void;
-    items?: MusicalKey;
-    disabledKey?: string; // e.g., original key for SP key
-    extraOptions?: {
-        label: string;
-        value: string;
-        containerStyle?: object;
-        labelStyle?: object;
-    }[];
-}
-
 export default function KeyPicker({
+    open,
+    setOpen,
     label,
     value,
     onChange,
-    disabledKey,
+    removeKey,
     extraOptions
 }: KeyPickerProps) {
     const { colors } = useTheme();
     const colorScheme = useColorScheme();
     const currentTheme = Colors[colorScheme ?? "light"];
-    const [open, setOpen] = useState(false);
     const items = getMusicalKeys(currentTheme.background, currentTheme.text);
 
     const buildDropItems = () => {
         const combinedItems = extraOptions ? [...extraOptions, ...items] : items;
-        return combinedItems.map((i) => ({
+        const filteredItems = combinedItems.filter((i) => i.value !== removeKey);
+        return filteredItems.map((i) => ({
             ...i,
-            disabled: i.value === disabledKey,
             // merge themed styles here
             containerStyle: {
-                backgroundColor: i.value === disabledKey ? colors.border : colors.card,
+                backgroundColor: i.value === removeKey ? colors.border : colors.card,
                 ...(i.containerStyle || {}),
             },
             labelStyle: {
@@ -58,7 +45,7 @@ export default function KeyPicker({
 
     useEffect(() => {
         setDropItems(buildDropItems());
-    }, [disabledKey, items, extraOptions, colors]);
+    }, [removeKey, items, extraOptions, colors]);
 
     return (
         <ThemedView style={styles.container}>

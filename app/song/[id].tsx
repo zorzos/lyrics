@@ -8,7 +8,7 @@ import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Show, Song, TagType } from "@/types";
 import { formatDuration } from "@/utils/dateUtils";
-import { generateHref } from "@/utils/paramUtils";
+import { generateHref, getSingleParam } from "@/utils/paramUtils";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -17,7 +17,7 @@ import { useLayoutEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, TouchableOpacity } from "react-native";
 
 import Key from "@/components/ui/Key";
-import { supabase } from "@/lib/supabase";
+import { getSong } from "@/lib/queries/songs";
 
 export default function SongDetailScreen() {
 	const colorScheme = useColorScheme();
@@ -41,23 +41,11 @@ export default function SongDetailScreen() {
 			const cachedSong = cachedSongs?.find((s) => s.id === id);
 			if (cachedSong) return cachedSong;
 
+			const singleId = getSingleParam(id);
+			if (!singleId) throw new Error('No song ID provided!');
+
 			// Fetch from Supabase
-			const { data, error } = await supabase
-				.from("songs")
-				.select(`*, show_songs(*), song_tags(*, tags(*))`)
-				.eq("id", id)
-				.single();
-			if (error) {
-				console.error(error);
-				return error;
-			}
-
-			const transformed = {
-				...data,
-				tags: (data.song_tags ?? []).map((st: any) => st.tags),
-			};
-
-			return transformed ?? null;
+			return await getSong(singleId);
 		},
 		enabled: !!id,
 	});
@@ -127,7 +115,7 @@ export default function SongDetailScreen() {
 		);
 	}
 
-	if (isError || !song) {
+	if (isError || !id || !song) {
 		return (
 			<ThemedView
 				style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -166,6 +154,19 @@ export default function SongDetailScreen() {
 		<>
 			<ThemedView style={styles.songDataItemContainer}>
 				{songDataComponents}
+			</ThemedView>
+			<ThemedView style={styles.songDataItemContainer}>
+				{renderInfo({
+					label: "Artist",
+					value: song.artist,
+					modalValue: [song.artist],
+					opensModal: true,
+				}, 0)}
+				{renderInfo({
+					label: "Year",
+					value: 2005,
+					opensModal: false,
+				}, 1)}
 			</ThemedView>
 
 			<ThemedView style={styles.tagsContainer}>

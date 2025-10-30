@@ -1,4 +1,4 @@
-// /context/TagContext.tsx
+import getTags from "@/lib/queries/tags";
 import { supabase } from "@/lib/supabase";
 import { TagColorMap } from "@/types";
 import React, { createContext, useContext, useEffect, useState } from "react";
@@ -11,16 +11,16 @@ export const TagProvider = ({ children }: { children: React.ReactNode }) => {
 	// --- Fetch all tags once on mount ---
 	useEffect(() => {
 		const fetchTags = async () => {
-			const { data, error } = await supabase.from("tags").select("name, color");
+			const result = await getTags();
 
-			if (error) {
-				console.error("❌ Error fetching tags:", error);
+			if (!result) {
+				console.error("Error fetching tags");
 				return;
 			}
 
-			if (data) {
+			if (result) {
 				const map: TagColorMap = {};
-				data.forEach((tag) => {
+				result.forEach((tag) => {
 					if (tag.name) map[tag.name.toLowerCase()] = tag.color ?? "#FFFFFF";
 				});
 				setTagColorMap(map);

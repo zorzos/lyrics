@@ -11,19 +11,25 @@ export default function Key({
     containerStyle
 }: KeyProps) {
     const keyDifference = spKey ? semitoneDifference(originalKey, spKey) : 'OG';
+    const totalLength = originalKey.length + (spKey?.length ?? 0);
+    const fontSize = totalLength > 4 ? 10 : 12;
 
     return (
         <ThemedView style={[styles.container, containerStyle]}>
             <ThemedText style={styles.label}>Key ({keyDifference})</ThemedText>
             <ThemedView
                 style={styles.view}>
-                <ThemedText style={styles.label}>{originalKey}</ThemedText>
-                {spKey && <><MaterialIcons
-                    size={20}
-                    name="arrow-right-alt"
-                    color="white"
-                />
-                    <ThemedText style={styles.label}>{spKey}</ThemedText></>}
+                <ThemedText style={{ fontSize }}>{originalKey}</ThemedText>
+                {spKey &&
+                    <>
+                        <MaterialIcons
+                            size={20}
+                            name="arrow-right-alt"
+                            color="white"
+                        />
+                        <ThemedText style={{ fontSize }}>{spKey}</ThemedText>
+                    </>
+                }
             </ThemedView>
         </ThemedView>
     )
@@ -39,6 +45,9 @@ const styles = StyleSheet.create({
     },
     label: {
         fontSize: 12
+    },
+    keyText: {
+        fontSize: 10
     },
     view: {
         flexDirection: "row",

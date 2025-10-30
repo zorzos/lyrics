@@ -12,13 +12,7 @@ export async function getSongs(showId?: string): Promise<ShowSongsByParts> {
 					part,
 					song_order,
 					songs (
-						id,
-						title,
-						artist,
-						duration,
-						lyrics,
-						original_key,
-						sp_key,
+						*,
 						song_tags (
 						tags (
 							id,
@@ -100,13 +94,7 @@ export async function getSongs(showId?: string): Promise<ShowSongsByParts> {
 				.from("songs")
 				.select(
 					`
-          id,
-          title,
-          artist,
-          duration,
-          lyrics,
-		  original_key,
-		  sp_key,
+          *,
           song_tags (
             tags (
               id,
@@ -168,3 +156,45 @@ export async function getSongs(showId?: string): Promise<ShowSongsByParts> {
 		throw err;
 	}
 }
+
+export async function getSong(songId: string): Promise<Song> {
+	try {
+		const { data, error } = await supabase
+			.from("songs")
+			.select(
+				`*, show_songs(shows (
+								id,
+								title,
+								date,
+								draft,
+								parts
+							)) ,song_tags(tags(id,name,color))`
+			)
+			.eq("id", songId)
+			.single();
+
+		const shows =
+			(data.show_songs ?? [])
+				.map((ss: any) => ss?.shows)
+				.filter(Boolean)
+				.sort((a: any, b: any) => {
+					const da = a?.date ? new Date(a.date).getTime() : 0;
+					const db = b?.date ? new Date(b.date).getTime() : 0;
+					return db - da;
+				}) ?? [];
+
+		if (error) {
+			console.error(error);
+			throw error;
+		}
+
+		return {
+			...data,
+			tags: (data.song_tags ?? []).map((st: any) => st.tags),
+			shows
+		};
+	} catch (err) {
+		console.error("getSong() failed:", err);
+		throw err;
+	}
+};

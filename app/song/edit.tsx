@@ -20,7 +20,9 @@ import { Song, TagType } from "@/types";
 import KeyPicker from "@/components/ui/KeyPicker";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { parseDurationToSeconds } from "@/utils/dateUtils";
+import { getSong } from "@/lib/queries/songs";
+import getTags from "@/lib/queries/tags";
+import { getSingleParam } from "@/utils/paramUtils";
 import Toast from "react-native-toast-message";
 
 export default function EditSongScreen() {
@@ -31,17 +33,21 @@ export default function EditSongScreen() {
 	const { id } = useLocalSearchParams();
 	const router = useRouter();
 
-	const [title, setTitle] = useState("");
-	const [artist, setArtist] = useState("");
-	const [duration, setDuration] = useState("");
-	const [lyrics, setLyrics] = useState("");
+	const [title, setTitle] = useState<string>("");
+	const [artist, setArtist] = useState<string>("");
+	const [duration, setDuration] = useState<number>(0);
+	const [lyrics, setLyrics] = useState<string>("");
 	const [availableTags, setAvailableTags] = useState<TagType[]>([]);
 	const [selectedTagIds, setSelectedTagIds] = useState<Record<string, boolean>>({});
-	const [originalKey, setOriginalKey] = useState("");
-	const [spKey, setSpKey] = useState("");
+	const [originalKey, setOriginalKey] = useState<string>("");
+	const [spKey, setSpKey] = useState<string>("");
+	const [bpm, setBPM] = useState<number>(0);
 
-	const [loading, setLoading] = useState(false);
-	const [fetchingSong, setFetchingSong] = useState(false);
+	const [loading, setLoading] = useState<boolean>(false);
+	const [fetchingSong, setFetchingSong] = useState<boolean>(false);
+
+	const [ogKeyOpen, setOGKeyOpen] = useState<boolean>(false);
+	const [spKeyOpen, setSPKeyOpen] = useState<boolean>(false);
 
 	const navigation = useNavigation();
 	useLayoutEffect(() => {
@@ -52,34 +58,30 @@ export default function EditSongScreen() {
 
 	useEffect(() => {
 		async function fetchTags() {
-			const { data, error } = await supabase.from("tags").select("*");
-			if (error) console.error(error);
-			else setAvailableTags(data ?? []);
+			const result = await getTags();
+			if (!result) console.error('Get tags failed');
+			else setAvailableTags(result ?? []);
 		}
 
 		async function fetchSong() {
 			if (!id) return;
 			setFetchingSong(true);
 			try {
-				const { data, error } = await supabase
-					.from("songs")
-					.select(
-						`id,title,artist,duration,lyrics,original_key,sp_key,song_tags(tags(id,name,color))`
-					)
-					.eq("id", id)
-					.single();
+				const singleId = getSingleParam(id);
+				if (!singleId) throw new Error("Song not found");
+				const result = await getSong(singleId);
 
-				if (error) console.error(error);
-				else if (data) {
-					setTitle(data.title);
-					setArtist(data.artist);
-					setDuration(data.duration?.toString() ?? "");
-					setLyrics(data.lyrics ?? "");
-					setOriginalKey(data.original_key ?? "");
-					setSpKey(data.sp_key ?? "");
+				if (!result) console.error("Song not found");
+				else {
+					setTitle(result.title);
+					setArtist(result.artist);
+					setDuration(result.duration);
+					setLyrics(result.lyrics ?? "");
+					setOriginalKey(result.original_key ?? "");
+					setSpKey(result.sp_key ?? "");
 
 					const tagMap: Record<string, boolean> = {};
-					data.song_tags?.forEach((st: any) => {
+					result.tags?.forEach((st: any) => {
 						if (st.tags) {
 							const tagsArray = Array.isArray(st.tags) ? st.tags : [st.tags];
 							tagsArray.forEach((tag: TagType) => {
@@ -127,13 +129,24 @@ export default function EditSongScreen() {
 			return null;
 		}
 
+		if (!bpm) {
+			Toast.show({
+				type: 'error',
+				text1: "BPM is required",
+				position: "bottom",
+				visibilityTime: 2000
+			});
+			return null;
+		}
+
 		return {
 			title: title.trim(),
 			artist: artist.trim(),
-			duration: parseDurationToSeconds(duration),
+			duration,
 			lyrics: lyrics || "",
 			original_key: originalKey,
 			sp_key: spKey || undefined,
+			bpm,
 		};
 	};
 
@@ -211,17 +224,42 @@ export default function EditSongScreen() {
 							onChangeText={setArtist}
 						/>
 
-						<ThemedText>Duration (seconds or mm:ss)</ThemedText>
-						<TextInput
-							style={[styles.input, { color: colors.text }]}
-							value={duration}
-							onChangeText={setDuration}
-							keyboardType="numeric"
-						/>
+						<ThemedView style={{ flexDirection: 'row', gap: 12, justifyContent: 'space-between' }}>
+							<ThemedView style={{ flex: 3 }}>
+								<ThemedText>Duration (seconds/mm:ss)</ThemedText>
+								<TextInput
+									style={[styles.input, { color: colors.text }]}
+									value={duration > 0 ? String(duration) : ''}
+									onChangeText={(text) => {
+										const numericValue = parseInt(text, 10);
+										setDuration(!isNaN(numericValue) ? numericValue : 0);
+									}}
+									keyboardType="numeric"
+								/>
+							</ThemedView>
+
+							<ThemedView style={{ flex: 1 }}>
+								<ThemedText>BPM</ThemedText>
+								<TextInput
+									style={[styles.input, { color: colors.text }]}
+									value={bpm > 0 ? String(bpm) : ''}
+									onChangeText={(text) => {
+										const numericValue = parseInt(text, 10);
+										setBPM(!isNaN(numericValue) ? numericValue : 0);
+									}}
+									keyboardType="numeric"
+								/>
+							</ThemedView>
+						</ThemedView>
 
 						{/* Keys */}
 						<ThemedView style={styles.keysRow}>
 							<KeyPicker
+								open={ogKeyOpen}
+								setOpen={(val) => {
+									if (val) setSPKeyOpen(!val);
+									setOGKeyOpen(val);
+								}}
 								label="Original Key"
 								value={originalKey}
 								onChange={(val) => {
@@ -230,10 +268,15 @@ export default function EditSongScreen() {
 								}}
 							/>
 							<KeyPicker
+								open={spKeyOpen}
+								setOpen={(val) => {
+									if (val) setOGKeyOpen(!val);
+									setSPKeyOpen(val);
+								}}
 								label="New Key (optional)"
 								value={spKey}
 								onChange={(val) => setSpKey(val === "none" ? "" : val)}
-								disabledKey={originalKey}
+								removeKey={originalKey}
 								extraOptions={[{
 									label: "None",
 									value: "none",

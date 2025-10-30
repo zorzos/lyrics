@@ -2,6 +2,21 @@ import { MusicalKey } from "@/types";
 
 export const getMusicalKeys = (backgroundColor: string, color: string): MusicalKey[] => [
     {
+        label: "A", value: "A",
+        containerStyle: { backgroundColor },
+        labelStyle: { color }
+    },
+    {
+        label: "A# / Bb", value: "A#",
+        containerStyle: { backgroundColor },
+        labelStyle: { color }
+    },
+    {
+        label: "B", value: "B",
+        containerStyle: { backgroundColor },
+        labelStyle: { color }
+    },
+    {
         label: "C", value: "C",
         containerStyle: { backgroundColor },
         labelStyle: { color }
@@ -45,20 +60,5 @@ export const getMusicalKeys = (backgroundColor: string, color: string): MusicalK
         label: "G# / Ab", value: "G#",
         containerStyle: { backgroundColor },
         labelStyle: { color }
-    },
-    {
-        label: "A", value: "A",
-        containerStyle: { backgroundColor },
-        labelStyle: { color }
-    },
-    {
-        label: "A# / Bb", value: "A#",
-        containerStyle: { backgroundColor },
-        labelStyle: { color }
-    },
-    {
-        label: "B", value: "B",
-        containerStyle: { backgroundColor },
-        labelStyle: { color }
-    },
+    }
 ];
