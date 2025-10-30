@@ -42,13 +42,15 @@ export default function SongDetailScreen() {
 			if (cachedSong) return cachedSong;
 
 			const singleId = getSingleParam(id);
-			if (!singleId) throw new Error('No song ID provided!');
+			if (!singleId) throw new Error("No song ID provided!");
 
 			// Fetch from Supabase
 			return await getSong(singleId);
 		},
 		enabled: !!id,
 	});
+
+	console.log("SONG DATA", song);
 
 	const finalShows: Show[] = song?.shows ?? [];
 	const finalTags: TagType[] = song?.tags ?? [];
@@ -92,10 +94,7 @@ export default function SongDetailScreen() {
 		return (
 			<Wrapper
 				key={`song-data-${index}`}
-				style={[
-					styles.songItem,
-					{ width: `${85 / 4}%` },
-				]}
+				style={[styles.songItem, { width: `${85 / 4}%` }]}
 				onPress={item.opensModal ? () => setModalInfo(item) : undefined}>
 				<ThemedText style={styles.songItemText}>{labelText}</ThemedText>
 				<ThemedText style={styles.songItemText}>{item.value}</ThemedText>
@@ -125,17 +124,23 @@ export default function SongDetailScreen() {
 	}
 
 	const songDataComponents = [
-		renderInfo({
-			label: "Duration",
-			value: formatDuration(durationNumber),
-			opensModal: false,
-		}, 0),
-		renderInfo({
-			label: "Shows",
-			value: finalShows.length,
-			modalValue: finalShows,
-			opensModal: true,
-		}, 1),
+		renderInfo(
+			{
+				label: "Duration",
+				value: formatDuration(durationNumber),
+				opensModal: false,
+			},
+			0
+		),
+		renderInfo(
+			{
+				label: "Shows",
+				value: finalShows.length,
+				modalValue: finalShows,
+				opensModal: true,
+			},
+			1
+		),
 		<Metronome
 			key={2}
 			value={120}
@@ -147,26 +152,32 @@ export default function SongDetailScreen() {
 			originalKey={song.original_key}
 			spKey={song.sp_key}
 			containerStyle={{ borderColor: "white", width: `${85 / 4}%` }}
-		/>
+		/>,
 	];
 
 	return (
-		<>
+		<ThemedView style={{ flex: 1 }}>
 			<ThemedView style={styles.songDataItemContainer}>
 				{songDataComponents}
 			</ThemedView>
 			<ThemedView style={styles.songDataItemContainer}>
-				{renderInfo({
-					label: "Artist",
-					value: song.artist,
-					modalValue: [song.artist],
-					opensModal: true,
-				}, 0)}
-				{renderInfo({
-					label: "Year",
-					value: 2005,
-					opensModal: false,
-				}, 1)}
+				{renderInfo(
+					{
+						label: "Artist",
+						value: song.artist,
+						modalValue: [song.artist],
+						opensModal: true,
+					},
+					0
+				)}
+				{renderInfo(
+					{
+						label: "Year",
+						value: 2005,
+						opensModal: false,
+					},
+					1
+				)}
 			</ThemedView>
 
 			<ThemedView style={styles.tagsContainer}>
@@ -185,7 +196,7 @@ export default function SongDetailScreen() {
 				modalInfo={modalInfo}
 				setModalInfo={setModalInfo}
 			/>
-		</>
+		</ThemedView>
 	);
 }
 
@@ -209,7 +220,7 @@ const styles = StyleSheet.create({
 		borderRadius: 8,
 		alignItems: "center",
 		padding: 6,
-		borderWidth: 1
+		borderWidth: 1,
 	},
 	songItemText: {
 		fontSize: 12,

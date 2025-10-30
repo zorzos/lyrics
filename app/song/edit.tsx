@@ -9,7 +9,7 @@ import {
 	StyleSheet,
 	Text,
 	TextInput,
-	TouchableOpacity
+	TouchableOpacity,
 } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
@@ -17,6 +17,7 @@ import { ThemedView } from "@/components/themed-view";
 import { supabase } from "@/lib/supabase";
 import { Song, TagType } from "@/types";
 
+import AutocompleteInput from "@/components/ui/Autocomplete";
 import KeyPicker from "@/components/ui/KeyPicker";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
@@ -38,7 +39,9 @@ export default function EditSongScreen() {
 	const [duration, setDuration] = useState<number>(0);
 	const [lyrics, setLyrics] = useState<string>("");
 	const [availableTags, setAvailableTags] = useState<TagType[]>([]);
-	const [selectedTagIds, setSelectedTagIds] = useState<Record<string, boolean>>({});
+	const [selectedTagIds, setSelectedTagIds] = useState<Record<string, boolean>>(
+		{}
+	);
 	const [originalKey, setOriginalKey] = useState<string>("");
 	const [spKey, setSpKey] = useState<string>("");
 	const [bpm, setBPM] = useState<number>(0);
@@ -59,7 +62,7 @@ export default function EditSongScreen() {
 	useEffect(() => {
 		async function fetchTags() {
 			const result = await getTags();
-			if (!result) console.error('Get tags failed');
+			if (!result) console.error("Get tags failed");
 			else setAvailableTags(result ?? []);
 		}
 
@@ -101,40 +104,23 @@ export default function EditSongScreen() {
 	}, [id]);
 
 	const buildPayload = (): Omit<Song, "id"> | null => {
-		if (!title.trim()) {
-			Toast.show({
-				type: "error",
-				text1: "Title is required",
-				position: "bottom",
-				visibilityTime: 2000
-			});
-			return null;
-		}
-		if (!artist.trim()) {
-			Toast.show({
-				type: "error",
-				text1: "Artist is required",
-				position: "bottom",
-				visibilityTime: 2000
-			});
-			return null;
-		}
-		if (!originalKey) {
-			Toast.show({
-				type: "error",
-				text1: "Original key is required",
-				position: "bottom",
-				visibilityTime: 2000
-			});
-			return null;
-		}
+		const requiredFields = [
+			{ value: title.trim(), label: "Title" },
+			{ value: artist.trim(), label: "Artist" },
+			{ value: originalKey, label: "Original key" },
+			{ value: bpm, label: "BPM" },
+			{ value: duration, label: "Duration" },
+			{ value: lyrics, label: "Lyrics" },
+		];
 
-		if (!bpm) {
+		const missing = requiredFields.find((f) => !f.value);
+
+		if (missing) {
 			Toast.show({
-				type: 'error',
-				text1: "BPM is required",
+				type: "error",
+				text1: `${missing.label} is required`,
 				position: "bottom",
-				visibilityTime: 2000
+				visibilityTime: 2000,
 			});
 			return null;
 		}
@@ -158,12 +144,19 @@ export default function EditSongScreen() {
 		try {
 			let songId = id;
 			if (id) {
-				const { error } = await supabase.from("songs").update(payload).eq("id", id);
+				const { error } = await supabase
+					.from("songs")
+					.update(payload)
+					.eq("id", id);
 				if (error) throw error;
 
 				await supabase.from("song_tags").delete().eq("song_id", id);
 			} else {
-				const { data, error } = await supabase.from("songs").insert(payload).select("id").single();
+				const { data, error } = await supabase
+					.from("songs")
+					.insert(payload)
+					.select("id")
+					.single();
 				if (error) throw error;
 				songId = data.id;
 			}
@@ -181,7 +174,7 @@ export default function EditSongScreen() {
 				type: "success",
 				text1: "Song saved!",
 				position: "bottom",
-				visibilityTime: 2000
+				visibilityTime: 2000,
 			});
 		} catch (e: any) {
 			console.error(e);
@@ -189,7 +182,7 @@ export default function EditSongScreen() {
 				type: "error",
 				text1: `Error: ${e.message}`,
 				position: "bottom",
-				visibilityTime: 2000
+				visibilityTime: 2000,
 			});
 		} finally {
 			setLoading(false);
@@ -203,11 +196,13 @@ export default function EditSongScreen() {
 	return (
 		<KeyboardAvoidingView
 			style={{ flex: 1 }}
-			behavior={Platform.OS === "ios" ? "padding" : undefined}
-		>
+			behavior={Platform.OS === "ios" ? "padding" : undefined}>
 			<ThemedView style={{ flex: 1, padding: 16 }}>
 				{fetchingSong ? (
-					<ActivityIndicator size="large" color={colors.primary} />
+					<ActivityIndicator
+						size="large"
+						color={colors.primary}
+					/>
 				) : (
 					<>
 						<ThemedText>Title</ThemedText>
@@ -218,18 +213,40 @@ export default function EditSongScreen() {
 						/>
 
 						<ThemedText>Artist</ThemedText>
-						<TextInput
-							style={[styles.input, { color: colors.text }]}
+						<AutocompleteInput
 							value={artist}
-							onChangeText={setArtist}
+							onChange={setArtist}
+							fetchData={async () => {
+								const { data } = await supabase
+									.from("artists")
+									.select("id, name")
+									.order("name");
+								return data || [];
+							}}
+							labelKey="name"
+							valueKey="id"
+							createItem={async (label: string) => {
+								const { data } = await supabase
+									.from("artists")
+									.insert({ name: label })
+									.select()
+									.single();
+								return data;
+							}}
+							placeholder="Type artist name"
 						/>
 
-						<ThemedView style={{ flexDirection: 'row', gap: 12, justifyContent: 'space-between' }}>
-							<ThemedView style={{ flex: 3 }}>
-								<ThemedText>Duration (seconds/mm:ss)</ThemedText>
+						<ThemedView
+							style={{
+								flexDirection: "row",
+								gap: 12,
+								justifyContent: "space-between",
+							}}>
+							<ThemedView style={{ flex: 1 }}>
+								<ThemedText>Duration (seconds)</ThemedText>
 								<TextInput
 									style={[styles.input, { color: colors.text }]}
-									value={duration > 0 ? String(duration) : ''}
+									value={duration > 0 ? String(duration) : ""}
 									onChangeText={(text) => {
 										const numericValue = parseInt(text, 10);
 										setDuration(!isNaN(numericValue) ? numericValue : 0);
@@ -242,7 +259,7 @@ export default function EditSongScreen() {
 								<ThemedText>BPM</ThemedText>
 								<TextInput
 									style={[styles.input, { color: colors.text }]}
-									value={bpm > 0 ? String(bpm) : ''}
+									value={bpm > 0 ? String(bpm) : ""}
 									onChangeText={(text) => {
 										const numericValue = parseInt(text, 10);
 										setBPM(!isNaN(numericValue) ? numericValue : 0);
@@ -277,16 +294,18 @@ export default function EditSongScreen() {
 								value={spKey}
 								onChange={(val) => setSpKey(val === "none" ? "" : val)}
 								removeKey={originalKey}
-								extraOptions={[{
-									label: "None",
-									value: "none",
-									containerStyle: {
-										backgroundColor: currentTheme.background
+								extraOptions={[
+									{
+										label: "None",
+										value: "none",
+										containerStyle: {
+											backgroundColor: currentTheme.background,
+										},
+										labelStyle: {
+											color: currentTheme.text,
+										},
 									},
-									labelStyle: {
-										color: currentTheme.text
-									}
-								}]}
+								]}
 							/>
 						</ThemedView>
 
@@ -302,21 +321,22 @@ export default function EditSongScreen() {
 						<ThemedView
 							style={[
 								styles.tagsContainer,
-								{ backgroundColor: colors.background }
-							]}
-						>
+								{ backgroundColor: currentTheme.background },
+							]}>
 							{availableTags.map((tag) => (
 								<TouchableOpacity
 									key={tag.id}
 									style={[
 										styles.tagCheckbox,
-										selectedTagIds[tag.id] && { backgroundColor: tag.color || "#00F" }
+										selectedTagIds[tag.id] && {
+											backgroundColor: tag.color || "#00F",
+										},
 									]}
-									onPress={() => toggleTag(tag.id)}
-								>
+									onPress={() => toggleTag(tag.id)}>
 									<Text
-										style={{ color: selectedTagIds[tag.id] ? "#FFF" : "#999" }}
-									>{tag.name}</Text>
+										style={{ color: selectedTagIds[tag.id] ? "#FFF" : "#999" }}>
+										{tag.name}
+									</Text>
 								</TouchableOpacity>
 							))}
 						</ThemedView>
@@ -324,11 +344,10 @@ export default function EditSongScreen() {
 						<TouchableOpacity
 							style={styles.saveButton}
 							onPress={handleSave}
-							disabled={loading}
-						>
-							<ThemedText
-								style={{ color: "#FFF", textAlign: "center" }}
-							>{loading ? "Saving..." : "Save"}</ThemedText>
+							disabled={loading}>
+							<ThemedText style={{ color: "#FFF", textAlign: "center" }}>
+								{loading ? "Saving..." : "Save"}
+							</ThemedText>
 						</TouchableOpacity>
 					</>
 				)}

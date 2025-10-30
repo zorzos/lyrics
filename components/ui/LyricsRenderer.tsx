@@ -87,57 +87,66 @@ export default function LyricsRenderer({ lyrics }: { lyrics: string }) {
 	return (
 		<ThemedView style={{ backgroundColor: colors.card, flex: 1 }}>
 			{/* Font size controls */}
-			<ThemedView style={styles.controls}>
-				<TouchableOpacity
-					style={[styles.button, isDecreaseDisabled && styles.disabledButton]}
-					onPress={decreaseFont}
-					disabled={isDecreaseDisabled}>
-					<MaterialIcons
-						color={currentTheme.text}
-						size={ICON_SIZE}
-						name={isDecreaseDisabled ? "block" : "text-decrease"}
-					/>
-				</TouchableOpacity>
-				<ThemedText style={styles.fontLabel}>{fontSize}</ThemedText>
-				<TouchableOpacity
-					style={[styles.button, isIncreaseDisabled && styles.disabledButton]}
-					onPress={increaseFont}
-					disabled={isIncreaseDisabled}>
-					<MaterialIcons
-						color={currentTheme.text}
-						size={ICON_SIZE}
-						name={isIncreaseDisabled ? "block" : "text-increase"}
-					/>
-				</TouchableOpacity>
-			</ThemedView>
+			{lyrics && (
+				<ThemedView style={styles.controls}>
+					<TouchableOpacity
+						style={[styles.button, isDecreaseDisabled && styles.disabledButton]}
+						onPress={decreaseFont}
+						disabled={isDecreaseDisabled}>
+						<MaterialIcons
+							color={currentTheme.text}
+							size={ICON_SIZE}
+							name={isDecreaseDisabled ? "block" : "text-decrease"}
+						/>
+					</TouchableOpacity>
+					<ThemedText style={styles.fontLabel}>{fontSize}</ThemedText>
+					<TouchableOpacity
+						style={[styles.button, isIncreaseDisabled && styles.disabledButton]}
+						onPress={increaseFont}
+						disabled={isIncreaseDisabled}>
+						<MaterialIcons
+							color={currentTheme.text}
+							size={ICON_SIZE}
+							name={isIncreaseDisabled ? "block" : "text-increase"}
+						/>
+					</TouchableOpacity>
+				</ThemedView>
+			)}
 
 			{/* Lyrics renderer */}
-			<ScrollView
-				style={{ backgroundColor: colors.card }}
-				contentContainerStyle={styles.scrollViewContainer}>
-				<ThemedView style={{ marginTop: fontSize }}>
-					{parseLyrics(lyrics).map((element, index: number) => (
-						<ThemedView
-							style={lyricStyles.common}
-							key={index}>
-							<ThemedText
-								style={{
-									fontSize: fontSize + 2,
-									marginBottom: fontSize / 2,
-									color: colors.text,
-									textTransform: "capitalize",
-									lineHeight: fontSize + 6,
-								}}>
-								[{element.type}]
-							</ThemedText>
-							{element.lines.map(
-								(line: string | Record<string, unknown>, lineIndex: number) =>
-									renderLine(line, lineIndex, element.type)
-							)}
-						</ThemedView>
-					))}
+			{lyrics ? (
+				<ScrollView
+					style={{ backgroundColor: colors.card }}
+					contentContainerStyle={styles.scrollViewContainer}>
+					<ThemedView style={{ marginTop: fontSize }}>
+						{parseLyrics(lyrics).map((element, index: number) => (
+							<ThemedView
+								style={lyricStyles.common}
+								key={index}>
+								<ThemedText
+									style={{
+										fontSize: fontSize + 2,
+										marginBottom: fontSize / 2,
+										color: colors.text,
+										textTransform: "capitalize",
+										lineHeight: fontSize + 6,
+									}}>
+									[{element.type}]
+								</ThemedText>
+								{element.lines.map(
+									(line: string | Record<string, unknown>, lineIndex: number) =>
+										renderLine(line, lineIndex, element.type)
+								)}
+							</ThemedView>
+						))}
+					</ThemedView>
+				</ScrollView>
+			) : (
+				<ThemedView
+					style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+					<ThemedText>INSTRUMENTAL</ThemedText>
 				</ThemedView>
-			</ScrollView>
+			)}
 		</ThemedView>
 	);
 }

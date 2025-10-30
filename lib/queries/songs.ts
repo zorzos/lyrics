@@ -65,14 +65,15 @@ export async function getSongs(showId?: string): Promise<ShowSongsByParts> {
 				const formattedSong: Song = {
 					id: song.id,
 					title: song.title,
-					artist: song.artist,
+					artist: song.artist_id,
 					duration: song.duration,
 					lyrics: song.lyrics,
 					tags,
 					song_order: row.song_order ?? null,
 					shows,
 					original_key: song.original_key,
-					sp_key: song.sp_key
+					sp_key: song.sp_key,
+					bpm: song.bpm,
 				};
 
 				if (!grouped[partNumber]) grouped[partNumber] = [];
@@ -139,13 +140,14 @@ export async function getSongs(showId?: string): Promise<ShowSongsByParts> {
 				return {
 					id: song.id,
 					title: song.title,
-					artist: song.artist,
+					artist: song.artist_id,
 					duration: song.duration,
 					lyrics: song.lyrics,
 					tags,
 					shows,
 					original_key: song.original_key,
-					sp_key: song.sp_key
+					sp_key: song.sp_key,
+					bpm: song.bpm,
 				} as Song;
 			});
 
@@ -190,11 +192,12 @@ export async function getSong(songId: string): Promise<Song> {
 
 		return {
 			...data,
+			artist: data.artist_id,
 			tags: (data.song_tags ?? []).map((st: any) => st.tags),
-			shows
+			shows,
 		};
 	} catch (err) {
 		console.error("getSong() failed:", err);
 		throw err;
 	}
-};
+}
