@@ -82,6 +82,8 @@ export default function KeyPicker({
 						color="white"
 					/>
 				)}
+				zIndex={2000}
+				zIndexInverse={1000}
 			/>
 		</ThemedView>
 	);

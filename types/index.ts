@@ -4,7 +4,7 @@ export interface TagType {
 	id: string;
 	name: string;
 	color?: string | null;
-}
+};
 
 /**
  * Unified Song type
@@ -22,7 +22,7 @@ export interface Song {
 	original_key: string;
 	sp_key?: string;
 	bpm: number;
-}
+};
 
 export interface Show {
 	id: string;
@@ -71,7 +71,7 @@ export enum ShowInfoTypes {
 	LOCATION = "location",
 	TIME = "time",
 	TYPE = "type",
-}
+};
 
 export interface KeyProps {
 	originalKey: string;
@@ -85,7 +85,7 @@ export interface KeyInfo {
 	name: string;       // normalized key name (C, C#, D, etc.)
 	quality: KeyQuality; // major or minor
 	semitone: number;    // semitone number 0-11
-}
+};
 
 export interface MusicalKey {
 	label: string;
@@ -107,4 +107,21 @@ export interface KeyPickerProps {
 		containerStyle?: object;
 		labelStyle?: object;
 	}[];
+};
+
+export interface Part {
+	partNumber: number;
+	songs: Song[];
+};
+
+interface AvailableSongModalContent {
+	title: string;
+	partNunber: number;
+	[k: string]: any;
+}
+
+export interface AvailableSongsModalProps {
+	content: AvailableSongModalContent;
+	setContent: Dispatch<SetStateAction<boolean>>;
+	onConfirm: (partNumber: number, selectedSongs: Song[]) => void;
 };

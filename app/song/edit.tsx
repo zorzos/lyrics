@@ -203,7 +203,10 @@ export default function EditSongScreen() {
 					<>
 						<ThemedText>Title</ThemedText>
 						<TextInput
-							style={[styles.input, { color: colors.text, borderColor: colors.text }]}
+							style={[
+								styles.input,
+								{ color: colors.text, borderColor: colors.text }
+							]}
 							value={title}
 							onChangeText={setTitle}
 						/>
@@ -229,8 +232,8 @@ export default function EditSongScreen() {
 									.single();
 								return data;
 							}}
-							placeholder="Type artist name"
 						/>
+
 
 						<ThemedView
 							style={{
@@ -241,7 +244,7 @@ export default function EditSongScreen() {
 							<ThemedView style={{ flex: 1 }}>
 								<ThemedText>Duration (seconds)</ThemedText>
 								<TextInput
-									style={[styles.input, { color: colors.text }]}
+									style={[styles.input, { borderColor: colors.tint }]}
 									value={duration > 0 ? String(duration) : ""}
 									onChangeText={(text) => {
 										const numericValue = parseInt(text, 10);
@@ -254,7 +257,7 @@ export default function EditSongScreen() {
 							<ThemedView style={{ flex: 1 }}>
 								<ThemedText>BPM</ThemedText>
 								<TextInput
-									style={[styles.input, { color: colors.text }]}
+									style={[styles.input, { borderColor: colors.tint }]}
 									value={bpm > 0 ? String(bpm) : ""}
 									onChangeText={(text) => {
 										const numericValue = parseInt(text, 10);
@@ -266,11 +269,11 @@ export default function EditSongScreen() {
 						</ThemedView>
 
 						{/* Keys */}
-						<ThemedView style={styles.keysRow}>
+						<ThemedView style={[styles.keysRow, { position: "relative", zIndex: 2000, elevation: 2000 }]}>
 							<KeyPicker
 								open={ogKeyOpen}
 								setOpen={(val) => {
-									if (val) setSPKeyOpen(!val);
+									if (val) setSPKeyOpen(false);
 									setOGKeyOpen(val);
 								}}
 								label="Original Key"
@@ -283,7 +286,7 @@ export default function EditSongScreen() {
 							<KeyPicker
 								open={spKeyOpen}
 								setOpen={(val) => {
-									if (val) setOGKeyOpen(!val);
+									if (val) setOGKeyOpen(false);
 									setSPKeyOpen(val);
 								}}
 								label="New Key (optional)"
@@ -307,7 +310,7 @@ export default function EditSongScreen() {
 
 						<ThemedText>Lyrics</ThemedText>
 						<TextInput
-							style={[styles.input, { height: 120, color: colors.text }]}
+							style={[styles.input, { height: 120, borderColor: colors.tint }]}
 							value={lyrics}
 							onChangeText={setLyrics}
 							multiline
@@ -355,7 +358,6 @@ export default function EditSongScreen() {
 const styles = StyleSheet.create({
 	input: {
 		borderWidth: 1,
-		// borderColor: "#999",
 		borderRadius: 6,
 		padding: 8,
 		marginBottom: 12,

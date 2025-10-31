@@ -1,19 +1,20 @@
 import { useColors } from "@/hooks/use-colors";
 import React, { useEffect, useState } from "react";
 import {
+	FlatList,
 	Keyboard,
-	Platform,
 	StyleSheet,
-	Text,
+	TextInput,
 	TouchableOpacity,
+	View
 } from "react-native";
-import Autocomplete from "react-native-autocomplete-input";
 import Toast from "react-native-toast-message";
+import { ThemedText } from "../themed-text";
 import { ThemedView } from "../themed-view";
 
 interface AutocompleteInputProps<T> {
 	value: T | null;
-	onChange: (item: T | null) => void;
+	onChange: (item: T | null | { isNew: true; label: string }) => void;
 	fetchData: () => Promise<T[]>;
 	labelKey: keyof T;
 	valueKey: keyof T;
@@ -30,136 +31,133 @@ export default function AutocompleteInput<T extends Record<string, any>>({
 	createItem,
 }: AutocompleteInputProps<T>) {
 	const colors = useColors();
-	const [query, setQuery] = useState(value ? String(value[labelKey]) : "");
+
 	const [items, setItems] = useState<T[]>([]);
+	const [query, setQuery] = useState(value ? String(value[labelKey]) : "");
 	const [filteredItems, setFilteredItems] = useState<T[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [showResults, setShowResults] = useState(false);
 
 	useEffect(() => {
-		async function loadData() {
-			setLoading(true);
+		(async () => {
 			try {
+				setLoading(true);
 				const data = await fetchData();
 				setItems(data);
-			} catch (e: any) {
+			} catch (e) {
 				console.error(e);
 				Toast.show({ type: "error", text1: "Failed to load data" });
 			} finally {
 				setLoading(false);
 			}
-		}
-		loadData();
+		})();
 	}, [fetchData]);
 
 	useEffect(() => {
-		const q = query.toLowerCase();
-		if (!q.trim()) {
+		const q = query.toLowerCase().trim();
+		if (!q) {
 			setFilteredItems([]);
+			setShowResults(false);
 			return;
 		}
-		setFilteredItems(
-			items.filter((i) => String(i[labelKey]).toLowerCase().includes(q))
+		const filtered = items.filter((i) =>
+			String(i[labelKey]).toLowerCase().includes(q)
 		);
+		setFilteredItems(filtered);
+		setShowResults(true);
 	}, [query, items, labelKey]);
 
 	const handleSelect = (item: T) => {
 		onChange(item);
 		setQuery(String(item[labelKey]));
-		setFilteredItems([]);
 		setShowResults(false);
 		Keyboard.dismiss();
 	};
 
-	const handleCreate = async () => {
-		if (!createItem || !query.trim()) return;
-		try {
-			const newItem = await createItem(query.trim());
-			setItems((prev) => [...prev, newItem]);
-			handleSelect(newItem);
-			Toast.show({ type: "success", text1: `Created "${query}"` });
-		} catch (e: any) {
-			console.error(e);
-			Toast.show({ type: "error", text1: "Failed to create item" });
-		}
+	const handleCreateSelect = () => {
+		onChange({ isNew: true, label: query.trim() });
+		setShowResults(false);
+		Keyboard.dismiss();
 	};
 
+	const renderItem = ({ item }: { item: T }) => (
+		<TouchableOpacity
+			style={[styles.item, { backgroundColor: colors.background }]}
+			onPress={() => handleSelect(item)}>
+			<ThemedText>{item[labelKey]}</ThemedText>
+		</TouchableOpacity>
+	);
+
+	const showCreateOption =
+		createItem &&
+		query.trim() &&
+		!loading &&
+		!items.some(
+			(i) => String(i[labelKey]).toLowerCase() === query.trim().toLowerCase()
+		);
+
 	return (
-		<ThemedView
-			style={{ position: "relative", zIndex: 100, marginBottom: "12.5%" }}>
-			<Autocomplete
-				style={{
-					color: colors.text,
-					backgroundColor: colors.background,
-					borderWidth: 1,
-					borderColor: colors.text,
-					borderRadius: 6,
-				}}
-				data={showResults ? filteredItems : []}
+		<ThemedView style={{ position: "relative", zIndex: 9999 }}>
+			<TextInput
 				value={query}
-				onChangeText={(text) => {
-					setQuery(text);
-					setShowResults(true);
-				}}
-				placeholder="Tap to search"
-				flatListProps={{
-					keyExtractor: (item) => String(item[valueKey]),
-					renderItem: ({ item }) => (
-						<TouchableOpacity
-							style={[styles.item, { backgroundColor: colors.background }]}
-							onPress={() => handleSelect(item)}>
-							<Text style={{ color: colors.text }}>{item[labelKey]}</Text>
-						</TouchableOpacity>
-					),
-					keyboardShouldPersistTaps: "handled",
-					style: { maxHeight: 200 },
-					ListEmptyComponent:
-						createItem && query.trim() && !loading ? (
-							<TouchableOpacity
-								style={[styles.item, { backgroundColor: colors.background }]}
-								onPress={handleCreate}>
-								<Text style={{ color: colors.text }}>
-									Create “{query.trim()}”
-								</Text>
-							</TouchableOpacity>
-						) : null,
-				}}
-				inputContainerStyle={[
-					styles.inputContainer,
-					{ borderColor: colors.background, backgroundColor: colors.background },
-				]}
-				containerStyle={[
-					styles.container,
-					Platform.OS === "android" ? { elevation: 10 } : { zIndex: 100 },
-				]}
-				listContainerStyle={[
-					styles.listContainer,
+				onChangeText={setQuery}
+				onFocus={() => setShowResults(true)}
+				placeholder="Tap to lookup artists"
+				placeholderTextColor="lightgray"
+				style={[
+					styles.input,
 					{
-						borderColor: colors.background,
+						color: colors.text,
+						borderColor: colors.text,
 						backgroundColor: colors.background,
-						...(Platform.OS === "android"
-							? { elevation: 20 }
-							: { zIndex: 9999 }),
+						marginBottom: 12
 					},
 				]}
-				placeholderTextColor={colors.text}
 			/>
+
+			{showResults && (filteredItems.length > 0 || showCreateOption) && (
+				<View
+					style={[
+						styles.listContainer,
+						{
+							backgroundColor: colors.background,
+							borderColor: colors.text,
+							elevation: 10,
+							shadowColor: "#000",
+							shadowOpacity: 0.15,
+							zIndex: 9999
+						},
+					]}>
+					<FlatList
+						data={filteredItems}
+						keyExtractor={(item) => String(item[valueKey])}
+						renderItem={renderItem}
+						keyboardShouldPersistTaps="handled"
+						style={{ maxHeight: 200 }}
+						ListFooterComponent={
+							showCreateOption ? (
+								<TouchableOpacity
+									style={[styles.item, { backgroundColor: colors.background }]}
+									onPress={handleCreateSelect}>
+									<ThemedText style={{ fontWeight: "500" }}>
+										Create "{query.trim()}"
+									</ThemedText>
+								</TouchableOpacity>
+							) : null
+						}
+					/>
+				</View>
+			)}
 		</ThemedView>
 	);
 }
 
 const styles = StyleSheet.create({
-	container: {
-		flex: 1,
-	},
-	inputContainer: {
+	input: {
 		borderWidth: 1,
-		borderRadius: 8,
-	},
-	item: {
-		padding: 8,
-		borderBottomWidth: 1,
-		borderBottomColor: "#ccc",
+		borderRadius: 6,
+		fontSize: 16,
+		padding: 8
 	},
 	listContainer: {
 		position: "absolute",
@@ -167,7 +165,13 @@ const styles = StyleSheet.create({
 		left: 0,
 		right: 0,
 		borderWidth: 1,
-		borderRadius: 8,
+		borderRadius: 6,
+		maxHeight: 200,
 		overflow: "hidden",
+	},
+	item: {
+		padding: 10,
+		borderBottomWidth: 1,
+		borderBottomColor: "#ccc",
 	},
 });

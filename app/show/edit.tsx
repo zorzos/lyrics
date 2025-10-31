@@ -7,7 +7,7 @@ import {
 	Switch,
 	Text,
 	TextInput,
-	TouchableOpacity,
+	TouchableOpacity
 } from "react-native";
 import DraggableFlatList, {
 	RenderItemParams,
@@ -18,16 +18,14 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { getSongs } from "@/lib/queries/songs";
 import { supabase } from "@/lib/supabase";
-import { Show, Song } from "@/types";
+import { Part, Show, Song } from "@/types";
 
 import { useColors } from "@/hooks/use-colors";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Toast from "react-native-toast-message";
 
-interface Part {
-	partNumber: number;
-	songs: Song[];
-}
+import { getTotalPartTime } from "@/utils/dateUtils";
+import AvailableSongsModal from "./AvailableSongsModal";
 
 export default function EditShowScreen() {
 	const colors = useColors();
@@ -39,7 +37,7 @@ export default function EditShowScreen() {
 	const [fetchingShow, setFetchingShow] = useState(false);
 
 	const [title, setTitle] = useState("");
-	const [date, setDate] = useState(""); // ISO string
+	const [date, setDate] = useState("");
 	const [draft, setDraft] = useState(false);
 	const [parts, setParts] = useState(1);
 
@@ -54,6 +52,12 @@ export default function EditShowScreen() {
 		partNumber: 1, songs: []
 	}]);
 	const [availableSongs, setAvailableSongs] = useState<Song[]>([]);
+	console.log('AVAILABLE SONGS', availableSongs.length);
+
+	const [
+		availableSongsModalContent,
+		setAvailableSongsModalContent
+	] = useState<any>(undefined);
 
 	useEffect(() => {
 		async function fetchSongs() {
@@ -177,15 +181,15 @@ export default function EditShowScreen() {
 		return (
 			<TouchableOpacity
 				style={{
-					padding: 12,
-					backgroundColor: isActive ? "#ddd" : "#fff",
+					padding: 10,
+					backgroundColor: isActive ? "#ddd" : colors.background,
 					marginBottom: 4,
 					borderRadius: 6,
 					borderWidth: 1,
 					borderColor: "#ccc",
 				}}
 				onLongPress={drag}>
-				<Text>{item.title}</Text>
+				<ThemedText>#1 {item.title} ({item.artist})</ThemedText>
 			</TouchableOpacity>
 		);
 	};
@@ -210,6 +214,8 @@ export default function EditShowScreen() {
 					style={[styles.input, { color: colors.text }]}
 					value={title}
 					onChangeText={setTitle}
+					placeholder="Enter title"
+					placeholderTextColor={colors.placeholder}
 				/>
 
 				<ThemedText>Date</ThemedText>
@@ -218,6 +224,7 @@ export default function EditShowScreen() {
 					value={date}
 					onChangeText={setDate}
 					placeholder="DD-MM-YYYY"
+					placeholderTextColor={colors.placeholder}
 				/>
 
 				<ThemedView
@@ -230,8 +237,8 @@ export default function EditShowScreen() {
 					<Switch
 						value={draft}
 						onValueChange={setDraft}
-						thumbColor={draft ? 'blue' : "#fff"}
-						trackColor={{ false: "#ccc", true: 'blue' }}
+						thumbColor={draft ? colors.accent : "#fff"}
+						trackColor={{ false: "#ccc", true: "#DA291C80" }}
 					/>
 				</ThemedView>
 
@@ -248,20 +255,16 @@ export default function EditShowScreen() {
 								key={index}
 								style={[
 									styles.partSegment,
-									isSelected && { backgroundColor: 'blue' },
-									!isSelected && { borderColor: colors.text, borderWidth: 1 },
-									p === availableParts[0] && {
-										borderTopLeftRadius: 8,
-										borderBottomLeftRadius: 8,
+									isSelected && {
+										backgroundColor: "#da291cbf",
 									},
-									p === availableParts[availableParts.length - 1] && {
-										borderTopRightRadius: 8,
-										borderBottomRightRadius: 8,
-									},
+									{
+										borderRadius: 8,
+										borderColor: isSelected ? "#da291cbf" : colors.text,
+									}
 								]}
 								onPress={() => {
 									setParts(p);
-									console.log('songsByPart', songsByPart);
 									setSongsByPart((prev) => {
 										if (prev.length === p) return prev;
 										if (prev.length < p) {
@@ -299,27 +302,44 @@ export default function EditShowScreen() {
 						}}>
 						<ThemedView
 							style={{
-								flexDirection: "row",
-								padding: 8,
-								backgroundColor: colors.background,
-								gap: 4,
-								alignItems: "center",
-								marginBottom: 8,
-							}}>
-							<ThemedText style={{ fontWeight: "bold" }}>
-								Part {part.partNumber}
-							</ThemedText>
+								flexDirection: 'row',
+								alignItems: 'center',
+								justifyContent: 'space-between'
+							}}
+						>
+							<ThemedView
+								style={{
+									flexDirection: "row",
+									padding: 8,
+									backgroundColor: colors.background,
+									gap: 4,
+									alignItems: "center",
+									marginBottom: 8,
+								}}>
+								<ThemedText style={{ fontWeight: "bold" }}>
+									Part {part.partNumber}
+								</ThemedText>
+								{part.songs.length > 0 && (
+									<TouchableOpacity
+										onPress={() =>
+											console.log(`Editing Part ${part.partNumber}`)
+										}>
+										<MaterialIcons
+											name="edit"
+											size={20}
+											color={colors.text}
+										/>
+									</TouchableOpacity>
+								)}
+							</ThemedView>
 							{part.songs.length > 0 && (
-								<TouchableOpacity
-									onPress={() =>
-										console.log(`Editing Part ${part.partNumber}`)
-									}>
-									<MaterialIcons
-										name="edit"
-										size={20}
-										color={colors.text}
-									/>
-								</TouchableOpacity>
+								<ThemedView
+									style={{
+										padding: 8,
+										marginBottom: 8,
+									}}>
+									<ThemedText style={{ fontWeight: 'bold' }}>{getTotalPartTime(part.songs)}</ThemedText>
+								</ThemedView>
 							)}
 						</ThemedView>
 
@@ -332,28 +352,34 @@ export default function EditShowScreen() {
 									return updated;
 								});
 							}}
+							contentContainerStyle={{
+								padding: 8
+							}}
 							keyExtractor={(item) => item.id}
 							renderItem={renderSongItem}
 							ListEmptyComponent={
 								<TouchableOpacity
-									onPress={() =>
-										console.log(`ADDING SONGS TO PART ${part.partNumber}`)
-									}
+									onPress={() => {
+										setAvailableSongsModalContent({
+											availableSongs,
+											partNumber: part.partNumber
+										});
+									}}
 									style={{
 										flexDirection: "row",
-										alignItems: "center",
+										alignContent: "center",
 										justifyContent: "center",
 										padding: 16,
-										borderWidth: 1,
-										borderColor: "red",
 										borderRadius: 8,
 										margin: 4,
+										backgroundColor: '#da291c33',
+										gap: 4
 									}}>
 									<ThemedText>Tap here to add songs</ThemedText>
 									<MaterialIcons
 										name="add-circle-outline"
 										size={24}
-										color="white"
+										color={colors.text}
 									/>
 								</TouchableOpacity>
 							}
@@ -370,6 +396,32 @@ export default function EditShowScreen() {
 					</ThemedText>
 				</TouchableOpacity>
 			</ThemedView>
+			<AvailableSongsModal
+				content={availableSongsModalContent}
+				setContent={setAvailableSongsModalContent}
+				onConfirm={(partNumber: number, selectedSongs: Song[]) => {
+					// Update songsByPart
+					setSongsByPart((prevParts) => {
+						const updated = [...prevParts];
+						const index = updated.findIndex(p => p.partNumber === partNumber);
+
+						if (index !== -1) {
+							updated[index] = { ...updated[index], songs: selectedSongs };
+						} else {
+							updated.push({ partNumber, songs: selectedSongs });
+						}
+						return updated;
+					});
+
+					setAvailableSongs((prevAvailable) =>
+						prevAvailable.filter(
+							(song) => !selectedSongs.some((sel: Song) => sel.id === song.id)
+						)
+					);
+
+					setAvailableSongsModalContent(false);
+				}}
+			/>
 		</GestureHandlerRootView>
 	);
 }
@@ -383,7 +435,7 @@ const styles = StyleSheet.create({
 		marginBottom: 12,
 	},
 	saveButton: {
-		backgroundColor: "#007AFF",
+		backgroundColor: "#DA291C",
 		paddingVertical: 12,
 		borderRadius: 6,
 		marginTop: 16,
