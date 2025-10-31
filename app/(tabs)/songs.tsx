@@ -7,16 +7,17 @@ import {
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { useColors } from "@/hooks/use-colors";
 import { getSongs } from "@/lib/queries/songs";
 import { Section, Song } from "@/types";
 import { generateHref } from "@/utils/paramUtils";
-import { useTheme } from "@react-navigation/native";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "expo-router";
 import { useMemo, useRef } from "react";
 
 export default function Songs() {
-	const { colors } = useTheme();
+	const colors = useColors();
+
 	const sectionListRef = useRef<SectionList<Song>>(null);
 	const {
 		data: rawSongs,
@@ -96,7 +97,7 @@ export default function Songs() {
 					</Link>
 				)}
 				renderSectionHeader={({ section: { title } }) => (
-					<ThemedView style={{ backgroundColor: colors.card, padding: 8 }}>
+					<ThemedView style={{ backgroundColor: colors.background, padding: 8 }}>
 						<ThemedText style={{ color: colors.text, fontWeight: "bold" }}>
 							{title}
 						</ThemedText>

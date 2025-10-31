@@ -1,4 +1,4 @@
-import { useTheme } from "@react-navigation/native";
+import { useColors } from "@/hooks/use-colors";
 import React, { useEffect, useState } from "react";
 import {
 	Keyboard,
@@ -29,7 +29,7 @@ export default function AutocompleteInput<T extends Record<string, any>>({
 	valueKey,
 	createItem,
 }: AutocompleteInputProps<T>) {
-	const { colors } = useTheme();
+	const colors = useColors();
 	const [query, setQuery] = useState(value ? String(value[labelKey]) : "");
 	const [items, setItems] = useState<T[]>([]);
 	const [filteredItems, setFilteredItems] = useState<T[]>([]);
@@ -106,7 +106,7 @@ export default function AutocompleteInput<T extends Record<string, any>>({
 					keyExtractor: (item) => String(item[valueKey]),
 					renderItem: ({ item }) => (
 						<TouchableOpacity
-							style={[styles.item, { backgroundColor: colors.card }]}
+							style={[styles.item, { backgroundColor: colors.background }]}
 							onPress={() => handleSelect(item)}>
 							<Text style={{ color: colors.text }}>{item[labelKey]}</Text>
 						</TouchableOpacity>
@@ -116,7 +116,7 @@ export default function AutocompleteInput<T extends Record<string, any>>({
 					ListEmptyComponent:
 						createItem && query.trim() && !loading ? (
 							<TouchableOpacity
-								style={[styles.item, { backgroundColor: colors.card }]}
+								style={[styles.item, { backgroundColor: colors.background }]}
 								onPress={handleCreate}>
 								<Text style={{ color: colors.text }}>
 									Create “{query.trim()}”
@@ -126,7 +126,7 @@ export default function AutocompleteInput<T extends Record<string, any>>({
 				}}
 				inputContainerStyle={[
 					styles.inputContainer,
-					{ borderColor: colors.border, backgroundColor: colors.background },
+					{ borderColor: colors.background, backgroundColor: colors.background },
 				]}
 				containerStyle={[
 					styles.container,
@@ -135,8 +135,8 @@ export default function AutocompleteInput<T extends Record<string, any>>({
 				listContainerStyle={[
 					styles.listContainer,
 					{
-						borderColor: colors.border,
-						backgroundColor: colors.card,
+						borderColor: colors.background,
+						backgroundColor: colors.background,
 						...(Platform.OS === "android"
 							? { elevation: 20 }
 							: { zIndex: 9999 }),

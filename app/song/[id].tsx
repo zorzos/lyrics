@@ -4,8 +4,6 @@ import InfoModal from "@/components/ui/InfoModal";
 import LyricsRenderer from "@/components/ui/LyricsRenderer";
 import Metronome from "@/components/ui/Metronome";
 import Tag from "@/components/ui/Tag";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Show, Song, TagType } from "@/types";
 import { formatDuration } from "@/utils/dateUtils";
 import { generateHref, getSingleParam } from "@/utils/paramUtils";
@@ -17,11 +15,11 @@ import { useLayoutEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, TouchableOpacity } from "react-native";
 
 import Key from "@/components/ui/Key";
+import { useColors } from "@/hooks/use-colors";
 import { getSong } from "@/lib/queries/songs";
 
 export default function SongDetailScreen() {
-	const colorScheme = useColorScheme();
-	const currentTheme = Colors[colorScheme ?? "light"];
+	const colors = useColors();
 	const { id } = useLocalSearchParams();
 	const queryClient = useQueryClient();
 
@@ -82,7 +80,7 @@ export default function SongDetailScreen() {
 				style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
 				<ThemedText style={{ fontSize: 12 }}>{item.label}</ThemedText>
 				<MaterialIcons
-					color={currentTheme.text}
+					color={colors.text}
 					size={12}
 					name="open-in-new"
 				/>
@@ -108,7 +106,7 @@ export default function SongDetailScreen() {
 				style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
 				<ActivityIndicator
 					size="large"
-					color={currentTheme.text}
+					color={colors.text}
 				/>
 			</ThemedView>
 		);

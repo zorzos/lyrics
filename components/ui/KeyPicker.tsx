@@ -1,10 +1,8 @@
 import { ThemedText } from "@/components/themed-text";
 import { getMusicalKeys } from "@/constants/keys";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useColors } from "@/hooks/use-colors";
 import { KeyPickerProps } from "@/types";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { useTheme } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import { StyleSheet } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
@@ -19,10 +17,8 @@ export default function KeyPicker({
 	removeKey,
 	extraOptions,
 }: KeyPickerProps) {
-	const { colors } = useTheme();
-	const colorScheme = useColorScheme();
-	const currentTheme = Colors[colorScheme ?? "light"];
-	const items = getMusicalKeys(currentTheme.background, currentTheme.text);
+	const colors = useColors();
+	const items = getMusicalKeys(colors.background, colors.text);
 
 	const buildDropItems = () => {
 		const combinedItems = extraOptions ? [...extraOptions, ...items] : items;
@@ -31,11 +27,11 @@ export default function KeyPicker({
 			...i,
 			// merge themed styles here
 			containerStyle: {
-				backgroundColor: i.value === removeKey ? colors.border : colors.card,
+				backgroundColor: i.value === removeKey ? colors.text : colors.background,
 				...(i.containerStyle || {}),
 			},
 			labelStyle: {
-				color: currentTheme.text,
+				color: colors.text,
 				...(i.labelStyle || {}),
 			},
 		}));
@@ -62,16 +58,16 @@ export default function KeyPicker({
 				setItems={setDropItems}
 				placeholder="Select key"
 				style={{
-					borderColor: currentTheme.icon,
-					backgroundColor: currentTheme.background,
+					borderColor: colors.text,
+					backgroundColor: colors.background,
 				}}
 				dropDownContainerStyle={{
-					borderColor: currentTheme.icon,
+					borderColor: colors.text,
 					borderWidth: 0.5,
-					backgroundColor: currentTheme.background,
+					backgroundColor: colors.background,
 				}}
-				labelStyle={{ color: currentTheme.text }}
-				placeholderStyle={{ color: currentTheme.text }}
+				labelStyle={{ color: colors.text }}
+				placeholderStyle={{ color: colors.text }}
 				ArrowUpIconComponent={() => (
 					<MaterialIcons
 						name="keyboard-arrow-up"

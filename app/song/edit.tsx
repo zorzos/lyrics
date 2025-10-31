@@ -1,4 +1,3 @@
-import { useTheme } from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useEffect, useLayoutEffect, useState } from "react";
@@ -19,17 +18,14 @@ import { Song, TagType } from "@/types";
 
 import AutocompleteInput from "@/components/ui/Autocomplete";
 import KeyPicker from "@/components/ui/KeyPicker";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useColors } from "@/hooks/use-colors";
 import { getSong } from "@/lib/queries/songs";
 import getTags from "@/lib/queries/tags";
 import { getSingleParam } from "@/utils/paramUtils";
 import Toast from "react-native-toast-message";
 
 export default function EditSongScreen() {
-	const { colors } = useTheme();
-	const colorScheme = useColorScheme();
-	const currentTheme = Colors[colorScheme ?? "light"];
+	const colors = useColors();
 	const queryClient = useQueryClient();
 	const { id } = useLocalSearchParams();
 	const router = useRouter();
@@ -201,13 +197,13 @@ export default function EditSongScreen() {
 				{fetchingSong ? (
 					<ActivityIndicator
 						size="large"
-						color={colors.primary}
+						color={colors.text}
 					/>
 				) : (
 					<>
 						<ThemedText>Title</ThemedText>
 						<TextInput
-							style={[styles.input, { color: colors.text }]}
+							style={[styles.input, { color: colors.text, borderColor: colors.text }]}
 							value={title}
 							onChangeText={setTitle}
 						/>
@@ -299,10 +295,10 @@ export default function EditSongScreen() {
 										label: "None",
 										value: "none",
 										containerStyle: {
-											backgroundColor: currentTheme.background,
+											backgroundColor: colors.background,
 										},
 										labelStyle: {
-											color: currentTheme.text,
+											color: colors.text,
 										},
 									},
 								]}
@@ -321,7 +317,7 @@ export default function EditSongScreen() {
 						<ThemedView
 							style={[
 								styles.tagsContainer,
-								{ backgroundColor: currentTheme.background },
+								{ backgroundColor: colors.background },
 							]}>
 							{availableTags.map((tag) => (
 								<TouchableOpacity
@@ -359,7 +355,7 @@ export default function EditSongScreen() {
 const styles = StyleSheet.create({
 	input: {
 		borderWidth: 1,
-		borderColor: "#999",
+		// borderColor: "#999",
 		borderRadius: 6,
 		padding: 8,
 		marginBottom: 12,

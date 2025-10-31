@@ -1,17 +1,15 @@
-import { Colors } from "@/constants/theme";
 import { normaliseLyric, parseLyrics } from "@/utils/songUtils";
 import { ThemedText } from "../themed-text";
 import { ThemedView } from "../themed-view";
 
 import { useTagColors } from "@/context/TagContext";
+import { useColors } from "@/hooks/use-colors";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { useTheme } from "@react-navigation/native";
 import React, { useState } from "react";
 import {
 	ScrollView,
 	StyleSheet,
-	TouchableOpacity,
-	useColorScheme,
+	TouchableOpacity
 } from "react-native";
 
 const MIN_FONT_SIZE = 12;
@@ -20,10 +18,8 @@ const MAX_FONT_SIZE = 36;
 const ICON_SIZE = 18;
 
 export default function LyricsRenderer({ lyrics }: { lyrics: string }) {
-	const { colors } = useTheme();
-	const colorScheme = useColorScheme();
+	const colors = useColors();
 	const tagColors = useTagColors();
-	const currentTheme = Colors[colorScheme ?? "light"];
 	const [fontSize, setFontSize] = useState(DEFAULT_FONT_SIZE);
 	const increaseFont = () =>
 		setFontSize((prev) =>
@@ -85,7 +81,7 @@ export default function LyricsRenderer({ lyrics }: { lyrics: string }) {
 	};
 
 	return (
-		<ThemedView style={{ backgroundColor: colors.card, flex: 1 }}>
+		<ThemedView style={{ backgroundColor: colors.background, flex: 1 }}>
 			{/* Font size controls */}
 			{lyrics && (
 				<ThemedView style={styles.controls}>
@@ -94,7 +90,7 @@ export default function LyricsRenderer({ lyrics }: { lyrics: string }) {
 						onPress={decreaseFont}
 						disabled={isDecreaseDisabled}>
 						<MaterialIcons
-							color={currentTheme.text}
+							color={colors.text}
 							size={ICON_SIZE}
 							name={isDecreaseDisabled ? "block" : "text-decrease"}
 						/>
@@ -105,7 +101,7 @@ export default function LyricsRenderer({ lyrics }: { lyrics: string }) {
 						onPress={increaseFont}
 						disabled={isIncreaseDisabled}>
 						<MaterialIcons
-							color={currentTheme.text}
+							color={colors.text}
 							size={ICON_SIZE}
 							name={isIncreaseDisabled ? "block" : "text-increase"}
 						/>
@@ -116,7 +112,7 @@ export default function LyricsRenderer({ lyrics }: { lyrics: string }) {
 			{/* Lyrics renderer */}
 			{lyrics ? (
 				<ScrollView
-					style={{ backgroundColor: colors.card }}
+					style={{ backgroundColor: colors.background }}
 					contentContainerStyle={styles.scrollViewContainer}>
 					<ThemedView style={{ marginTop: fontSize }}>
 						{parseLyrics(lyrics).map((element, index: number) => (

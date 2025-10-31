@@ -2,30 +2,31 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Link, Tabs } from "expo-router";
 import React from "react";
 
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { BottomTabBarButtonProps } from "@react-navigation/bottom-tabs";
 import { PlatformPressable } from "@react-navigation/elements";
 import { TouchableOpacity } from "react-native";
 
+import { useColors } from "@/hooks/use-colors";
 import { isAdmin } from "@/lib/supabase";
 import { generateHref } from "@/utils/paramUtils";
 
 export default function TabLayout() {
-	const colorScheme = useColorScheme();
-	const currentTheme = Colors[colorScheme ?? "light"];
+	const colors = useColors();
 
 	return (
 		<Tabs
 			screenOptions={{
-				tabBarActiveTintColor: currentTheme.tint,
-				tabBarInactiveTintColor: currentTheme.inactiveTint,
+				tabBarActiveTintColor: colors.tint,
+				tabBarInactiveTintColor: "#999",
 				tabBarButton: (props: BottomTabBarButtonProps) => (
 					<PlatformPressable
 						{...props}
 						onPressIn={props.onPressIn}
 					/>
 				),
+				tabBarStyle: {
+					backgroundColor: colors.background
+				}
 			}}>
 			<Tabs.Screen
 				name="shows"
@@ -38,7 +39,7 @@ export default function TabLayout() {
 								asChild>
 								<TouchableOpacity>
 									<MaterialIcons
-										color={currentTheme.text}
+										color={colors.text}
 										size={28}
 										name="add"
 										style={{ marginRight: "2.5%" }}
@@ -56,6 +57,12 @@ export default function TabLayout() {
 					tabBarLabelStyle: {
 						fontSize: 15,
 					},
+					headerStyle: {
+						backgroundColor: colors.background
+					},
+					headerTitleStyle: {
+						color: colors.text
+					}
 				}}
 			/>
 			<Tabs.Screen
@@ -69,7 +76,7 @@ export default function TabLayout() {
 								asChild>
 								<TouchableOpacity>
 									<MaterialIcons
-										color={currentTheme.text}
+										color={colors.text}
 										size={28}
 										name="add"
 										style={{ marginRight: "2.5%" }}
@@ -87,6 +94,12 @@ export default function TabLayout() {
 					tabBarLabelStyle: {
 						fontSize: 15,
 					},
+					headerStyle: {
+						backgroundColor: colors.background
+					},
+					headerTitleStyle: {
+						color: colors.text
+					}
 				}}
 			/>
 		</Tabs>

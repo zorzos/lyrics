@@ -1,9 +1,8 @@
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { ModalProps, Show } from "@/types";
 import { ThemedText } from "../themed-text";
 
+import { useColors } from "@/hooks/use-colors";
 import { formatDate } from "@/utils/dateUtils";
-import { DarkTheme, DefaultTheme } from "@react-navigation/native";
 import {
 	Modal,
 	Pressable,
@@ -15,8 +14,7 @@ import { ThemedView } from "../themed-view";
 
 export default function InfoModal(modalProps: ModalProps) {
 	const { modalInfo, setModalInfo } = modalProps;
-	const colorScheme = useColorScheme();
-	const theme = colorScheme === "dark" ? DarkTheme : DefaultTheme;
+	const colors = useColors();
 
 	const renderModalValue = () => (
 		<ScrollView>
@@ -42,7 +40,7 @@ export default function InfoModal(modalProps: ModalProps) {
 				style={styles.wrapper}
 				onPress={() => setModalInfo(false)}>
 				<Pressable
-					style={[styles.inner, { backgroundColor: theme.colors.border }]}
+					style={[styles.inner, { backgroundColor: colors.background }]}
 					onPress={(e) => e.stopPropagation()}>
 					<ThemedText>{modalInfo?.label}</ThemedText>
 					<ThemedText>{renderModalValue()}</ThemedText>
@@ -50,12 +48,12 @@ export default function InfoModal(modalProps: ModalProps) {
 						onPress={() => setModalInfo(false)}
 						style={{
 							padding: 8,
-							backgroundColor: theme.colors.background,
+							backgroundColor: colors.background,
 							borderRadius: 12,
 							alignItems: "center",
 							width: "40%",
 							borderWidth: 1,
-							borderColor: theme.colors.text,
+							borderColor: colors.text,
 						}}>
 						<ThemedText>Close</ThemedText>
 					</TouchableOpacity>

@@ -1,4 +1,3 @@
-import { useTheme } from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useEffect, useLayoutEffect, useState } from "react";
@@ -21,6 +20,7 @@ import { getSongs } from "@/lib/queries/songs";
 import { supabase } from "@/lib/supabase";
 import { Show, Song } from "@/types";
 
+import { useColors } from "@/hooks/use-colors";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Toast from "react-native-toast-message";
 
@@ -30,7 +30,7 @@ interface Part {
 }
 
 export default function EditShowScreen() {
-	const { colors } = useTheme();
+	const colors = useColors();
 	const queryClient = useQueryClient();
 	const { id } = useLocalSearchParams(); // optional, for edit
 	const router = useRouter();
@@ -196,7 +196,7 @@ export default function EditShowScreen() {
 				style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
 				<ActivityIndicator
 					size="large"
-					color={colors.primary}
+					color={colors.text}
 				/>
 			</ThemedView>
 		);
@@ -230,8 +230,8 @@ export default function EditShowScreen() {
 					<Switch
 						value={draft}
 						onValueChange={setDraft}
-						thumbColor={draft ? colors.primary : "#fff"}
-						trackColor={{ false: "#ccc", true: colors.primary + "55" }}
+						thumbColor={draft ? 'blue' : "#fff"}
+						trackColor={{ false: "#ccc", true: 'blue' }}
 					/>
 				</ThemedView>
 
@@ -248,7 +248,7 @@ export default function EditShowScreen() {
 								key={index}
 								style={[
 									styles.partSegment,
-									isSelected && { backgroundColor: colors.primary },
+									isSelected && { backgroundColor: 'blue' },
 									!isSelected && { borderColor: colors.text, borderWidth: 1 },
 									p === availableParts[0] && {
 										borderTopLeftRadius: 8,

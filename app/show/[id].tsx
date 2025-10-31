@@ -1,11 +1,11 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { useColors } from "@/hooks/use-colors";
 import { getSongs } from "@/lib/queries/songs";
 import { ShowInfoTypes } from "@/types";
 import { generateHref, getSingleParam } from "@/utils/paramUtils";
 
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { useTheme } from "@react-navigation/native";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocalSearchParams, useNavigation } from "expo-router";
 import { useLayoutEffect } from "react";
@@ -17,7 +17,7 @@ import {
 } from "react-native";
 
 export default function ShowDetailScreen() {
-	const { colors } = useTheme();
+	const colors = useColors();
 	const { id, title, date } = useLocalSearchParams();
 	const showId: string | undefined = getSingleParam(id);
 	const showDate = getSingleParam(date);

@@ -7,11 +7,10 @@ import {
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useQuery } from "@tanstack/react-query";
 
-import { Colors } from "@/constants/theme";
+import { useColors } from "@/hooks/use-colors";
 import { getShows } from "@/lib/queries/shows";
 import { formatDate } from "@/utils/dateUtils";
 import { generateHref } from "@/utils/paramUtils";
@@ -19,8 +18,7 @@ import { categoriseShows } from "@/utils/showUtils"; // your new helper
 import { Link } from "expo-router";
 
 export default function Shows() {
-	const colorScheme = useColorScheme();
-	const currentTheme = Colors[colorScheme ?? "light"];
+	const colors = useColors();
 
 	const {
 		data: shows,
@@ -38,11 +36,11 @@ export default function Shows() {
 					flex: 1,
 					justifyContent: "center",
 					alignItems: "center",
-					backgroundColor: currentTheme.background,
+					backgroundColor: colors.background,
 				}}>
 				<ActivityIndicator
 					size="large"
-					color={currentTheme.text}
+					color={colors.text}
 				/>
 			</ThemedView>
 		);
@@ -56,16 +54,15 @@ export default function Shows() {
 					justifyContent: "center",
 					alignItems: "center",
 					padding: 16,
-					backgroundColor: currentTheme.background,
+					backgroundColor: colors.background,
 				}}>
-				<ThemedText style={{ color: currentTheme.text }}>
+				<ThemedText style={{ color: colors.text }}>
 					Error loading shows
 				</ThemedText>
 			</ThemedView>
 		);
 	}
 
-	// Categorize using helper
 	const sections = categoriseShows(shows).filter(
 		(section) => section.data.length > 0
 	);
@@ -77,7 +74,7 @@ export default function Shows() {
 				keyExtractor={(item) => item.id}
 				renderSectionHeader={({ section: { title } }) => (
 					<ThemedText
-						style={[styles.sectionHeader, { color: currentTheme.text }]}>
+						style={[styles.sectionHeader, { color: colors.text }]}>
 						{title}
 					</ThemedText>
 				)}
@@ -90,13 +87,13 @@ export default function Shows() {
 						})}
 						asChild>
 						<TouchableOpacity style={styles.item}>
-							<ThemedText style={[styles.text, { color: currentTheme.text }]}>
+							<ThemedText style={[styles.text, { color: colors.text }]}>
 								{`${item.title.substring(0, 15)} ${formatDate(
 									new Date(item.date)
 								)}`}
 							</ThemedText>
 							<MaterialIcons
-								color={currentTheme.text}
+								color={colors.text}
 								size={28}
 								name="play-arrow"
 							/>
