@@ -30,7 +30,7 @@ import AvailableSongsModal from "./AvailableSongsModal";
 export default function EditShowScreen() {
 	const colors = useColors();
 	const queryClient = useQueryClient();
-	const { id } = useLocalSearchParams(); // optional, for edit
+	const { id } = useLocalSearchParams();
 	const router = useRouter();
 
 	const [loading, setLoading] = useState(false);

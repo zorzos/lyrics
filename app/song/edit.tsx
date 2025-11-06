@@ -3,6 +3,7 @@ import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useEffect, useLayoutEffect, useState } from "react";
 import {
 	ActivityIndicator,
+	Keyboard,
 	KeyboardAvoidingView,
 	Platform,
 	StyleSheet,
@@ -244,7 +245,7 @@ export default function EditSongScreen() {
 							<ThemedView style={{ flex: 1 }}>
 								<ThemedText>Duration (seconds)</ThemedText>
 								<TextInput
-									style={[styles.input, { borderColor: colors.tint }]}
+									style={[styles.input, { borderColor: colors.tint, color: colors.text }]}
 									value={duration > 0 ? String(duration) : ""}
 									onChangeText={(text) => {
 										const numericValue = parseInt(text, 10);
@@ -257,7 +258,7 @@ export default function EditSongScreen() {
 							<ThemedView style={{ flex: 1 }}>
 								<ThemedText>BPM</ThemedText>
 								<TextInput
-									style={[styles.input, { borderColor: colors.tint }]}
+									style={[styles.input, { borderColor: colors.tint, color: colors.text }]}
 									value={bpm > 0 ? String(bpm) : ""}
 									onChangeText={(text) => {
 										const numericValue = parseInt(text, 10);
@@ -275,12 +276,14 @@ export default function EditSongScreen() {
 								setOpen={(val) => {
 									if (val) setSPKeyOpen(false);
 									setOGKeyOpen(val);
+									Keyboard.dismiss();
 								}}
 								label="Original Key"
 								value={originalKey}
 								onChange={(val) => {
 									setOriginalKey(val);
 									if (val === spKey) setSpKey("");
+									Keyboard.dismiss();
 								}}
 							/>
 							<KeyPicker
@@ -310,7 +313,7 @@ export default function EditSongScreen() {
 
 						<ThemedText>Lyrics</ThemedText>
 						<TextInput
-							style={[styles.input, { height: 120, borderColor: colors.tint }]}
+							style={[styles.input, { height: 120, borderColor: colors.tint, color: colors.text }]}
 							value={lyrics}
 							onChangeText={setLyrics}
 							multiline

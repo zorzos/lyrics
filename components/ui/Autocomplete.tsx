@@ -37,6 +37,7 @@ export default function AutocompleteInput<T extends Record<string, any>>({
 	const [filteredItems, setFilteredItems] = useState<T[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [showResults, setShowResults] = useState(false);
+	const [justSelected, setJustSelected] = useState(false);
 
 	useEffect(() => {
 		(async () => {
@@ -54,29 +55,37 @@ export default function AutocompleteInput<T extends Record<string, any>>({
 	}, [fetchData]);
 
 	useEffect(() => {
-		const q = query.toLowerCase().trim();
-		if (!q) {
-			setFilteredItems([]);
-			setShowResults(false);
+		if (justSelected) {
+			setJustSelected(false);
 			return;
 		}
+
+		const q = query.trim().toLowerCase();
+		if (!q) {
+			setFilteredItems([]);
+			return;
+		}
+
 		const filtered = items.filter((i) =>
 			String(i[labelKey]).toLowerCase().includes(q)
 		);
 		setFilteredItems(filtered);
-		setShowResults(true);
-	}, [query, items, labelKey]);
+	}, [query, items, labelKey, justSelected]);
 
 	const handleSelect = (item: T) => {
 		onChange(item);
 		setQuery(String(item[labelKey]));
+		setFilteredItems([]);
 		setShowResults(false);
+		setJustSelected(true);
 		Keyboard.dismiss();
 	};
 
 	const handleCreateSelect = () => {
 		onChange({ isNew: true, label: query.trim() });
+		setFilteredItems([]);
 		setShowResults(false);
+		setJustSelected(true);
 		Keyboard.dismiss();
 	};
 
@@ -100,9 +109,16 @@ export default function AutocompleteInput<T extends Record<string, any>>({
 		<ThemedView style={{ position: "relative", zIndex: 9999 }}>
 			<TextInput
 				value={query}
-				onChangeText={setQuery}
-				onFocus={() => setShowResults(true)}
-				placeholder="Tap to lookup artists"
+				onChangeText={(text) => {
+					setQuery(text);
+					setJustSelected(false);
+					setShowResults(true);
+				}}
+				onFocus={() => {
+					setJustSelected(false);
+					setShowResults(true);
+				}}
+				placeholder="Tap to lookup/createf artists"
 				placeholderTextColor="lightgray"
 				style={[
 					styles.input,
