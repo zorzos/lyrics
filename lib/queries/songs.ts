@@ -13,6 +13,7 @@ export async function getSongs(showId?: string): Promise<ShowSongsByParts> {
 					song_order,
 					songs (
 						*,
+						artist:artists(name),
 						song_tags (
 						tags (
 							id,
@@ -96,6 +97,7 @@ export async function getSongs(showId?: string): Promise<ShowSongsByParts> {
 				.select(
 					`
           *,
+		  artist:artists(name),
           song_tags (
             tags (
               id,
@@ -164,13 +166,15 @@ export async function getSong(songId: string): Promise<Song> {
 		const { data, error } = await supabase
 			.from("songs")
 			.select(
-				`*, show_songs(shows (
-								id,
-								title,
-								date,
-								draft,
-								parts
-							)) ,song_tags(tags(id,name,color))`
+				`*, 
+				artist:artists(name),
+				show_songs(shows (
+					id,
+					title,
+					date,
+					draft,
+					parts
+				)) ,song_tags(tags(id,name,color))`
 			)
 			.eq("id", songId)
 			.single();

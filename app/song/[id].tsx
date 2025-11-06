@@ -48,8 +48,6 @@ export default function SongDetailScreen() {
 		enabled: !!id,
 	});
 
-	console.log("SONG DATA", song);
-
 	const finalShows: Show[] = song?.shows ?? [];
 	const finalTags: TagType[] = song?.tags ?? [];
 	const durationNumber = Number(song?.duration);

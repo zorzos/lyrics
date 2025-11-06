@@ -33,6 +33,5 @@ export const getTotalPartTime = (songs: Song[]): string => {
 		hasHours && HOUR_FORMAT + ":" +
 			doubleDigitMinutes ? DOUBLE_MINUTE_FORMAT : SINGLE_MINUTE_FORMAT + ":" +
 		FORMAT_STRING;
-	console.log('formatString', formatString);
 	return duration.format(formatString);
 };

@@ -15,7 +15,7 @@ import {
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { supabase } from "@/lib/supabase";
-import { Song, TagType } from "@/types";
+import { TagType } from "@/types";
 
 import AutocompleteInput from "@/components/ui/Autocomplete";
 import KeyPicker from "@/components/ui/KeyPicker";
@@ -25,6 +25,9 @@ import getTags from "@/lib/queries/tags";
 import { getSingleParam } from "@/utils/paramUtils";
 import Toast from "react-native-toast-message";
 
+type NewArtist = { isNew: true; name: string };
+type Artist = NewArtist | string;
+
 export default function EditSongScreen() {
 	const colors = useColors();
 	const queryClient = useQueryClient();
@@ -32,7 +35,7 @@ export default function EditSongScreen() {
 	const router = useRouter();
 
 	const [title, setTitle] = useState<string>("");
-	const [artist, setArtist] = useState<string>("");
+	const [artist, setArtist] = useState<Artist>("");
 	const [duration, setDuration] = useState<number>(0);
 	const [lyrics, setLyrics] = useState<string>("");
 	const [availableTags, setAvailableTags] = useState<TagType[]>([]);
@@ -100,51 +103,70 @@ export default function EditSongScreen() {
 		fetchSong();
 	}, [id]);
 
-	const buildPayload = (): Omit<Song, "id"> | null => {
-		console.log('FIELDS', {
-			title,
-			artist,
-			originalKey,
-			spKey,
-			bpm,
-			duration,
-			lyrics,
-		});
+	const isArtistInput = (artist: Artist): artist is NewArtist => {
+		return typeof artist === "object" && artist !== null && "isNew" in artist;
+	}
 
+	const showToastError = (label: string) => {
+		Toast.show({
+			type: "error",
+			text1: label,
+			position: "bottom",
+			visibilityTime: 2000,
+		});
+	}
+
+	const buildPayload = async () => {
+		const trimmedTitle = title.trim();
 		const requiredFields = [
 			{ value: title.trim(), label: "Title" },
-			{ value: artist.trim(), label: "Artist" },
 			{ value: originalKey, label: "Original key" },
 			{ value: bpm, label: "BPM" },
 			{ value: duration, label: "Duration" },
-			{ value: lyrics, label: "Lyrics" },
+			// { value: lyrics, label: "Lyrics" },
 		];
 
 		const missing = requiredFields.find((f) => !f.value);
 
 		if (missing) {
-			Toast.show({
-				type: "error",
-				text1: `${missing.label} is required`,
-				position: "bottom",
-				visibilityTime: 2000,
-			});
+			showToastError(`${missing.label} is required`);
 			return null;
 		}
 
+		let artistId: string | null = null;
+
+		if (isArtistInput(artist)) {
+			try {
+				const { data, error } = await supabase
+					.from("artists")
+					.insert({ name: artist.name.trim() })
+					.select("id")
+					.single();
+				if (error || !data) throw error;
+				artistId = data.id;
+			} catch (err) {
+				showToastError("Failed to create artist in database");
+				throw Error("Failed to create artist in database");
+			}
+		} else {
+			artistId = artist;
+		}
+
+		if (!artistId) return showToastError("Artist ID is required");
+
 		return {
-			title: title.trim(),
-			artist: artist.trim(),
+			title: trimmedTitle,
+			artist_id: artistId,
 			duration,
-			lyrics: lyrics || "",
-			original_key: originalKey,
-			sp_key: spKey || undefined,
+			lyrics: lyrics?.trim() || "",
+			original_key: originalKey?.trim() || "",
+			sp_key: spKey?.trim() || undefined,
 			bpm,
 		};
 	};
 
 	const handleSave = async () => {
-		const payload = buildPayload();
+		const payload = await buildPayload();
 		if (!payload) return;
 
 		setLoading(true);
@@ -235,10 +257,10 @@ export default function EditSongScreen() {
 							}}
 							labelKey="name"
 							valueKey="id"
-							createItem={async (label: string) => {
+							createItem={async (name: string) => {
 								const { data } = await supabase
 									.from("artists")
-									.insert({ name: label })
+									.insert({ name })
 									.select()
 									.single();
 								return data;
@@ -387,7 +409,7 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		gap: 12,
 		marginBottom: 12,
-		overflow: 'visible',
+		overflow: 'visible'
 	},
 	tagsContainer: {
 		flexDirection: "row",

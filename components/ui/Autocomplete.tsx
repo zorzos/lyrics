@@ -14,11 +14,11 @@ import { ThemedView } from "../themed-view";
 
 interface AutocompleteInputProps<T> {
 	value: T | null;
-	onChange: (item: T | null | { isNew: true; label: string }) => void;
+	onChange: (item: T | null | { isNew: true; name: string }) => void;
 	fetchData: () => Promise<T[]>;
 	labelKey: keyof T;
 	valueKey: keyof T;
-	createItem?: (label: string) => Promise<T>;
+	createItem?: (name: string) => Promise<T>;
 	placeholder?: string;
 }
 
@@ -82,7 +82,7 @@ export default function AutocompleteInput<T extends Record<string, any>>({
 	};
 
 	const handleCreateSelect = () => {
-		onChange({ isNew: true, label: query.trim() });
+		onChange({ isNew: true, name: query.trim() });
 		setFilteredItems([]);
 		setShowResults(false);
 		setJustSelected(true);
@@ -118,7 +118,7 @@ export default function AutocompleteInput<T extends Record<string, any>>({
 					setJustSelected(false);
 					setShowResults(true);
 				}}
-				placeholder="Tap to lookup/createf artists"
+				placeholder="Tap to lookup/create artists"
 				placeholderTextColor="lightgray"
 				style={[
 					styles.input,
