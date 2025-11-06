@@ -16,6 +16,8 @@ export default function KeyPicker({
 	onChange,
 	removeKey,
 	extraOptions,
+	zIndex,
+	zIndexInverse
 }: KeyPickerProps) {
 	const colors = useColors();
 	const items = getMusicalKeys(colors.background, colors.text);
@@ -25,7 +27,6 @@ export default function KeyPicker({
 		const filteredItems = combinedItems.filter((i) => i.value !== removeKey);
 		return filteredItems.map((i) => ({
 			...i,
-			// merge themed styles here
 			containerStyle: {
 				backgroundColor: i.value === removeKey ? colors.text : colors.background,
 				...(i.containerStyle || {}),
@@ -44,7 +45,7 @@ export default function KeyPicker({
 	}, [removeKey, items, extraOptions, colors]);
 
 	return (
-		<ThemedView style={styles.container}>
+		<ThemedView style={[styles.container, { overflow: 'visible' }]}>
 			<ThemedText>{label}</ThemedText>
 			<DropDownPicker
 				open={open}
@@ -69,21 +70,16 @@ export default function KeyPicker({
 				labelStyle={{ color: colors.text }}
 				placeholderStyle={{ color: colors.text }}
 				ArrowUpIconComponent={() => (
-					<MaterialIcons
-						name="keyboard-arrow-up"
-						size={20}
-						color="white"
-					/>
+					<MaterialIcons name="keyboard-arrow-up" size={20} color="white" />
 				)}
 				ArrowDownIconComponent={() => (
-					<MaterialIcons
-						name="keyboard-arrow-down"
-						size={20}
-						color="white"
-					/>
+					<MaterialIcons name="keyboard-arrow-down" size={20} color="white" />
 				)}
-				zIndex={2000}
-				zIndexInverse={1000}
+				zIndex={zIndex}
+				zIndexInverse={zIndexInverse}
+				listMode="SCROLLVIEW"
+				maxHeight={200} // ensures scrollable height
+				scrollViewProps={{ nestedScrollEnabled: true }}
 			/>
 		</ThemedView>
 	);
@@ -91,6 +87,7 @@ export default function KeyPicker({
 
 const styles = StyleSheet.create({
 	container: {
-		flex: 1,
+		flex: 1, // allows side-by-side layout
+		marginHorizontal: 4,
 	},
 });

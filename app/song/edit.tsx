@@ -101,6 +101,16 @@ export default function EditSongScreen() {
 	}, [id]);
 
 	const buildPayload = (): Omit<Song, "id"> | null => {
+		console.log('FIELDS', {
+			title,
+			artist,
+			originalKey,
+			spKey,
+			bpm,
+			duration,
+			lyrics,
+		});
+
 		const requiredFields = [
 			{ value: title.trim(), label: "Title" },
 			{ value: artist.trim(), label: "Artist" },
@@ -270,7 +280,7 @@ export default function EditSongScreen() {
 						</ThemedView>
 
 						{/* Keys */}
-						<ThemedView style={[styles.keysRow, { position: "relative", zIndex: 2000, elevation: 2000 }]}>
+						<ThemedView style={styles.keysRow}>
 							<KeyPicker
 								open={ogKeyOpen}
 								setOpen={(val) => {
@@ -285,16 +295,22 @@ export default function EditSongScreen() {
 									if (val === spKey) setSpKey("");
 									Keyboard.dismiss();
 								}}
+								zIndex={5000}
+								zIndexInverse={1000}
 							/>
 							<KeyPicker
 								open={spKeyOpen}
 								setOpen={(val) => {
 									if (val) setOGKeyOpen(false);
 									setSPKeyOpen(val);
+									Keyboard.dismiss();
 								}}
 								label="New Key (optional)"
 								value={spKey}
-								onChange={(val) => setSpKey(val === "none" ? "" : val)}
+								onChange={(val) => {
+									setSpKey(val === "none" ? "" : val);
+									Keyboard.dismiss();
+								}}
 								removeKey={originalKey}
 								extraOptions={[
 									{
@@ -308,6 +324,8 @@ export default function EditSongScreen() {
 										},
 									},
 								]}
+								zIndex={4000}
+								zIndexInverse={2000}
 							/>
 						</ThemedView>
 
@@ -369,6 +387,7 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		gap: 12,
 		marginBottom: 12,
+		overflow: 'visible',
 	},
 	tagsContainer: {
 		flexDirection: "row",

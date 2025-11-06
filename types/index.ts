@@ -107,6 +107,8 @@ export interface KeyPickerProps {
 		containerStyle?: object;
 		labelStyle?: object;
 	}[];
+	zIndex: number;
+	zIndexInverse: number;
 };
 
 export interface Part {
