@@ -3,7 +3,12 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "start": "expo start",
+    "env:prod": "cp .env.production .env",
+    "env:exp": "cp .env.experiment .env",
+    "env:admin": "cp .env.admin .env",
+    "start:prod": "npm run env:prod && npx expo start",
+    "start:exp": "npm run env:exp && npx expo start",
+    "start:admin": "npm run env:admin && npx expo start",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo run:android",
     "ios": "expo run:ios",
