@@ -9,8 +9,13 @@ import { TagProvider } from "@/context/TagContext";
 import { useColors } from "@/hooks/use-colors";
 import { useToastConfig } from "@/lib/toastConfig";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import Constants from "expo-constants";
 import { useColorScheme } from "react-native";
 import Toast from "react-native-toast-message";
+
+type ExtraConfig = {
+	[k: string]: string;
+}
 
 export default function RootLayout() {
 	const queryClient = new QueryClient();
@@ -20,13 +25,26 @@ export default function RootLayout() {
 	const isDarkTheme = colorScheme === 'dark';
 	const statusBarStyle = isDarkTheme ? 'light' : 'dark';
 	const colors = useColors();
+	const extra = Constants.expoConfig?.extra as ExtraConfig;
+	const isExperimental = extra.name === 'experiment';
+	const experimentalStyles = {
+		borderWidth: 5,
+		borderColor: extra.color
+	};
 
 	return (
 		<QueryClientProvider client={queryClient}>
 			<TagProvider>
 				<NetworkProvider>
 					<ThemedView
-						style={{ flex: 1, backgroundColor: colors.background }}>
+						style={[
+							{
+								flex: 1,
+								backgroundColor: colors.background
+							},
+							isExperimental && experimentalStyles
+						]}
+					>
 						<Stack
 							screenOptions={{
 								animation: "slide_from_right",
