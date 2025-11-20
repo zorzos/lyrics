@@ -3,9 +3,9 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "env:prod": "cp .env.production .env",
-    "env:exp": "cp .env.experiment .env",
-    "env:admin": "cp .env.admin .env",
+    "env:prod": "shx cp .env.production .env",
+    "env:exp": "shx cp .env.experiment .env",
+    "env:admin": "shx cp .env.admin .env",
     "start:prod": "npm run env:prod && npx expo start",
     "start:exp": "npm run env:exp && npx expo start",
     "start:admin": "npm run env:admin && npx expo start",
@@ -14,8 +14,8 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "build:admin": "cp .env.admin .env && expo build:android",
-    "build:public": "cp .env.public .env && expo build:android",
+    "build:admin": "shx cp .env.admin .env && expo build:android",
+    "build:public": "shx cp .env.public .env && expo build:android",
     "build:both": "npm run build:admin && npm run build:public"
   },
   "dependencies": {
@@ -61,6 +61,7 @@
     "@types/react": "~19.1.0",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
+    "shx": "^0.4.0",
     "typescript": "~5.9.2"
   },
   "private": true
