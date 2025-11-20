@@ -26,7 +26,7 @@ import { getSingleParam } from "@/utils/paramUtils";
 import Toast from "react-native-toast-message";
 
 type NewArtist = { isNew: true; name: string };
-type Artist = NewArtist | string;
+type Artist = { id: number; name: string } | NewArtist;
 
 export default function EditSongScreen() {
 	const colors = useColors();
@@ -35,7 +35,8 @@ export default function EditSongScreen() {
 	const router = useRouter();
 
 	const [title, setTitle] = useState<string>("");
-	const [artist, setArtist] = useState<Artist>("");
+	// const [artist, setArtist] = useState<Artist>("");
+	const [artist, setArtist] = useState<Artist[]>([]);
 	const [duration, setDuration] = useState<number>(0);
 	const [lyrics, setLyrics] = useState<string>("");
 	const [availableTags, setAvailableTags] = useState<TagType[]>([]);
@@ -77,7 +78,7 @@ export default function EditSongScreen() {
 				if (!result) console.error("Song not found");
 				else {
 					setTitle(result.title);
-					setArtist(result.artist);
+					// setArtist(result.artist);
 					setDuration(result.duration);
 					setLyrics(result.lyrics ?? "");
 					setOriginalKey(result.original_key ?? "");
@@ -117,12 +118,11 @@ export default function EditSongScreen() {
 	}
 
 	const buildPayload = async () => {
-		const trimmedTitle = title.trim();
 		const requiredFields = [
 			{ value: title.trim(), label: "Title" },
-			{ value: originalKey, label: "Original key" },
-			{ value: bpm, label: "BPM" },
 			{ value: duration, label: "Duration" },
+			{ value: bpm, label: "BPM" },
+			{ value: originalKey, label: "Original key" },
 			// { value: lyrics, label: "Lyrics" },
 		];
 
@@ -135,34 +135,35 @@ export default function EditSongScreen() {
 
 		let artistId: string | null = null;
 
-		if (isArtistInput(artist)) {
-			try {
-				const { data, error } = await supabase
-					.from("artists")
-					.insert({ name: artist.name.trim() })
-					.select("id")
-					.single();
-				if (error || !data) throw error;
-				artistId = data.id;
-			} catch (err) {
-				showToastError("Failed to create artist in database");
-				throw Error("Failed to create artist in database");
-			}
-		} else {
-			artistId = artist;
-		}
+		console.log('ARTISTS COUNT', artist.length);
 
-		if (!artistId) return showToastError("Artist ID is required");
+		const newArtists = artist.filter(item => Object.keys(item).includes('isNew'));
+		console.log('NEW ARTISTS', newArtists);
+		const existingArtists = artist.filter(item => Object.keys(item).includes('id'));
+		console.log('EXISTING ARTISTS', existingArtists);
 
-		return {
-			title: trimmedTitle,
-			artist_id: artistId,
-			duration,
-			lyrics: lyrics?.trim() || "",
-			original_key: originalKey?.trim() || "",
-			sp_key: spKey?.trim() || undefined,
-			bpm,
-		};
+
+		// if (isArtistInput(artist)) {
+		// 	try {
+		// 		const { data, error } = await supabase
+		// 			.from("artists")
+		// 			.insert({ name: artist.name.trim() })
+		// 			.select("id")
+		// 			.single();
+		// 		if (error || !data) throw error;
+		// 		artistId = data.id;
+		// 	} catch (err) {
+		// 		showToastError("Failed to create artist in database");
+		// 		throw Error("Failed to create artist in database");
+		// 	}
+		// } else {
+		// 	artistId = artist;
+		// }
+
+		// if (!artistId) return showToastError("Artist ID is required");
+
+		return {};
+
 	};
 
 	const handleSave = async () => {
@@ -257,14 +258,14 @@ export default function EditSongScreen() {
 							}}
 							labelKey="name"
 							valueKey="id"
-							createItem={async (name: string) => {
-								const { data } = await supabase
-									.from("artists")
-									.insert({ name })
-									.select()
-									.single();
-								return data;
-							}}
+						// createItem={async (name: string) => {
+						// 	const { data } = await supabase
+						// 		.from("artists")
+						// 		.insert({ name })
+						// 		.select()
+						// 		.single();
+						// 	return data;
+						// }}
 						/>
 
 
@@ -385,7 +386,7 @@ export default function EditSongScreen() {
 
 						<TouchableOpacity
 							style={styles.saveButton}
-							onPress={handleSave}
+							onPress={buildPayload}
 							disabled={loading}>
 							<ThemedText style={{ color: "#FFF", textAlign: "center" }}>
 								{loading ? "Saving..." : "Save"}
