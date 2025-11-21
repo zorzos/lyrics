@@ -106,7 +106,7 @@ export default function EditSongScreen() {
 
 	const isArtistInput = (artist: Artist): artist is NewArtist => {
 		return typeof artist === "object" && artist !== null && "isNew" in artist;
-	}
+	};
 
 	const showToastError = (label: string) => {
 		Toast.show({
@@ -115,7 +115,7 @@ export default function EditSongScreen() {
 			position: "bottom",
 			visibilityTime: 2000,
 		});
-	}
+	};
 
 	const buildPayload = async () => {
 		const requiredFields = [
@@ -135,13 +135,16 @@ export default function EditSongScreen() {
 
 		let artistId: string | null = null;
 
-		console.log('ARTISTS COUNT', artist.length);
+		console.log("ARTISTS COUNT", artist.length);
 
-		const newArtists = artist.filter(item => Object.keys(item).includes('isNew'));
-		console.log('NEW ARTISTS', newArtists);
-		const existingArtists = artist.filter(item => Object.keys(item).includes('id'));
-		console.log('EXISTING ARTISTS', existingArtists);
-
+		const newArtists = artist.filter((item) =>
+			Object.keys(item).includes("isNew")
+		);
+		console.log("NEW ARTISTS", newArtists);
+		const existingArtists = artist.filter((item) =>
+			Object.keys(item).includes("id")
+		);
+		console.log("EXISTING ARTISTS", existingArtists);
 
 		// if (isArtistInput(artist)) {
 		// 	try {
@@ -163,7 +166,6 @@ export default function EditSongScreen() {
 		// if (!artistId) return showToastError("Artist ID is required");
 
 		return {};
-
 	};
 
 	const handleSave = async () => {
@@ -239,7 +241,7 @@ export default function EditSongScreen() {
 						<TextInput
 							style={[
 								styles.input,
-								{ color: colors.text, borderColor: colors.text }
+								{ color: colors.text, borderColor: colors.text },
 							]}
 							value={title}
 							onChangeText={setTitle}
@@ -247,17 +249,17 @@ export default function EditSongScreen() {
 
 						<ThemedText>Artist</ThemedText>
 						<AutocompleteInput
-							value={artist}
-							onChange={setArtist}
-							fetchData={async () => {
-								const { data } = await supabase
-									.from("artists")
-									.select("id, name")
-									.order("name");
-								return data || [];
-							}}
-							labelKey="name"
-							valueKey="id"
+						// value={artist}
+						// onChange={setArtist}
+						// fetchData={async () => {
+						// 	const { data } = await supabase
+						// 		.from("artists")
+						// 		.select("id, name")
+						// 		.order("name");
+						// 	return data || [];
+						// }}
+						// labelKey="name"
+						// valueKey="id"
 						// createItem={async (name: string) => {
 						// 	const { data } = await supabase
 						// 		.from("artists")
@@ -268,7 +270,6 @@ export default function EditSongScreen() {
 						// }}
 						/>
 
-
 						<ThemedView
 							style={{
 								flexDirection: "row",
@@ -278,7 +279,10 @@ export default function EditSongScreen() {
 							<ThemedView style={{ flex: 1 }}>
 								<ThemedText>Duration (seconds)</ThemedText>
 								<TextInput
-									style={[styles.input, { borderColor: colors.tint, color: colors.text }]}
+									style={[
+										styles.input,
+										{ borderColor: colors.tint, color: colors.text },
+									]}
 									value={duration > 0 ? String(duration) : ""}
 									onChangeText={(text) => {
 										const numericValue = parseInt(text, 10);
@@ -291,7 +295,10 @@ export default function EditSongScreen() {
 							<ThemedView style={{ flex: 1 }}>
 								<ThemedText>BPM</ThemedText>
 								<TextInput
-									style={[styles.input, { borderColor: colors.tint, color: colors.text }]}
+									style={[
+										styles.input,
+										{ borderColor: colors.tint, color: colors.text },
+									]}
 									value={bpm > 0 ? String(bpm) : ""}
 									onChangeText={(text) => {
 										const numericValue = parseInt(text, 10);
@@ -354,7 +361,10 @@ export default function EditSongScreen() {
 
 						<ThemedText>Lyrics</ThemedText>
 						<TextInput
-							style={[styles.input, { height: 120, borderColor: colors.tint, color: colors.text }]}
+							style={[
+								styles.input,
+								{ height: 120, borderColor: colors.tint, color: colors.text },
+							]}
 							value={lyrics}
 							onChangeText={setLyrics}
 							multiline
@@ -410,7 +420,7 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		gap: 12,
 		marginBottom: 12,
-		overflow: 'visible'
+		overflow: "visible",
 	},
 	tagsContainer: {
 		flexDirection: "row",
