@@ -1,7 +1,7 @@
 import { useColors } from "@/hooks/use-colors";
 import { AutocompleteItem, AutocompleteProps } from "@/types";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
 	FlatList,
 	Keyboard,
@@ -23,7 +23,15 @@ export default function AutocompleteInput({
 	const [query, setQuery] = useState("");
 	const [showDropdown, setShowDropdown] = useState(false);
 
-	// --- Filter available options and sort alphabetically
+	// --- Hide dropdown when keyboard is dismissed
+	useEffect(() => {
+		const hideListener = Keyboard.addListener("keyboardDidHide", () => {
+			setShowDropdown(false);
+		});
+		return () => hideListener.remove();
+	}, []);
+
+	// --- Filter options and append "create new" if needed
 	const filteredOptions = useMemo(() => {
 		const selectedIds = new Set(value.map((i) => i.id));
 		const filtered = data
@@ -33,7 +41,6 @@ export default function AutocompleteInput({
 				a.label.toLowerCase().localeCompare(b.label.toLowerCase())
 			);
 
-		// Append "Create new" if needed
 		if (
 			query.trim() &&
 			!filtered.some(
@@ -125,10 +132,10 @@ export default function AutocompleteInput({
 				)}
 			</View>
 
-			{/* Dropdown with tap-outside overlay */}
+			{/* Dropdown + overlay */}
 			{showDropdown && filteredOptions.length > 0 && (
 				<>
-					{/* Full-screen transparent overlay to catch taps outside */}
+					{/* Full-screen overlay to catch taps outside */}
 					<TouchableOpacity
 						style={{
 							position: "absolute",
