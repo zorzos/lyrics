@@ -15,7 +15,7 @@ import {
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { supabase } from "@/lib/supabase";
-import { TagType } from "@/types";
+import { AutocompleteItem, TagType } from "@/types";
 
 import AutocompleteInput from "@/components/ui/Autocomplete";
 import KeyPicker from "@/components/ui/KeyPicker";
@@ -28,6 +28,14 @@ import Toast from "react-native-toast-message";
 type NewArtist = { isNew: true; name: string };
 type Artist = { id: number; name: string } | NewArtist;
 
+const allArtists: AutocompleteItem[] = [
+	{ id: "1", label: "Artist 1", isNew: false },
+	{ id: "2", label: "Artist 2", isNew: false },
+	{ id: "3", label: "Test artist", isNew: false },
+	{ id: "4", label: "Another artist", isNew: false },
+	{ id: "5", label: "Sample artist", isNew: false },
+];
+
 export default function EditSongScreen() {
 	const colors = useColors();
 	const queryClient = useQueryClient();
@@ -35,8 +43,9 @@ export default function EditSongScreen() {
 	const router = useRouter();
 
 	const [title, setTitle] = useState<string>("");
-	// const [artist, setArtist] = useState<Artist>("");
-	const [artist, setArtist] = useState<Artist[]>([]);
+	const [selectedArtists, setSelectedArtists] = useState<AutocompleteItem[]>(
+		[]
+	);
 	const [duration, setDuration] = useState<number>(0);
 	const [lyrics, setLyrics] = useState<string>("");
 	const [availableTags, setAvailableTags] = useState<TagType[]>([]);
@@ -133,17 +142,11 @@ export default function EditSongScreen() {
 			return null;
 		}
 
-		let artistId: string | null = null;
+		console.log("ARTISTS COUNT", selectedArtists.length);
 
-		console.log("ARTISTS COUNT", artist.length);
-
-		const newArtists = artist.filter((item) =>
-			Object.keys(item).includes("isNew")
-		);
+		const newArtists = selectedArtists.filter((item) => item.isNew);
 		console.log("NEW ARTISTS", newArtists);
-		const existingArtists = artist.filter((item) =>
-			Object.keys(item).includes("id")
-		);
+		const existingArtists = selectedArtists.filter((item) => !item.isNew);
 		console.log("EXISTING ARTISTS", existingArtists);
 
 		// if (isArtistInput(artist)) {
@@ -249,25 +252,10 @@ export default function EditSongScreen() {
 
 						<ThemedText>Artist</ThemedText>
 						<AutocompleteInput
-						// value={artist}
-						// onChange={setArtist}
-						// fetchData={async () => {
-						// 	const { data } = await supabase
-						// 		.from("artists")
-						// 		.select("id, name")
-						// 		.order("name");
-						// 	return data || [];
-						// }}
-						// labelKey="name"
-						// valueKey="id"
-						// createItem={async (name: string) => {
-						// 	const { data } = await supabase
-						// 		.from("artists")
-						// 		.insert({ name })
-						// 		.select()
-						// 		.single();
-						// 	return data;
-						// }}
+							value={selectedArtists}
+							onChange={setSelectedArtists}
+							data={allArtists}
+							placeholder="Select artist"
 						/>
 
 						<ThemedView
