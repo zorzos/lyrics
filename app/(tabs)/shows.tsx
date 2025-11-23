@@ -10,15 +10,49 @@ import { ThemedView } from "@/components/themed-view";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useQuery } from "@tanstack/react-query";
 
-import { useColors } from "@/hooks/use-colors";
+import { ColorTheme, useColors } from "@/hooks/use-colors";
 import { getShows } from "@/lib/queries/shows";
 import { formatDate } from "@/utils/dateUtils";
 import { generateHref } from "@/utils/paramUtils";
 import { categoriseShows } from "@/utils/showUtils"; // your new helper
 import { Link } from "expo-router";
 
+const createStyles = (colors: ColorTheme) =>
+	StyleSheet.create({
+		container: { flex: 1, paddingHorizontal: "2.5%" },
+		sectionHeader: {
+			fontSize: 18,
+			fontWeight: "bold",
+			marginTop: 16,
+			marginBottom: 8,
+			color: colors.text,
+		},
+		item: {
+			paddingVertical: 12,
+			borderBottomWidth: 1,
+			borderBottomColor: "#lightgray",
+			borderBottomEndRadius: 16,
+			borderBottomStartRadius: 16,
+			flexDirection: "row",
+			justifyContent: "space-between",
+			alignItems: "center",
+			flex: 1,
+		},
+		text: {
+			fontSize: 16,
+			color: colors.text,
+		},
+		errorView: {
+			flex: 1,
+			justifyContent: "center",
+			alignItems: "center",
+			backgroundColor: colors.background,
+		},
+	});
+
 export default function Shows() {
 	const colors = useColors();
+	const styles = createStyles(colors);
 
 	const {
 		data: shows,
@@ -31,13 +65,7 @@ export default function Shows() {
 
 	if (isLoading) {
 		return (
-			<ThemedView
-				style={{
-					flex: 1,
-					justifyContent: "center",
-					alignItems: "center",
-					backgroundColor: colors.background,
-				}}>
+			<ThemedView style={styles.errorView}>
 				<ActivityIndicator
 					size="large"
 					color={colors.text}
@@ -56,9 +84,7 @@ export default function Shows() {
 					padding: 16,
 					backgroundColor: colors.background,
 				}}>
-				<ThemedText style={{ color: colors.text }}>
-					Error loading shows
-				</ThemedText>
+				<ThemedText style={styles.text}>Error loading shows</ThemedText>
 			</ThemedView>
 		);
 	}
@@ -73,10 +99,7 @@ export default function Shows() {
 				sections={sections}
 				keyExtractor={(item) => item.id}
 				renderSectionHeader={({ section: { title } }) => (
-					<ThemedText
-						style={[styles.sectionHeader, { color: colors.text }]}>
-						{title}
-					</ThemedText>
+					<ThemedText style={styles.sectionHeader}>{title}</ThemedText>
 				)}
 				renderItem={({ item }) => (
 					<Link
@@ -87,7 +110,7 @@ export default function Shows() {
 						})}
 						asChild>
 						<TouchableOpacity style={styles.item}>
-							<ThemedText style={[styles.text, { color: colors.text }]}>
+							<ThemedText style={styles.text}>
 								{`${item.title.substring(0, 15)} ${formatDate(
 									new Date(item.date)
 								)}`}
@@ -104,25 +127,3 @@ export default function Shows() {
 		</ThemedView>
 	);
 }
-
-const styles = StyleSheet.create({
-	container: { flex: 1, paddingHorizontal: "2.5%" },
-	sectionHeader: {
-		fontSize: 18,
-		fontWeight: "bold",
-		marginTop: 16,
-		marginBottom: 8,
-	},
-	item: {
-		paddingVertical: 12,
-		borderBottomWidth: 1,
-		borderBottomColor: "#lightgray",
-		borderBottomEndRadius: 16,
-		borderBottomStartRadius: 16,
-		flexDirection: "row",
-		justifyContent: "space-between",
-		alignItems: "center",
-		flex: 1,
-	},
-	text: { fontSize: 16 },
-});
