@@ -1,6 +1,7 @@
 import { useColorScheme } from "react-native";
 
 export interface ColorTheme {
+	accent: string;
 	text: string;
 	background: string;
 	tint: string;

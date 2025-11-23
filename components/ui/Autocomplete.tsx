@@ -1,4 +1,4 @@
-import { useColors } from "@/hooks/use-colors";
+import { ColorTheme, useColors } from "@/hooks/use-colors";
 import { AutocompleteItem, AutocompleteProps } from "@/types";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import React, { useEffect, useMemo, useState } from "react";
@@ -6,12 +6,49 @@ import {
 	FlatList,
 	Keyboard,
 	StyleSheet,
-	Text,
 	TextInput,
 	TouchableOpacity,
-	View,
 } from "react-native";
+import { ThemedText } from "../themed-text";
 import { ThemedView } from "../themed-view";
+
+const createStyles = (colors: ColorTheme) =>
+	StyleSheet.create({
+		chipsContainer: {
+			flexDirection: "row",
+			flexWrap: "wrap",
+			gap: 8,
+			marginBottom: 4,
+		},
+		chip: {
+			paddingHorizontal: 8,
+			paddingVertical: 2,
+			borderRadius: 20,
+			flexDirection: "row",
+			alignItems: "center",
+			borderWidth: 1,
+			gap: 4,
+			borderColor: colors.placeholder,
+		},
+		input: {
+			borderWidth: 1,
+			borderRadius: 4,
+			padding: 6,
+			fontSize: 16,
+			marginBottom: 4,
+		},
+		dropdown: {
+			borderWidth: 1,
+			borderRadius: 4,
+			maxHeight: 200,
+		},
+		item: {
+			padding: 10,
+			borderBottomWidth: 1,
+			borderBottomColor: "#ccc",
+			backgroundColor: colors.background,
+		},
+	});
 
 export default function AutocompleteInput({
 	value,
@@ -20,6 +57,7 @@ export default function AutocompleteInput({
 	placeholder = "Select artist",
 }: AutocompleteProps) {
 	const colors = useColors();
+	const styles = createStyles(colors);
 	const [query, setQuery] = useState("");
 	const [showDropdown, setShowDropdown] = useState(false);
 
@@ -70,17 +108,16 @@ export default function AutocompleteInput({
 
 	return (
 		<ThemedView>
-			{/* Chips */}
-			<View style={styles.chipsContainer}>
+			<ThemedView style={styles.chipsContainer}>
 				{value.map((item) => (
-					<View
+					<ThemedView
 						key={item.id}
 						style={{
 							...styles.chip,
 							backgroundColor: item.isNew ? colors.accent : colors.background,
-							borderColor: colors.placeholder,
+							// opacity: item.isNew ? 0.95 : 1,
 						}}>
-						<Text style={{ color: colors.text }}>{item.label}</Text>
+						<ThemedText style={{ color: colors.text }}>{item.label}</ThemedText>
 						<TouchableOpacity onPress={() => removeItem(item.id)}>
 							<MaterialIcons
 								color={colors.text}
@@ -88,12 +125,11 @@ export default function AutocompleteInput({
 								size={16}
 							/>
 						</TouchableOpacity>
-					</View>
+					</ThemedView>
 				))}
-			</View>
+			</ThemedView>
 
-			{/* Search input with clear button */}
-			<View style={{ position: "relative" }}>
+			<ThemedView style={{ position: "relative" }}>
 				<TextInput
 					value={query}
 					onChangeText={(text) => {
@@ -112,15 +148,15 @@ export default function AutocompleteInput({
 					}}
 				/>
 
-				{query.length > 0 && (
+				{query.length > 0 ? (
 					<TouchableOpacity
 						style={{
 							position: "absolute",
-							right: 6,
+							right: "1.5%",
 							top: 0,
 							bottom: 0,
 							justifyContent: "center",
-							padding: 4,
+							padding: "1%",
 						}}
 						onPress={() => setQuery("")}>
 						<MaterialIcons
@@ -129,11 +165,23 @@ export default function AutocompleteInput({
 							color={colors.text}
 						/>
 					</TouchableOpacity>
+				) : (
+					<MaterialIcons
+						color={colors.text}
+						name="keyboard-arrow-down"
+						size={20}
+						style={{
+							position: "absolute",
+							right: "2%",
+							top: "20%",
+							alignItems: "center",
+						}}
+					/>
 				)}
-			</View>
+			</ThemedView>
 
 			{/* Dropdown + overlay */}
-			{showDropdown && filteredOptions.length > 0 && (
+			{showDropdown && (
 				<>
 					{/* Full-screen overlay to catch taps outside */}
 					<TouchableOpacity
@@ -162,15 +210,22 @@ export default function AutocompleteInput({
 						keyboardShouldPersistTaps="handled"
 						renderItem={({ item }) => (
 							<TouchableOpacity
-								style={{
-									...styles.item,
-									backgroundColor: colors.background,
-								}}
+								style={styles.item}
 								onPress={() => handleSelect(item)}>
-								<Text style={{ color: colors.text }}>
+								<ThemedText style={{ color: colors.text }}>
 									{item.isNew ? `Create "${item.label}"` : item.label}
-								</Text>
+								</ThemedText>
 							</TouchableOpacity>
+						)}
+						ListEmptyComponent={() => (
+							<ThemedText
+								style={{
+									color: colors.placeholder,
+									textAlign: "center",
+									paddingVertical: 6,
+								}}>
+								There are no artists left!
+							</ThemedText>
 						)}
 					/>
 				</>
@@ -178,40 +233,3 @@ export default function AutocompleteInput({
 		</ThemedView>
 	);
 }
-
-const styles = StyleSheet.create({
-	chipsContainer: {
-		flexDirection: "row",
-		flexWrap: "wrap",
-		gap: 8,
-		marginBottom: 4,
-	},
-	chip: {
-		paddingHorizontal: 10,
-		paddingVertical: 6,
-		borderRadius: 20,
-		flexDirection: "row",
-		alignItems: "center",
-		borderWidth: 1,
-		gap: 4,
-		marginRight: 6,
-		marginBottom: 6,
-	},
-	input: {
-		borderWidth: 1,
-		borderRadius: 4,
-		padding: 6,
-		fontSize: 16,
-		marginBottom: 4,
-	},
-	dropdown: {
-		borderWidth: 1,
-		borderRadius: 4,
-		maxHeight: 200,
-	},
-	item: {
-		padding: 10,
-		borderBottomWidth: 1,
-		borderBottomColor: "#ccc",
-	},
-});

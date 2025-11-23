@@ -25,9 +25,6 @@ import getTags from "@/lib/queries/tags";
 import { getSingleParam } from "@/utils/paramUtils";
 import Toast from "react-native-toast-message";
 
-type NewArtist = { isNew: true; name: string };
-type Artist = { id: number; name: string } | NewArtist;
-
 const allArtists: AutocompleteItem[] = [
 	{ id: "1", label: "Artist 1", isNew: false },
 	{ id: "2", label: "Artist 2", isNew: false },
@@ -42,7 +39,7 @@ export default function EditSongScreen() {
 	const { id } = useLocalSearchParams();
 	const router = useRouter();
 
-	const [title, setTitle] = useState<string>("");
+	const [tempTitle, setTitle] = useState<string>("");
 	const [selectedArtists, setSelectedArtists] = useState<AutocompleteItem[]>(
 		[]
 	);
@@ -113,10 +110,6 @@ export default function EditSongScreen() {
 		fetchSong();
 	}, [id]);
 
-	const isArtistInput = (artist: Artist): artist is NewArtist => {
-		return typeof artist === "object" && artist !== null && "isNew" in artist;
-	};
-
 	const showToastError = (label: string) => {
 		Toast.show({
 			type: "error",
@@ -127,8 +120,10 @@ export default function EditSongScreen() {
 	};
 
 	const buildPayload = async () => {
+		const title = tempTitle.trim();
 		const requiredFields = [
-			{ value: title.trim(), label: "Title" },
+			{ value: title, label: "Title" },
+			{ value: selectedArtists, label: "Artist" },
 			{ value: duration, label: "Duration" },
 			{ value: bpm, label: "BPM" },
 			{ value: originalKey, label: "Original key" },
@@ -142,32 +137,39 @@ export default function EditSongScreen() {
 			return null;
 		}
 
-		console.log("ARTISTS COUNT", selectedArtists.length);
-
-		const newArtists = selectedArtists.filter((item) => item.isNew);
-		console.log("NEW ARTISTS", newArtists);
 		const existingArtists = selectedArtists.filter((item) => !item.isNew);
 		console.log("EXISTING ARTISTS", existingArtists);
 
-		// if (isArtistInput(artist)) {
-		// 	try {
-		// 		const { data, error } = await supabase
-		// 			.from("artists")
-		// 			.insert({ name: artist.name.trim() })
-		// 			.select("id")
-		// 			.single();
-		// 		if (error || !data) throw error;
-		// 		artistId = data.id;
-		// 	} catch (err) {
-		// 		showToastError("Failed to create artist in database");
-		// 		throw Error("Failed to create artist in database");
-		// 	}
-		// } else {
-		// 	artistId = artist;
-		// }
+		// CALL SUPABASE FOR NEW ARTISTS TO CREATE THEM
+		const newArtists = selectedArtists.filter((item) => item.isNew);
+		let createdIDs: any[] = [];
+		if (newArtists.length) {
+			const withoutIDs = newArtists
+				.map(({ id, isNew, ...rest }) => rest)
+				.map(({ label, ...restRenamed }) => ({
+					name: label,
+					...restRenamed,
+				}));
+			withoutIDs.forEach((item: any) => {
+				createdIDs.push(new Date());
+			});
+		}
 
-		// if (!artistId) return showToastError("Artist ID is required");
+		// MANIPULATE EXISTING ARTISTS
+		const existingIDs = existingArtists.map((item: any) => item.id);
 
+		// COMBINE NEW AND EXISTING
+		const consolidatedArtists = [...createdIDs, ...existingIDs];
+
+		const payload = {
+			title,
+			duration,
+			bpm,
+			originalKey,
+			spKey,
+			artists: consolidatedArtists,
+		};
+		console.log("PAYLOAD ENTERED:", payload);
 		return {};
 	};
 
@@ -246,8 +248,10 @@ export default function EditSongScreen() {
 								styles.input,
 								{ color: colors.text, borderColor: colors.text },
 							]}
-							value={title}
+							value={tempTitle}
 							onChangeText={setTitle}
+							placeholder="Enter title"
+							placeholderTextColor={colors.placeholder}
 						/>
 
 						<ThemedText>Artist</ThemedText>
@@ -277,6 +281,8 @@ export default function EditSongScreen() {
 										setDuration(!isNaN(numericValue) ? numericValue : 0);
 									}}
 									keyboardType="numeric"
+									placeholder="Enter duration"
+									placeholderTextColor={colors.placeholder}
 								/>
 							</ThemedView>
 
@@ -293,6 +299,8 @@ export default function EditSongScreen() {
 										setBPM(!isNaN(numericValue) ? numericValue : 0);
 									}}
 									keyboardType="numeric"
+									placeholder="Enter BPM"
+									placeholderTextColor={colors.placeholder}
 								/>
 							</ThemedView>
 						</ThemedView>

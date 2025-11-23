@@ -17,7 +17,7 @@ export default function KeyPicker({
 	removeKey,
 	extraOptions,
 	zIndex,
-	zIndexInverse
+	zIndexInverse,
 }: KeyPickerProps) {
 	const colors = useColors();
 	const items = getMusicalKeys(colors.background, colors.text);
@@ -28,7 +28,8 @@ export default function KeyPicker({
 		return filteredItems.map((i) => ({
 			...i,
 			containerStyle: {
-				backgroundColor: i.value === removeKey ? colors.text : colors.background,
+				backgroundColor:
+					i.value === removeKey ? colors.text : colors.background,
 				...(i.containerStyle || {}),
 			},
 			labelStyle: {
@@ -45,7 +46,7 @@ export default function KeyPicker({
 	}, [removeKey, items, extraOptions, colors]);
 
 	return (
-		<ThemedView style={[styles.container, { overflow: 'visible' }]}>
+		<ThemedView style={[styles.container, { overflow: "visible" }]}>
 			<ThemedText>{label}</ThemedText>
 			<DropDownPicker
 				open={open}
@@ -68,12 +69,20 @@ export default function KeyPicker({
 					backgroundColor: colors.background,
 				}}
 				labelStyle={{ color: colors.text }}
-				placeholderStyle={{ color: colors.text }}
+				placeholderStyle={{ color: colors.placeholder }}
 				ArrowUpIconComponent={() => (
-					<MaterialIcons name="keyboard-arrow-up" size={20} color="white" />
+					<MaterialIcons
+						name="keyboard-arrow-up"
+						size={20}
+						color="white"
+					/>
 				)}
 				ArrowDownIconComponent={() => (
-					<MaterialIcons name="keyboard-arrow-down" size={20} color="white" />
+					<MaterialIcons
+						name="keyboard-arrow-down"
+						size={20}
+						color="white"
+					/>
 				)}
 				zIndex={zIndex}
 				zIndexInverse={zIndexInverse}
@@ -87,7 +96,6 @@ export default function KeyPicker({
 
 const styles = StyleSheet.create({
 	container: {
-		flex: 1, // allows side-by-side layout
-		marginHorizontal: 4,
+		flex: 1,
 	},
 });
