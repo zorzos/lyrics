@@ -151,6 +151,8 @@ export default function SongDetailScreen() {
 		/>,
 	];
 
+	console.log("SONG ARTIST(S)", song.artist);
+
 	return (
 		<ThemedView style={{ flex: 1 }}>
 			<ThemedView style={styles.songDataItemContainer}>
@@ -160,9 +162,7 @@ export default function SongDetailScreen() {
 				{renderInfo(
 					{
 						label: "Artist",
-						value: song.artist,
-						modalValue: [song.artist],
-						opensModal: true,
+						value: song.artist.length,
 					},
 					0
 				)}

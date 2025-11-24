@@ -6,14 +6,19 @@ export interface TagType {
 	color?: string | null;
 }
 
-/**
- * Unified Song type
- * song_order is optional and only set when the song belongs to a show
- */
+export interface Artist {
+	id: string;
+	name: string;
+}
+
+export interface NewArtist {
+	name: string;
+}
+
 export interface Song {
 	id: string;
 	title: string;
-	artist: string;
+	artist: Artist[];
 	duration: number;
 	lyrics: string;
 	tags?: TagType[];

@@ -4,52 +4,47 @@ import { ShowSongsByParts, Song } from "@/types";
 export async function getSongs(showId?: string): Promise<ShowSongsByParts> {
 	try {
 		if (showId) {
-			// Fetch songs linked to a specific show (with song_order and part/order info)
 			const { data, error } = await supabase
 				.from("show_songs")
 				.select(
 					`
-					part,
-					song_order,
-					songs (
-						*,
-						artist:artists(name),
-						song_tags (
-						tags (
-							id,
-							name,
-							color
-						)
-						),
-						show_songs (
-							shows (
-								id,
-								title,
-								date,
-								draft,
-								parts
-							)
-						)
-					)
-				`
+            part,
+            song_order,
+            songs (
+              *,
+              artists:artists!song_artists(*),
+              song_tags (
+                tags (
+                  id,
+                  name,
+                  color
+                )
+              ),
+              show_songs (
+                shows (
+                  id,
+                  title,
+                  date,
+                  draft,
+                  parts
+                )
+              )
+            )
+          `
 				)
 				.eq("show_id", showId)
 				.order("part", { ascending: true })
 				.order("song_order", { ascending: true });
 
-			if (error) {
-				console.error("Supabase error (showId branch):", error);
-				throw error;
-			}
-
+			if (error) throw error;
 			if (!data) return { parts: [] };
 
-			// Group songs by part
 			const grouped: { [key: number]: Song[] } = {};
 
 			data.forEach((row: any) => {
-				const partNumber = row.order ?? 1;
+				const partNumber = row.part ?? 1;
 				const song = row.songs ?? {};
+
 				const rawTags: any[] = song.song_tags ?? [];
 				const tags = rawTags.flatMap((t) => (t?.tags ? t.tags : []));
 
@@ -63,10 +58,12 @@ export async function getSongs(showId?: string): Promise<ShowSongsByParts> {
 							return db - da;
 						}) ?? [];
 
+				const artist = song.artists ?? [];
+
 				const formattedSong: Song = {
 					id: song.id,
 					title: song.title,
-					artist: song.artist_id,
+					artist,
 					duration: song.duration,
 					lyrics: song.lyrics,
 					tags,
@@ -81,7 +78,6 @@ export async function getSongs(showId?: string): Promise<ShowSongsByParts> {
 				grouped[partNumber].push(formattedSong);
 			});
 
-			// Convert grouped object to sorted parts array
 			const parts = Object.keys(grouped)
 				.sort((a, b) => Number(a) - Number(b))
 				.map((partNum) => ({
@@ -91,40 +87,34 @@ export async function getSongs(showId?: string): Promise<ShowSongsByParts> {
 
 			return { parts };
 		} else {
-			// Fetch all songs without a show
 			const { data, error } = await supabase
 				.from("songs")
 				.select(
 					`
-          *,
-		  artist:artists(name),
-          song_tags (
-            tags (
-              id,
-              name,
-              color
+            *,
+            artists:artists!song_artists(*),
+            song_tags (
+              tags (
+                id,
+                name,
+                color
+              )
+            ),
+            show_songs (
+              shows (
+                id,
+                title,
+                date,
+                draft
+              )
             )
-          ),
-          show_songs (
-            shows (
-              id,
-              title,
-              date,
-              draft
-            )
-          )
-        `
+          `
 				)
 				.order("title", { ascending: true });
 
-			if (error) {
-				console.error("Supabase error (all songs branch):", error);
-				throw error;
-			}
-
+			if (error) throw error;
 			if (!data) return { parts: [] };
 
-			// Put all songs into a single part for consistency
 			const songs: Song[] = data.map((song: any) => {
 				const rawTags: any[] = song.song_tags ?? [];
 				const tags = rawTags.flatMap((t) => (t?.tags ? t.tags : []));
@@ -139,10 +129,12 @@ export async function getSongs(showId?: string): Promise<ShowSongsByParts> {
 							return db - da;
 						}) ?? [];
 
+				const artist = song.artists ?? [];
+
 				return {
 					id: song.id,
 					title: song.title,
-					artist: song.artist_id,
+					artist,
 					duration: song.duration,
 					lyrics: song.lyrics,
 					tags,
@@ -166,19 +158,42 @@ export async function getSong(songId: string): Promise<Song> {
 		const { data, error } = await supabase
 			.from("songs")
 			.select(
-				`*, 
-				artist:artists(name),
-				show_songs(shows (
-					id,
-					title,
-					date,
-					draft,
-					parts
-				)) ,song_tags(tags(id,name,color))`
+				`
+          *,
+          artists:artists!song_artists(*),
+          song_tags (
+            tags (
+              id,
+              name,
+              color
+            )
+          ),
+          show_songs (
+            shows (
+              id,
+              title,
+              date,
+              draft,
+              parts
+            )
+          )
+        `
 			)
 			.eq("id", songId)
 			.single();
 
+		if (error) {
+			console.error("Supabase error in getSong:", error);
+			throw error;
+		}
+
+		if (!data) throw new Error("Song not found");
+
+		// Extract tags
+		const rawTags: any[] = data.song_tags ?? [];
+		const tags = rawTags.flatMap((t) => (t?.tags ? t.tags : []));
+
+		// Extract shows
 		const shows =
 			(data.show_songs ?? [])
 				.map((ss: any) => ss?.shows)
@@ -189,17 +204,21 @@ export async function getSong(songId: string): Promise<Song> {
 					return db - da;
 				}) ?? [];
 
-		if (error) {
-			console.error(error);
-			throw error;
-		}
+		// Extract artists (many-to-many)
+		const artist = data.artists ?? [];
 
 		return {
-			...data,
-			artist: data.artist_id,
-			tags: (data.song_tags ?? []).map((st: any) => st.tags),
+			id: data.id,
+			title: data.title,
+			artist,
+			duration: data.duration,
+			lyrics: data.lyrics,
+			tags,
 			shows,
-		};
+			original_key: data.original_key,
+			sp_key: data.sp_key,
+			bpm: data.bpm,
+		} as Song;
 	} catch (err) {
 		console.error("getSong() failed:", err);
 		throw err;
