@@ -68,14 +68,12 @@ export default function EditSongScreen() {
 	}, [navigation, id]);
 
 	const insertArtist = async (newArtists: NewArtist[]) => {
-		setLoading(true);
 		try {
 			const inserted = await insertArtists(newArtists);
 			return inserted;
 		} catch (err) {
 			console.error("ERROR INSERTING NEW ARTISTS:", err);
 		}
-		setLoading(false);
 	};
 
 	useEffect(() => {
@@ -152,8 +150,6 @@ export default function EditSongScreen() {
 			return null;
 		}
 
-		const existingArtists = selectedArtists.filter((item) => !item.isNew);
-
 		// CALL SUPABASE FOR NEW ARTISTS TO CREATE THEM
 		const newArtists = selectedArtists.filter((item) => item.isNew);
 		let createdArtists: NewArtist[] = [];
@@ -174,7 +170,9 @@ export default function EditSongScreen() {
 		}
 
 		// MANIPULATE EXISTING ARTISTS
-		const existingIDs = existingArtists.map((item: any) => item.id);
+		const existingIDs = selectedArtists
+			.filter((item) => !item.isNew)
+			.map((item: any) => item.id);
 
 		// COMBINE NEW AND EXISTING
 		const consolidatedArtists = [...createdArtists, ...existingIDs];
@@ -190,12 +188,11 @@ export default function EditSongScreen() {
 	};
 
 	const handleSave = async () => {
+		setLoading(true);
 		const payload = await buildPayload();
 		if (!payload) return;
 
 		console.log("PAYLOAD ENTERED:", payload);
-
-		// setLoading(true);
 		// try {
 		// 	let songId = id;
 		// 	if (id) {
@@ -242,6 +239,8 @@ export default function EditSongScreen() {
 		// } finally {
 		// 	setLoading(false);
 		// }
+
+		setLoading(false);
 	};
 
 	const toggleTag = (tagId: string) => {

@@ -224,3 +224,46 @@ export async function getSong(songId: string): Promise<Song> {
 		throw err;
 	}
 }
+
+export async function insertSong(newSong: any) {
+	try {
+		const { artists, tags, ...songFields } = newSong;
+		const { data: song, error } = await supabase
+			.from("songs")
+			.insert(songFields)
+			.select("id")
+			.single();
+
+		if (error) {
+			throw new Error(`Failed to create song: ${error.message}`);
+		}
+
+		const songId = song.id;
+		const rows = artists.map((artistId: string) => ({
+			song_id: songId,
+			artist_id: artistId,
+		}));
+		const { error: relationError } = await supabase
+			.from("song_artists")
+			.insert(rows);
+
+		if (relationError) {
+			throw new Error(`Failed to link artists: ${relationError.message}`);
+		}
+
+		if (tags.length > 0) {
+			const rows = newSong.tags.map((tagId: string) => ({
+				song_id: songId,
+				tag_id: tagId,
+			}));
+
+			const { error } = await supabase.from("song_tags").insert(rows);
+			if (error) throw error;
+		}
+
+		return { songId };
+	} catch (err) {
+		console.error("insertSong() failed:", err);
+		throw err;
+	}
+}
