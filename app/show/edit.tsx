@@ -7,7 +7,7 @@ import {
 	Switch,
 	Text,
 	TextInput,
-	TouchableOpacity
+	TouchableOpacity,
 } from "react-native";
 import DraggableFlatList, {
 	RenderItemParams,
@@ -48,16 +48,17 @@ export default function EditShowScreen() {
 		});
 	}, [id, navigation]);
 
-	const [songsByPart, setSongsByPart] = useState<Part[]>([{
-		partNumber: 1, songs: []
-	}]);
+	const [songsByPart, setSongsByPart] = useState<Part[]>([
+		{
+			partNumber: 1,
+			songs: [],
+		},
+	]);
 	const [availableSongs, setAvailableSongs] = useState<Song[]>([]);
-	console.log('AVAILABLE SONGS', availableSongs.length);
+	console.log("AVAILABLE SONGS", availableSongs.length);
 
-	const [
-		availableSongsModalContent,
-		setAvailableSongsModalContent
-	] = useState<any>(undefined);
+	const [availableSongsModalContent, setAvailableSongsModalContent] =
+		useState<any>(undefined);
 
 	useEffect(() => {
 		async function fetchSongs() {
@@ -178,6 +179,8 @@ export default function EditShowScreen() {
 	};
 
 	const renderSongItem = ({ item, drag, isActive }: RenderItemParams<Song>) => {
+		const artistName =
+			item.artist.length > 1 ? "Various Artists" : item.artist[0].name;
 		return (
 			<TouchableOpacity
 				style={{
@@ -189,7 +192,9 @@ export default function EditShowScreen() {
 					borderColor: "#ccc",
 				}}
 				onLongPress={drag}>
-				<ThemedText>#1 {item.title} ({item.artist})</ThemedText>
+				<ThemedText>
+					#1 {item.title} ({artistName})
+				</ThemedText>
 			</TouchableOpacity>
 		);
 	};
@@ -261,17 +266,20 @@ export default function EditShowScreen() {
 									{
 										borderRadius: 8,
 										borderColor: isSelected ? "#da291cbf" : colors.text,
-									}
+									},
 								]}
 								onPress={() => {
 									setParts(p);
 									setSongsByPart((prev) => {
 										if (prev.length === p) return prev;
 										if (prev.length < p) {
-											const newParts = Array.from({ length: p - prev.length }, (_, i) => ({
-												partNumber: prev.length + i + 1,
-												songs: [],
-											}));
+											const newParts = Array.from(
+												{ length: p - prev.length },
+												(_, i) => ({
+													partNumber: prev.length + i + 1,
+													songs: [],
+												})
+											);
 											return [...prev, ...newParts];
 										} else {
 											return prev.slice(0, p);
@@ -283,7 +291,7 @@ export default function EditShowScreen() {
 										styles.partSegmentText,
 										{ color: isSelected ? colors.text : "#FFF" },
 									]}>
-									{p} Part{p > 1 ? "s" : ""}
+									{p} Part{p > 1 && "s"}
 								</Text>
 							</TouchableOpacity>
 						);
@@ -302,11 +310,10 @@ export default function EditShowScreen() {
 						}}>
 						<ThemedView
 							style={{
-								flexDirection: 'row',
-								alignItems: 'center',
-								justifyContent: 'space-between'
-							}}
-						>
+								flexDirection: "row",
+								alignItems: "center",
+								justifyContent: "space-between",
+							}}>
 							<ThemedView
 								style={{
 									flexDirection: "row",
@@ -338,7 +345,9 @@ export default function EditShowScreen() {
 										padding: 8,
 										marginBottom: 8,
 									}}>
-									<ThemedText style={{ fontWeight: 'bold' }}>{getTotalPartTime(part.songs)}</ThemedText>
+									<ThemedText style={{ fontWeight: "bold" }}>
+										{getTotalPartTime(part.songs)}
+									</ThemedText>
 								</ThemedView>
 							)}
 						</ThemedView>
@@ -353,7 +362,7 @@ export default function EditShowScreen() {
 								});
 							}}
 							contentContainerStyle={{
-								padding: 8
+								padding: 8,
 							}}
 							keyExtractor={(item) => item.id}
 							renderItem={renderSongItem}
@@ -362,7 +371,7 @@ export default function EditShowScreen() {
 									onPress={() => {
 										setAvailableSongsModalContent({
 											availableSongs,
-											partNumber: part.partNumber
+											partNumber: part.partNumber,
 										});
 									}}
 									style={{
@@ -372,8 +381,8 @@ export default function EditShowScreen() {
 										padding: 16,
 										borderRadius: 8,
 										margin: 4,
-										backgroundColor: '#da291c33',
-										gap: 4
+										backgroundColor: "#da291c33",
+										gap: 4,
 									}}>
 									<ThemedText>Tap here to add songs</ThemedText>
 									<MaterialIcons
@@ -403,7 +412,7 @@ export default function EditShowScreen() {
 					// Update songsByPart
 					setSongsByPart((prevParts) => {
 						const updated = [...prevParts];
-						const index = updated.findIndex(p => p.partNumber === partNumber);
+						const index = updated.findIndex((p) => p.partNumber === partNumber);
 
 						if (index !== -1) {
 							updated[index] = { ...updated[index], songs: selectedSongs };
