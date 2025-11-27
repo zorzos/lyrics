@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { ShowSongsByParts, Song } from "@/types";
+import { camelToSnake } from "@/utils/dbUtils";
 
 export async function getSongs(showId?: string): Promise<ShowSongsByParts> {
 	try {
@@ -228,9 +229,11 @@ export async function getSong(songId: string): Promise<Song> {
 export async function insertSong(newSong: any) {
 	try {
 		const { artists, tags, ...songFields } = newSong;
+
+		const songDBStructure = camelToSnake(songFields);
 		const { data: song, error } = await supabase
 			.from("songs")
-			.insert(songFields)
+			.insert(songDBStructure)
 			.select("id")
 			.single();
 
@@ -264,6 +267,31 @@ export async function insertSong(newSong: any) {
 		return { songId };
 	} catch (err) {
 		console.error("insertSong() failed:", err);
+		throw err;
+	}
+}
+
+export async function updateSong(updatedSong: any) {
+	try {
+		const { artists, tags, ...songFields } = updatedSong;
+
+		const songDBStructure = camelToSnake(songFields);
+		const { data: song, error } = await supabase
+			.from("songs")
+			.update(songDBStructure)
+			.select("id")
+			.single();
+
+		if (error) {
+			throw new Error(`Failed to create song: ${error.message}`);
+		}
+
+		const songId = song.id;
+		// HOW TO HANDLE ARTISTS & TAGS?
+
+		return { songId };
+	} catch (err) {
+		console.error("updateSong() failed:", err);
 		throw err;
 	}
 }

@@ -19,7 +19,7 @@ import { AutocompleteItem, NewArtist, TagType } from "@/types";
 import AutocompleteInput from "@/components/ui/Autocomplete";
 import KeyPicker from "@/components/ui/KeyPicker";
 import { useColors } from "@/hooks/use-colors";
-import { getSong } from "@/lib/queries/songs";
+import { getSong, insertSong, updateSong } from "@/lib/queries/songs";
 import getTags from "@/lib/queries/tags";
 import { getSingleParam } from "@/utils/paramUtils";
 import Toast from "react-native-toast-message";
@@ -172,7 +172,7 @@ export default function EditSongScreen() {
 			originalKey,
 			spKey,
 			artists: consolidatedArtists,
-			tags: selectedTagIds
+			tags: selectedTagIds,
 		};
 	};
 
@@ -181,7 +181,27 @@ export default function EditSongScreen() {
 		const payload = await buildPayload();
 		if (!payload) return;
 
-		console.log("PAYLOAD ENTERED:", payload);
+		console.log("PAYLOAD", payload);
+		try {
+			if (id) {
+				await updateSong(payload);
+			} else {
+				await insertSong(payload);
+			}
+		} catch (error: any) {
+			const message = error.message;
+			console.error(`Error: ${message}`);
+			Toast.show({
+				type: "error",
+				text1: message,
+				position: "top",
+				visibilityTime: 2500,
+			});
+		} finally {
+			await queryClient.invalidateQueries({ queryKey: ["allSongs"] });
+			router.back();
+			setLoading(false);
+		}
 		// try {
 		// 	let songId = id;
 		// 	if (id) {
@@ -228,15 +248,14 @@ export default function EditSongScreen() {
 		// } finally {
 		// 	setLoading(false);
 		// }
-
-		setLoading(false);
 	};
 
 	const toggleTag = (tagId: string) => {
-		setSelectedTagIds((prev) =>
-			prev.includes(tagId)
-				? prev.filter((id) => id !== tagId) // remove
-				: [...prev, tagId] // add
+		setSelectedTagIds(
+			(prev) =>
+				prev.includes(tagId)
+					? prev.filter((id) => id !== tagId) // removes
+					: [...prev, tagId] // adds
 		);
 	};
 

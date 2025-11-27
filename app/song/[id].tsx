@@ -124,7 +124,6 @@ export default function SongDetailScreen() {
 			{
 				label: "Duration",
 				value: formatDuration(durationNumber),
-				opensModal: false,
 			},
 			0
 		),
@@ -133,21 +132,21 @@ export default function SongDetailScreen() {
 				label: "Shows",
 				value: finalShows.length,
 				modalValue: finalShows,
-				opensModal: true,
+				opensModal: finalShows.length,
 			},
 			1
 		),
 		<Metronome
 			key={2}
 			value={120}
-			containerStyle={{ borderColor: "white", width: `${85 / 4}%` }}
+			containerStyle={{ borderColor: colors.text, width: `${85 / 4}%` }}
 			contentStyle={{ fontSize: 12 }}
 		/>,
 		<Key
 			key={3}
 			originalKey={song.original_key}
 			spKey={song.sp_key}
-			containerStyle={{ borderColor: "white", width: `${85 / 4}%` }}
+			containerStyle={{ borderColor: colors.text, width: `${85 / 4}%` }}
 		/>,
 	];
 
