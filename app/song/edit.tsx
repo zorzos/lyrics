@@ -14,12 +14,11 @@ import {
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { Artist, AutocompleteItem, NewArtist, TagType } from "@/types";
+import { AutocompleteItem, NewArtist, TagType } from "@/types";
 
 import AutocompleteInput from "@/components/ui/Autocomplete";
 import KeyPicker from "@/components/ui/KeyPicker";
 import { useColors } from "@/hooks/use-colors";
-import { insertArtists } from "@/lib/queries/artists";
 import { getSong } from "@/lib/queries/songs";
 import getTags from "@/lib/queries/tags";
 import { getSingleParam } from "@/utils/paramUtils";
@@ -46,9 +45,7 @@ export default function EditSongScreen() {
 	const [duration, setDuration] = useState<number>(0);
 	const [lyrics, setLyrics] = useState<string>("");
 	const [availableTags, setAvailableTags] = useState<TagType[]>([]);
-	const [selectedTagIds, setSelectedTagIds] = useState<Record<string, boolean>>(
-		{}
-	);
+	const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
 	const [originalKey, setOriginalKey] = useState<string>("");
 	const [spKey, setSpKey] = useState<string>("");
 	const [bpm, setBPM] = useState<number>(0);
@@ -66,15 +63,6 @@ export default function EditSongScreen() {
 			title: id ? "Edit Song" : "Add new Song",
 		});
 	}, [navigation, id]);
-
-	const insertArtist = async (newArtists: NewArtist[]) => {
-		try {
-			const inserted = await insertArtists(newArtists);
-			return inserted;
-		} catch (err) {
-			console.error("ERROR INSERTING NEW ARTISTS:", err);
-		}
-	};
 
 	useEffect(() => {
 		async function fetchTags() {
@@ -111,7 +99,7 @@ export default function EditSongScreen() {
 							});
 						}
 					});
-					setSelectedTagIds(tagMap);
+					// setSelectedTagIds(tagMap);
 				}
 			} finally {
 				setFetchingSong(false);
@@ -161,12 +149,12 @@ export default function EditSongScreen() {
 					...restRenamed,
 				}));
 
-			const newlyCreatedArtists = await insertArtist(artistsToCreate);
-			createdArtists.push(
-				...newlyCreatedArtists.map((newArtist: Artist) =>
-					newArtist.id.toString()
-				)
-			);
+			// const newlyCreatedArtists = await insertArtist(artistsToCreate);
+			// createdArtists.push(
+			// 	...newlyCreatedArtists.map((newArtist: Artist) =>
+			// 		newArtist.id.toString()
+			// 	)
+			// );
 		}
 
 		// MANIPULATE EXISTING ARTISTS
@@ -184,6 +172,7 @@ export default function EditSongScreen() {
 			originalKey,
 			spKey,
 			artists: consolidatedArtists,
+			tags: selectedTagIds
 		};
 	};
 
@@ -244,7 +233,11 @@ export default function EditSongScreen() {
 	};
 
 	const toggleTag = (tagId: string) => {
-		setSelectedTagIds((prev) => ({ ...prev, [tagId]: !prev[tagId] }));
+		setSelectedTagIds((prev) =>
+			prev.includes(tagId)
+				? prev.filter((id) => id !== tagId) // remove
+				: [...prev, tagId] // add
+		);
 	};
 
 	const renderTags = () => {
@@ -263,14 +256,14 @@ export default function EditSongScreen() {
 					key={tag.id}
 					style={[
 						styles.tagCheckbox,
-						selectedTagIds[tag.id] && {
+						selectedTagIds.includes(tag.id) && {
 							backgroundColor: tag.color || "#00F",
 						},
 					]}
 					onPress={() => toggleTag(tag.id)}>
 					<Text
 						style={{
-							color: selectedTagIds[tag.id] ? "#FFF" : "#999",
+							color: selectedTagIds.includes(tag.id) ? "#FFF" : "#999",
 						}}>
 						{tag.name}
 					</Text>
