@@ -14,15 +14,16 @@ import {
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { AutocompleteItem, NewArtist, TagType } from "@/types";
+import { Artist, AutocompleteItem, NewArtist, TagType } from "@/types";
 
 import AutocompleteInput from "@/components/ui/Autocomplete";
 import KeyPicker from "@/components/ui/KeyPicker";
 import { useColors } from "@/hooks/use-colors";
+import getArtists, { insertArtists } from "@/lib/queries/artists";
 import { getSong, insertSong, updateSong } from "@/lib/queries/songs";
 import getTags from "@/lib/queries/tags";
 import { getSingleParam } from "@/utils/paramUtils";
-import Toast from "react-native-toast-message";
+import { showErrorToast, showSuccessToast } from "@/utils/toastUtils";
 
 const allArtists: AutocompleteItem[] = [
 	{ id: "1", label: "Artist 1", isNew: false },
@@ -45,6 +46,7 @@ export default function EditSongScreen() {
 	const [duration, setDuration] = useState<number>(0);
 	const [lyrics, setLyrics] = useState<string>("");
 	const [availableTags, setAvailableTags] = useState<TagType[]>([]);
+	const [availableArtists, setAvailableArtists] = useState<Artist[]>([]);
 	const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
 	const [originalKey, setOriginalKey] = useState<string>("");
 	const [spKey, setSpKey] = useState<string>("");
@@ -67,10 +69,16 @@ export default function EditSongScreen() {
 	useEffect(() => {
 		async function fetchTags() {
 			setTagsLoading(true);
-			const result = await getTags();
-			if (!result) console.error("Get tags failed");
-			else setAvailableTags(result ?? []);
+			const tags = await getTags();
+			if (!tags) console.error("Get tags failed");
+			else setAvailableTags(tags ?? []);
 			setTagsLoading(false);
+		}
+
+		async function fetchArtists() {
+			const artists = await getArtists();
+			if (!artists) console.error('Get artists failed');
+			else setAvailableArtists(artists ?? []);
 		}
 
 		async function fetchSong() {
@@ -106,19 +114,10 @@ export default function EditSongScreen() {
 			}
 		}
 
+		fetchArtists();
 		fetchTags();
 		fetchSong();
 	}, [id]);
-
-	const showToastError = (label: string) => {
-		Toast.show({
-			type: "error",
-			text1: label,
-			position: "top",
-			visibilityTime: 2500,
-			topOffset: 80,
-		});
-	};
 
 	const buildPayload = async () => {
 		const title = tempTitle.trim();
@@ -134,7 +133,7 @@ export default function EditSongScreen() {
 		const missing = requiredFields.find((f) => !f.value);
 
 		if (missing) {
-			showToastError(`${missing.label} is required`);
+			showErrorToast(`${missing.label} is required`);
 			return null;
 		}
 
@@ -149,12 +148,12 @@ export default function EditSongScreen() {
 					...restRenamed,
 				}));
 
-			// const newlyCreatedArtists = await insertArtist(artistsToCreate);
-			// createdArtists.push(
-			// 	...newlyCreatedArtists.map((newArtist: Artist) =>
-			// 		newArtist.id.toString()
-			// 	)
-			// );
+			const newlyCreatedArtists = await insertArtists(artistsToCreate);
+			createdArtists.push(
+				...newlyCreatedArtists.map((newArtist: Artist) =>
+					newArtist.id.toString()
+				)
+			);
 		}
 
 		// MANIPULATE EXISTING ARTISTS
@@ -183,71 +182,19 @@ export default function EditSongScreen() {
 
 		console.log("PAYLOAD", payload);
 		try {
-			if (id) {
-				await updateSong(payload);
-			} else {
-				await insertSong(payload);
-			}
+			if (id) await updateSong(payload);
+			else await insertSong(payload);
 		} catch (error: any) {
 			const message = error.message;
 			console.error(`Error: ${message}`);
-			Toast.show({
-				type: "error",
-				text1: message,
-				position: "top",
-				visibilityTime: 2500,
-			});
+			showErrorToast(message);
 		} finally {
 			await queryClient.invalidateQueries({ queryKey: ["allSongs"] });
 			router.back();
 			setLoading(false);
+			const message = id ? 'updated' : 'created';
+			showSuccessToast(`Song successfully ${message}`);
 		}
-		// try {
-		// 	let songId = id;
-		// 	if (id) {
-		// 		const { error } = await supabase
-		// 			.from("songs")
-		// 			.update(payload)
-		// 			.eq("id", id);
-		// 		if (error) throw error;
-
-		// 		await supabase.from("song_tags").delete().eq("song_id", id);
-		// 	} else {
-		// 		const { data, error } = await supabase
-		// 			.from("songs")
-		// 			.insert(payload)
-		// 			.select("id")
-		// 			.single();
-		// 		if (error) throw error;
-		// 		songId = data.id;
-		// 	}
-
-		// 	const newTags = Object.keys(selectedTagIds)
-		// 		.filter((k) => selectedTagIds[k])
-		// 		.map((tagId) => ({ song_id: songId, tag_id: tagId }));
-
-		// 	if (newTags.length) await supabase.from("song_tags").insert(newTags);
-
-		// 	await queryClient.invalidateQueries({ queryKey: ["allSongs"] });
-
-		// 	router.back();
-		// 	Toast.show({
-		// 		type: "success",
-		// 		text1: "Song saved!",
-		// 		position: "bottom",
-		// 		visibilityTime: 2000,
-		// 	});
-		// } catch (e: any) {
-		// 	console.error(e);
-		// 	Toast.show({
-		// 		type: "error",
-		// 		text1: `Error: ${e.message}`,
-		// 		position: "bottom",
-		// 		visibilityTime: 2000,
-		// 	});
-		// } finally {
-		// 	setLoading(false);
-		// }
 	};
 
 	const toggleTag = (tagId: string) => {

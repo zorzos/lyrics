@@ -21,3 +21,15 @@ export async function insertArtists(newArtists: NewArtist[]): Promise<any> {
 		handleError(err);
 	}
 }
+
+export default async function getArtists() {
+	try {
+		const { data, error } = await supabase.from("artists").select("*");
+		if (error) console.error(error);
+
+		return data;
+	} catch (error) {
+		console.error("getArtists() failed:", error);
+		throw error;
+	}
+};
