@@ -4,7 +4,7 @@ import Constants from "expo-constants";
 type ExtraConfig = {
 	supabaseUrl: string;
 	supabaseKey: string;
-	mode: "admin" | "public";
+	mode: "admin" | "production" | "experiment";
 };
 
 const extra = Constants.expoConfig?.extra as ExtraConfig;

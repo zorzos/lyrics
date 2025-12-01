@@ -21,7 +21,6 @@ export default ({ config }: { config: ExpoConfig }) => ({
 		supabaseUrl: env.EXPO_PUBLIC_SUPABASE_URL,
 		supabaseKey: env.EXPO_PUBLIC_SUPABASE_KEY,
 		mode: env.EXPO_MODE,
-		name: env.ENV_NAME,
 		color: env.ENV_COLOR,
 		eas: {
 			projectId: "18a96692-fc2b-4633-917a-e059cf2867e6",

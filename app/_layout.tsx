@@ -8,14 +8,11 @@ import { NetworkProvider } from "@/context/NetworkContext";
 import { TagProvider } from "@/context/TagContext";
 import { useColors } from "@/hooks/use-colors";
 import { useToastConfig } from "@/lib/toastConfig";
+import { ExtraConfig } from "@/types";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Constants from "expo-constants";
 import { useColorScheme } from "react-native";
 import Toast from "react-native-toast-message";
-
-type ExtraConfig = {
-	[k: string]: string;
-}
 
 export default function RootLayout() {
 	const queryClient = new QueryClient();
@@ -26,7 +23,7 @@ export default function RootLayout() {
 	const statusBarStyle = isDarkTheme ? 'light' : 'dark';
 	const colors = useColors();
 	const extra = Constants.expoConfig?.extra as ExtraConfig;
-	const isExperimental = extra.name === 'experiment';
+	const isExperimental = extra.mode === 'experiment';
 	const experimentalStyles = {
 		borderWidth: 5,
 		borderColor: extra.color

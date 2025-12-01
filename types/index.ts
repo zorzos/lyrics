@@ -145,3 +145,7 @@ export interface AutocompleteProps {
 	data: AutocompleteItem[];
 	placeholder?: string;
 }
+
+export type ExtraConfig = {
+	[k: string]: string;
+}
