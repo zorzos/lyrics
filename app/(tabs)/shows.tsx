@@ -30,9 +30,7 @@ const createStyles = (colors: ColorTheme) =>
 		item: {
 			paddingVertical: 12,
 			borderBottomWidth: 1,
-			borderBottomColor: "#lightgray",
-			borderBottomEndRadius: 16,
-			borderBottomStartRadius: 16,
+			borderBottomColor: "lightgray",
 			flexDirection: "row",
 			justifyContent: "space-between",
 			alignItems: "center",

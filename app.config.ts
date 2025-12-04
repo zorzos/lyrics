@@ -2,10 +2,11 @@ import { ExpoConfig } from "@expo/config-types";
 import "dotenv/config";
 
 const env = process.env;
+const mode = env.EXPO_MODE?.toUpperCase();
 
 export default ({ config }: { config: ExpoConfig }) => ({
 	...config,
-	name: "Lyrics DEV",
+	name: `Lyrics ${mode}`,
 	slug: "lyrics-app",
 	version: "1.0.0",
 	platforms: ["ios", "android"],

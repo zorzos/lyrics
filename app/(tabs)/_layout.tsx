@@ -8,32 +8,28 @@ import { TouchableOpacity } from "react-native";
 
 import { useColors } from "@/hooks/use-colors";
 import { isAdmin } from "@/lib/supabase";
-import { ExtraConfig } from "@/types";
 import { generateHref } from "@/utils/paramUtils";
-import Constants from "expo-constants";
 
 export default function TabLayout() {
 	const colors = useColors();
-	const { mode } = Constants.expoConfig?.extra as ExtraConfig;
-	console.log('MODE', mode);
 
 	const tabStyle = {
 		tabBarLabelStyle: {
 			fontSize: 15,
 		},
 		headerStyle: {
-			backgroundColor: colors.background
+			backgroundColor: colors.background,
 		},
 		headerTitleStyle: {
-			color: colors.text
-		}
+			color: colors.text,
+		},
 	};
 
 	return (
 		<Tabs
 			screenOptions={{
 				tabBarActiveTintColor: colors.tint,
-				tabBarInactiveTintColor: "#999",
+				tabBarInactiveTintColor: colors.placeholder,
 				tabBarButton: (props: BottomTabBarButtonProps) => (
 					<PlatformPressable
 						{...props}
@@ -41,8 +37,8 @@ export default function TabLayout() {
 					/>
 				),
 				tabBarStyle: {
-					backgroundColor: colors.background
-				}
+					backgroundColor: colors.background,
+				},
 			}}>
 			<Tabs.Screen
 				name="shows"
@@ -67,10 +63,10 @@ export default function TabLayout() {
 						<MaterialIcons
 							size={24}
 							color={color}
-							name="library-music"
+							name="queue-play-next"
 						/>
 					),
-					...tabStyle
+					...tabStyle,
 				}}
 			/>
 			<Tabs.Screen
@@ -99,29 +95,14 @@ export default function TabLayout() {
 							name="music-note"
 						/>
 					),
-					...tabStyle
+					...tabStyle,
 				}}
 			/>
 			<Tabs.Screen
 				name="admin"
 				options={{
 					title: "Admin",
-					href: isAdmin ? "/(tabs)/admin" : null,
-					headerRight: () =>
-						isAdmin && (
-							<Link
-								href={generateHref("editSong", {})}
-								asChild>
-								<TouchableOpacity>
-									<MaterialIcons
-										color={colors.text}
-										size={28}
-										name="add"
-										style={{ marginRight: "2.5%" }}
-									/>
-								</TouchableOpacity>
-							</Link>
-						),
+					href: isAdmin ? "/(tabs)/admin" : null, // only show the tab for admin
 					tabBarIcon: ({ color }) => (
 						<MaterialIcons
 							color={color}
@@ -129,7 +110,7 @@ export default function TabLayout() {
 							name="admin-panel-settings"
 						/>
 					),
-					...tabStyle
+					...tabStyle,
 				}}
 			/>
 		</Tabs>
