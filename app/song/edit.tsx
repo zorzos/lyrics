@@ -180,7 +180,6 @@ export default function EditSongScreen() {
 		const payload = await buildPayload();
 		if (!payload) return;
 
-		console.log("PAYLOAD", payload);
 		try {
 			if (id) await updateSong(payload);
 			else await insertSong(payload);

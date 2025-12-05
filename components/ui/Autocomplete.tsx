@@ -28,7 +28,7 @@ const createStyles = (colors: ColorTheme) =>
 			alignItems: "center",
 			borderWidth: 1,
 			gap: 4,
-			borderColor: colors.placeholder,
+			backgroundColor: colors.background,
 		},
 		input: {
 			borderWidth: 1,
@@ -114,8 +114,7 @@ export default function AutocompleteInput({
 						key={item.id}
 						style={{
 							...styles.chip,
-							backgroundColor: item.isNew ? colors.accent : colors.background,
-							// opacity: item.isNew ? 0.95 : 1,
+							borderColor: item.isNew ? colors.accent : colors.placeholder,
 						}}>
 						<ThemedText style={{ color: colors.text }}>{item.label}</ThemedText>
 						<TouchableOpacity onPress={() => removeItem(item.id)}>

@@ -1,19 +1,17 @@
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { useColors } from "@/hooks/use-colors";
+import { useSongs } from "@/hooks/useSongs";
+import { Section, Song } from "@/types";
+import { generateHref } from "@/utils/paramUtils";
+import { Link } from "expo-router";
+import { useMemo, useRef } from "react";
 import {
 	ActivityIndicator,
 	SectionList,
 	StyleSheet,
 	TouchableOpacity,
 } from "react-native";
-
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
-import { useColors } from "@/hooks/use-colors";
-import { getSongs } from "@/lib/queries/songs";
-import { Section, Song } from "@/types";
-import { generateHref } from "@/utils/paramUtils";
-import { useQuery } from "@tanstack/react-query";
-import { Link } from "expo-router";
-import { useMemo, useRef } from "react";
 
 export default function Songs() {
 	const colors = useColors();
@@ -23,13 +21,7 @@ export default function Songs() {
 		data: rawSongs,
 		isLoading,
 		isError,
-	} = useQuery<Song[]>({
-		queryKey: ["allSongs"],
-		queryFn: async () => {
-			const result = await getSongs();
-			return result.parts.flatMap((parts) => parts.songs);
-		},
-	});
+	} = useSongs();
 
 	const memoizedSongs = useMemo(() => rawSongs ?? [], [rawSongs]);
 	const sections: Section[] = useMemo(() => {

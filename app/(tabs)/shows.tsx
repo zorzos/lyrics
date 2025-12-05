@@ -8,10 +8,9 @@ import {
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { useQuery } from "@tanstack/react-query";
 
 import { ColorTheme, useColors } from "@/hooks/use-colors";
-import { getShows } from "@/lib/queries/shows";
+import { useShows } from "@/hooks/useShows";
 import { formatDate } from "@/utils/dateUtils";
 import { generateHref } from "@/utils/paramUtils";
 import { categoriseShows } from "@/utils/showUtils"; // your new helper
@@ -56,10 +55,7 @@ export default function Shows() {
 		data: shows,
 		isLoading,
 		isError,
-	} = useQuery({
-		queryKey: ["allShows"],
-		queryFn: () => getShows(),
-	});
+	} = useShows();
 
 	if (isLoading) {
 		return (
