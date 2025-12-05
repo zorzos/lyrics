@@ -2,8 +2,8 @@ import { normaliseLyric, parseLyrics } from "@/utils/songUtils";
 import { ThemedText } from "../themed-text";
 import { ThemedView } from "../themed-view";
 
-import { useTagColors } from "@/context/TagContext";
 import { useColors } from "@/hooks/use-colors";
+import { useTagColors } from "@/hooks/useTags";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import React, { useState } from "react";
 import {

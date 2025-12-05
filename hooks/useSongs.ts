@@ -2,8 +2,6 @@ import { getSongs, insertSong } from "@/lib/queries/songs";
 import { Song } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-const queryClient = useQueryClient();
-
 export function useSongs() {
     return useQuery<Song[]>({
         queryKey: ["songs"],
@@ -15,6 +13,7 @@ export function useSongs() {
 }
 
 export function useInsertSong() {
+    const queryClient = useQueryClient();
     return useMutation<Song>({
         mutationKey: ["newSong"],
         mutationFn: async (songData) => {
