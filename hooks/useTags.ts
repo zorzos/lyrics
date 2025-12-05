@@ -21,8 +21,6 @@ export const useTagColors = () => {
             return map;
         },
         initialData: {},
-        // optional: tune caching/staleness as you like
-        // staleTime: 1000 * 60 * 5, // 5 minutes
     });
 
     useEffect(() => {
