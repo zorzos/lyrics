@@ -1,12 +1,11 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useColors } from "@/hooks/use-colors";
-import { getSongs } from "@/lib/queries/songs";
+import { useShowSongs } from "@/hooks/useSongs";
 import { ShowInfoTypes } from "@/types";
 import { generateHref, getSingleParam } from "@/utils/paramUtils";
 
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { useQuery } from "@tanstack/react-query";
 import { Link, useLocalSearchParams, useNavigation } from "expo-router";
 import { useLayoutEffect } from "react";
 import {
@@ -27,11 +26,7 @@ export default function ShowDetailScreen() {
 		data: songs,
 		isLoading,
 		isError,
-	} = useQuery({
-		queryKey: ["showSongs", showId],
-		queryFn: () => getSongs(showId),
-		enabled: !!showId,
-	});
+	} = useShowSongs(showId);
 
 	useLayoutEffect(() => {
 		navigation.setOptions({

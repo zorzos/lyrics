@@ -7,3 +7,10 @@ export function useShows() {
         queryFn: () => getShows()
     });
 }
+
+// export function useShow() {
+//     return useQuery({
+//         queryKey: ["show", showId],
+//         queryFn: () => getSh
+//     })
+// }

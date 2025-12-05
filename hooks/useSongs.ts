@@ -1,4 +1,4 @@
-import { getSongs, insertSong } from "@/lib/queries/songs";
+import { getSong, getSongs, insertSong } from "@/lib/queries/songs";
 import { Song } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -23,5 +23,21 @@ export function useInsertSong() {
         onSuccess() {
             queryClient.invalidateQueries({ queryKey: ["songs"] })
         },
+    })
+}
+
+export function useShowSongs(showId: any) {
+    return useQuery({
+        queryKey: ["song", showId],
+        queryFn: async () => await getSongs(showId),
+        enabled: !!showId
+    })
+}
+
+export function useSingleSong(songId: string) {
+    return useQuery({
+        queryKey: ["song", songId],
+        queryFn: () => getSong(songId),
+        enabled: !!songId
     })
 }

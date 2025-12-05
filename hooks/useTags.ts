@@ -4,7 +4,7 @@ import { TagColorMap } from "@/types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 
-const TAG_QUERY_KEY = ["tags"];
+const TAG_QUERY_KEY = ["tagColors"];
 
 export const useTagColors = () => {
     const queryClient = useQueryClient();
@@ -55,3 +55,10 @@ export const useTagColors = () => {
 
     return tagColorMap;
 };
+
+export function useTags() {
+    return useQuery({
+        queryKey: ["tags"],
+        queryFn: () => getTags()
+    })
+}

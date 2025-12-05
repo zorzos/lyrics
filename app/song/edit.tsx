@@ -7,9 +7,8 @@ import {
 	KeyboardAvoidingView,
 	Platform,
 	StyleSheet,
-	Text,
 	TextInput,
-	TouchableOpacity,
+	TouchableOpacity
 } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
@@ -19,43 +18,49 @@ import { Artist, AutocompleteItem, NewArtist, TagType } from "@/types";
 import AutocompleteInput from "@/components/ui/Autocomplete";
 import KeyPicker from "@/components/ui/KeyPicker";
 import { useColors } from "@/hooks/use-colors";
-import getArtists, { insertArtists } from "@/lib/queries/artists";
+import { useArtists } from "@/hooks/useArtists";
+import { useSingleSong } from "@/hooks/useSongs";
+import { useTags } from "@/hooks/useTags";
+import { insertArtists } from "@/lib/queries/artists";
 import { getSong, insertSong, updateSong } from "@/lib/queries/songs";
-import getTags from "@/lib/queries/tags";
 import { getSingleParam } from "@/utils/paramUtils";
 import { showErrorToast, showSuccessToast } from "@/utils/toastUtils";
-
-const allArtists: AutocompleteItem[] = [
-	{ id: "1", label: "Artist 1", isNew: false },
-	{ id: "2", label: "Artist 2", isNew: false },
-	{ id: "3", label: "Test artist", isNew: false },
-	{ id: "4", label: "Another artist", isNew: false },
-	{ id: "5", label: "Sample artist", isNew: false },
-];
 
 export default function EditSongScreen() {
 	const colors = useColors();
 	const queryClient = useQueryClient();
 	const { id } = useLocalSearchParams();
+	const songId = getSingleParam(id);
 	const router = useRouter();
 
+	const {
+		data: tags,
+		isLoading: isTagsLoading
+	} = useTags();
+
+	const {
+		data: availableArtists,
+		isLoading: isArtistsLoading
+	} = useArtists();
+
+	const {
+		data: song,
+		isLoading: isSongLoading
+	} = useSingleSong(songId || '');
+
 	const [tempTitle, setTitle] = useState<string>("");
-	const [selectedArtists, setSelectedArtists] = useState<AutocompleteItem[]>(
-		[]
-	);
-	const [duration, setDuration] = useState<number>(0);
-	const [lyrics, setLyrics] = useState<string>("");
-	const [availableTags, setAvailableTags] = useState<TagType[]>([]);
-	const [availableArtists, setAvailableArtists] = useState<Artist[]>([]);
-	const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
-	const [originalKey, setOriginalKey] = useState<string>("");
-	const [spKey, setSpKey] = useState<string>("");
-	const [bpm, setBPM] = useState<number>(0);
+	const [selectedArtists, setSelectedArtists] =
+		useState<AutocompleteItem[]>([]);
+	const [duration, setDuration] = useState<number>(song?.duration || 0);
+	const [lyrics, setLyrics] = useState<string>(song?.lyrics || '');
+	const [selectedTagIds, setSelectedTagIds] =
+		useState<string[]>(song?.tags?.map(x => x.id) || []);
+	const [originalKey, setOriginalKey] =
+		useState<string>(song?.original_key || '');
+	const [spKey, setSpKey] = useState<string>(song?.sp_key || '');
+	const [bpm, setBPM] = useState<number>(song?.bpm || 0);
 
 	const [loading, setLoading] = useState<boolean>(false);
-	const [tagsLoading, setTagsLoading] = useState<boolean>(false);
-	const [fetchingSong, setFetchingSong] = useState<boolean>(false);
-
 	const [ogKeyOpen, setOGKeyOpen] = useState<boolean>(false);
 	const [spKeyOpen, setSPKeyOpen] = useState<boolean>(false);
 
@@ -67,23 +72,9 @@ export default function EditSongScreen() {
 	}, [navigation, id]);
 
 	useEffect(() => {
-		async function fetchTags() {
-			setTagsLoading(true);
-			const tags = await getTags();
-			if (!tags) console.error("Get tags failed");
-			else setAvailableTags(tags ?? []);
-			setTagsLoading(false);
-		}
-
-		async function fetchArtists() {
-			const artists = await getArtists();
-			if (!artists) console.error('Get artists failed');
-			else setAvailableArtists(artists ?? []);
-		}
-
 		async function fetchSong() {
 			if (!id) return;
-			setFetchingSong(true);
+			// setFetchingSong(true);
 			try {
 				const singleId = getSingleParam(id);
 				if (!singleId) throw new Error("Song not found");
@@ -110,12 +101,10 @@ export default function EditSongScreen() {
 					// setSelectedTagIds(tagMap);
 				}
 			} finally {
-				setFetchingSong(false);
+				// setFetchingSong(false);
 			}
 		}
 
-		fetchArtists();
-		fetchTags();
 		fetchSong();
 	}, [id]);
 
@@ -205,18 +194,37 @@ export default function EditSongScreen() {
 		);
 	};
 
-	const renderTags = () => {
-		if (tagsLoading)
-			return (
-				<ThemedView style={{ flex: 1 }}>
-					<ActivityIndicator
-						size="large"
-						color={colors.text}
-					/>
-				</ThemedView>
-			);
+	const loadingComponent =
+		<ThemedView style={{ flex: 1 }}>
+			<ActivityIndicator
+				size="large"
+				color={colors.text}
+			/>
+		</ThemedView>
+
+	const renderArtists = () => {
+		if (isArtistsLoading)
+			return loadingComponent;
 		else
-			return availableTags.map((tag) => (
+			return (
+				<AutocompleteInput
+					value={selectedArtists}
+					onChange={setSelectedArtists}
+					data={availableArtists?.map(item => ({
+						...item,
+						label: item.name,
+						isNew: false
+					})) ?? []}
+					placeholder="Select artist"
+				/>
+			)
+	}
+
+	const renderTags = () => {
+		if (isTagsLoading)
+			return loadingComponent;
+		else {
+			return tags?.map((tag) => (
 				<TouchableOpacity
 					key={tag.id}
 					style={[
@@ -226,14 +234,15 @@ export default function EditSongScreen() {
 						},
 					]}
 					onPress={() => toggleTag(tag.id)}>
-					<Text
+					<ThemedText
 						style={{
 							color: selectedTagIds.includes(tag.id) ? "#FFF" : "#999",
 						}}>
 						{tag.name}
-					</Text>
+					</ThemedText>
 				</TouchableOpacity>
 			));
+		}
 	};
 
 	return (
@@ -241,12 +250,7 @@ export default function EditSongScreen() {
 			style={{ flex: 1 }}
 			behavior={Platform.OS === "ios" ? "padding" : undefined}>
 			<ThemedView style={{ flex: 1, padding: 8 }}>
-				{fetchingSong ? (
-					<ActivityIndicator
-						size="large"
-						color={colors.text}
-					/>
-				) : (
+				{isSongLoading ? loadingComponent : (
 					<ThemedView
 						style={{
 							justifyContent: "space-between",
@@ -266,12 +270,7 @@ export default function EditSongScreen() {
 							/>
 
 							<ThemedText>Artist</ThemedText>
-							<AutocompleteInput
-								value={selectedArtists}
-								onChange={setSelectedArtists}
-								data={allArtists}
-								placeholder="Select artist"
-							/>
+							{renderArtists()}
 
 							<ThemedView
 								style={{
