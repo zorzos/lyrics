@@ -86,7 +86,7 @@ export default function AutocompleteInput({
 			)
 		) {
 			filtered.push({
-				id: `new-${Date.now()}`,
+				id: `new-${Date.now() * Math.random()}`,
 				label: query.trim(),
 				isNew: true,
 			});

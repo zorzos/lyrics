@@ -48,9 +48,7 @@ export default function SongDetailScreen() {
 		enabled: !!id,
 	});
 
-	const finalShows: Show[] = song?.shows ?? [];
-	const finalTags: TagType[] = song?.tags ?? [];
-	const durationNumber = Number(song?.duration);
+	const shows: Show[] = song?.shows ?? [];
 
 	const navigation = useNavigation();
 	useLayoutEffect(() => {
@@ -123,16 +121,16 @@ export default function SongDetailScreen() {
 		renderInfo(
 			{
 				label: "Duration",
-				value: formatDuration(durationNumber),
+				value: formatDuration(song?.duration),
 			},
 			0
 		),
 		renderInfo(
 			{
 				label: "Shows",
-				value: finalShows.length,
-				modalValue: finalShows,
-				opensModal: finalShows.length,
+				value: shows.length,
+				modalValue: shows,
+				opensModal: shows.length,
 			},
 			1
 		),
@@ -176,7 +174,7 @@ export default function SongDetailScreen() {
 			</ThemedView>
 
 			<ThemedView style={styles.tagsContainer}>
-				{finalTags.map((tag: TagType) => (
+				{song?.tags?.map((tag: TagType) => (
 					<ThemedView
 						key={tag.id}
 						style={styles.individualTagContainer}>

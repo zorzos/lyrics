@@ -17,10 +17,9 @@ import { Artist, AutocompleteItem, NewArtist } from "@/types";
 import AutocompleteInput from "@/components/ui/Autocomplete";
 import KeyPicker from "@/components/ui/KeyPicker";
 import { useColors } from "@/hooks/use-colors";
-import { useArtists } from "@/hooks/useArtists";
+import { useArtists, useInsertArtists } from "@/hooks/useArtists";
 import { useInsertSong, useSong } from "@/hooks/useSongs";
 import { useTags } from "@/hooks/useTags";
-import { insertArtists } from "@/lib/queries/artists";
 import { getSingleParam } from "@/utils/paramUtils";
 import { showErrorToast } from "@/utils/toastUtils";
 
@@ -35,6 +34,7 @@ export default function EditSongScreen() {
 	const { data: song, isLoading: isSongLoading } = useSong(songId || "");
 
 	const insertSongMutation = useInsertSong();
+	const insertArtistMutation = useInsertArtists();
 
 	const [tempTitle, setTitle] = useState<string>("");
 	const [selectedArtists, setSelectedArtists] = useState<AutocompleteItem[]>(
@@ -105,10 +105,10 @@ export default function EditSongScreen() {
 					name: label,
 					...restRenamed,
 				}));
-
-			const newlyCreatedArtists = await insertArtists(artistsToCreate);
+			const createdNewArtists =
+				await insertArtistMutation.mutateAsync(artistsToCreate);
 			createdArtists.push(
-				...newlyCreatedArtists.map((newArtist: Artist) =>
+				...createdNewArtists.map((newArtist: Artist) =>
 					newArtist.id.toString()
 				)
 			);
@@ -139,13 +139,11 @@ export default function EditSongScreen() {
 
 		try {
 			setLoading(true);
-
 			if (!songId) {
 				await insertSongMutation.mutateAsync(payload);
 			} else {
 				showErrorToast("Update implementation pending!");
 			}
-
 			router.back();
 		} catch (error: any) {
 			showErrorToast(error.message);
@@ -153,27 +151,6 @@ export default function EditSongScreen() {
 			setLoading(false);
 		}
 	};
-
-	// const handleSave = async () => {
-	// 	setLoading(true);
-	// 	const payload = await buildPayload();
-	// 	if (!payload) return;
-
-	// 	try {
-	// 		if (id) await updateSong(payload);
-	// 		else await insertSong(payload);
-	// 	} catch (error: any) {
-	// 		const message = error.message;
-	// 		console.error(`Error: ${message}`);
-	// 		showErrorToast(message);
-	// 	} finally {
-	// 		await queryClient.invalidateQueries({ queryKey: ["allSongs"] });
-	// 		router.back();
-	// 		setLoading(false);
-	// 		const message = id ? "updated" : "created";
-	// 		showSuccessToast(`Song successfully ${message}`);
-	// 	}
-	// };
 
 	const toggleTag = (tagId: string) => {
 		setSelectedTagIds(
