@@ -354,7 +354,7 @@ export default function EditSongScreen() {
 							onPress={() => form.handleSubmit()}
 							disabled={loading}
 						>
-							<ThemedText style={{ color: "#FFF", textAlign: "center" }}>
+							<ThemedText style={{ color: colors.text, textAlign: "center" }}>
 								{loading ? "Saving..." : "Save"}
 							</ThemedText>
 						</TouchableOpacity>
