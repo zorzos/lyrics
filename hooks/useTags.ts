@@ -4,13 +4,13 @@ import { TagColorMap } from "@/types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 
-const TAG_QUERY_KEY = ["tagColors"];
+const TAG_COLORS_QUERY_KEY = ["tagColors"];
 
 export const useTagColors = () => {
     const queryClient = useQueryClient();
 
     const { data: tagColorMap = {} } = useQuery<TagColorMap>({
-        queryKey: TAG_QUERY_KEY,
+        queryKey: TAG_COLORS_QUERY_KEY,
         queryFn: async () => {
             const result = await getTags();
             if (!result) return {};
@@ -30,7 +30,7 @@ export const useTagColors = () => {
                 "postgres_changes",
                 { event: "*", schema: "public", table: "tags" },
                 (payload) => {
-                    queryClient.setQueryData<TagColorMap>(TAG_QUERY_KEY, (prev = {}) => {
+                    queryClient.setQueryData<TagColorMap>(TAG_COLORS_QUERY_KEY, (prev = {}) => {
                         const updated = { ...prev };
 
                         if (payload.eventType === "DELETE" && payload.old?.name) {
