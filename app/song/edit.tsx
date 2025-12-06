@@ -1,4 +1,3 @@
-import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useEffect, useLayoutEffect, useState } from "react";
 import {
@@ -8,57 +7,45 @@ import {
 	Platform,
 	StyleSheet,
 	TextInput,
-	TouchableOpacity
+	TouchableOpacity,
 } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { Artist, AutocompleteItem, NewArtist, TagType } from "@/types";
+import { Artist, AutocompleteItem, NewArtist } from "@/types";
 
 import AutocompleteInput from "@/components/ui/Autocomplete";
 import KeyPicker from "@/components/ui/KeyPicker";
 import { useColors } from "@/hooks/use-colors";
 import { useArtists } from "@/hooks/useArtists";
-import { useSingleSong } from "@/hooks/useSongs";
+import { useInsertSong, useSong } from "@/hooks/useSongs";
 import { useTags } from "@/hooks/useTags";
 import { insertArtists } from "@/lib/queries/artists";
-import { getSong, insertSong, updateSong } from "@/lib/queries/songs";
 import { getSingleParam } from "@/utils/paramUtils";
-import { showErrorToast, showSuccessToast } from "@/utils/toastUtils";
+import { showErrorToast } from "@/utils/toastUtils";
 
 export default function EditSongScreen() {
 	const colors = useColors();
-	const queryClient = useQueryClient();
 	const { id } = useLocalSearchParams();
 	const songId = getSingleParam(id);
 	const router = useRouter();
 
-	const {
-		data: tags,
-		isLoading: isTagsLoading
-	} = useTags();
+	const { data: tags, isLoading: isTagsLoading } = useTags();
+	const { data: availableArtists, isLoading: isArtistsLoading } = useArtists();
+	const { data: song, isLoading: isSongLoading } = useSong(songId || "");
 
-	const {
-		data: availableArtists,
-		isLoading: isArtistsLoading
-	} = useArtists();
-
-	const {
-		data: song,
-		isLoading: isSongLoading
-	} = useSingleSong(songId || '');
+	const insertSongMutation = useInsertSong();
 
 	const [tempTitle, setTitle] = useState<string>("");
-	const [selectedArtists, setSelectedArtists] =
-		useState<AutocompleteItem[]>([]);
-	const [duration, setDuration] = useState<number>(song?.duration || 0);
-	const [lyrics, setLyrics] = useState<string>(song?.lyrics || '');
-	const [selectedTagIds, setSelectedTagIds] =
-		useState<string[]>(song?.tags?.map(x => x.id) || []);
-	const [originalKey, setOriginalKey] =
-		useState<string>(song?.original_key || '');
-	const [spKey, setSpKey] = useState<string>(song?.sp_key || '');
-	const [bpm, setBPM] = useState<number>(song?.bpm || 0);
+	const [selectedArtists, setSelectedArtists] = useState<AutocompleteItem[]>(
+		[]
+	);
+	const [duration, setDuration] = useState<number>(0);
+	const [lyrics, setLyrics] = useState<string>("");
+	const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+	const [originalKey, setOriginalKey] = useState<string>("");
+	const [spKey, setSpKey] = useState<string>("");
+	const [bpm, setBPM] = useState<number>(0);
 
 	const [loading, setLoading] = useState<boolean>(false);
 	const [ogKeyOpen, setOGKeyOpen] = useState<boolean>(false);
@@ -72,41 +59,23 @@ export default function EditSongScreen() {
 	}, [navigation, id]);
 
 	useEffect(() => {
-		async function fetchSong() {
-			if (!id) return;
-			// setFetchingSong(true);
-			try {
-				const singleId = getSingleParam(id);
-				if (!singleId) throw new Error("Song not found");
-				const result = await getSong(singleId);
+		if (!song) return;
 
-				if (!result) console.error("Song not found");
-				else {
-					setTitle(result.title);
-					// setArtist(result.artist);
-					setDuration(result.duration);
-					setLyrics(result.lyrics ?? "");
-					setOriginalKey(result.original_key ?? "");
-					setSpKey(result.sp_key ?? "");
-
-					const tagMap: Record<string, boolean> = {};
-					result.tags?.forEach((st: any) => {
-						if (st.tags) {
-							const tagsArray = Array.isArray(st.tags) ? st.tags : [st.tags];
-							tagsArray.forEach((tag: TagType) => {
-								tagMap[tag.id] = true;
-							});
-						}
-					});
-					// setSelectedTagIds(tagMap);
-				}
-			} finally {
-				// setFetchingSong(false);
-			}
-		}
-
-		fetchSong();
-	}, [id]);
+		setTitle(song.title);
+		setDuration(song.duration ?? 0);
+		setLyrics(song.lyrics ?? "");
+		setOriginalKey(song.original_key ?? "");
+		setSpKey(song.sp_key ?? "");
+		setBPM(song.bpm ?? 0);
+		setSelectedArtists(
+			song.artist.map((a) => ({
+				id: a.id,
+				label: a.name,
+				isNew: false,
+			}))
+		);
+		setSelectedTagIds(song.tags?.map((t) => t.id) ?? []);
+	}, [song]);
 
 	const buildPayload = async () => {
 		const title = tempTitle.trim();
@@ -165,25 +134,46 @@ export default function EditSongScreen() {
 	};
 
 	const handleSave = async () => {
-		setLoading(true);
 		const payload = await buildPayload();
 		if (!payload) return;
 
 		try {
-			if (id) await updateSong(payload);
-			else await insertSong(payload);
-		} catch (error: any) {
-			const message = error.message;
-			console.error(`Error: ${message}`);
-			showErrorToast(message);
-		} finally {
-			await queryClient.invalidateQueries({ queryKey: ["allSongs"] });
+			setLoading(true);
+
+			if (!songId) {
+				await insertSongMutation.mutateAsync(payload);
+			} else {
+				showErrorToast("Update implementation pending!");
+			}
+
 			router.back();
+		} catch (error: any) {
+			showErrorToast(error.message);
+		} finally {
 			setLoading(false);
-			const message = id ? 'updated' : 'created';
-			showSuccessToast(`Song successfully ${message}`);
 		}
 	};
+
+	// const handleSave = async () => {
+	// 	setLoading(true);
+	// 	const payload = await buildPayload();
+	// 	if (!payload) return;
+
+	// 	try {
+	// 		if (id) await updateSong(payload);
+	// 		else await insertSong(payload);
+	// 	} catch (error: any) {
+	// 		const message = error.message;
+	// 		console.error(`Error: ${message}`);
+	// 		showErrorToast(message);
+	// 	} finally {
+	// 		await queryClient.invalidateQueries({ queryKey: ["allSongs"] });
+	// 		router.back();
+	// 		setLoading(false);
+	// 		const message = id ? "updated" : "created";
+	// 		showSuccessToast(`Song successfully ${message}`);
+	// 	}
+	// };
 
 	const toggleTag = (tagId: string) => {
 		setSelectedTagIds(
@@ -194,35 +184,36 @@ export default function EditSongScreen() {
 		);
 	};
 
-	const loadingComponent =
+	const loadingComponent = (
 		<ThemedView style={{ flex: 1 }}>
 			<ActivityIndicator
 				size="large"
 				color={colors.text}
 			/>
 		</ThemedView>
+	);
 
 	const renderArtists = () => {
-		if (isArtistsLoading)
-			return loadingComponent;
+		if (isArtistsLoading) return loadingComponent;
 		else
 			return (
 				<AutocompleteInput
 					value={selectedArtists}
 					onChange={setSelectedArtists}
-					data={availableArtists?.map(item => ({
-						...item,
-						label: item.name,
-						isNew: false
-					})) ?? []}
+					data={
+						availableArtists?.map((item) => ({
+							...item,
+							label: item.name,
+							isNew: false,
+						})) ?? []
+					}
 					placeholder="Select artist"
 				/>
-			)
-	}
+			);
+	};
 
 	const renderTags = () => {
-		if (isTagsLoading)
-			return loadingComponent;
+		if (isTagsLoading) return loadingComponent;
 		else {
 			return tags?.map((tag) => (
 				<TouchableOpacity
@@ -250,7 +241,9 @@ export default function EditSongScreen() {
 			style={{ flex: 1 }}
 			behavior={Platform.OS === "ios" ? "padding" : undefined}>
 			<ThemedView style={{ flex: 1, padding: 8 }}>
-				{isSongLoading ? loadingComponent : (
+				{isSongLoading ? (
+					loadingComponent
+				) : (
 					<ThemedView
 						style={{
 							justifyContent: "space-between",
