@@ -1,6 +1,8 @@
 import { supabase } from "@/lib/supabase";
 import { ShowSongsByParts, Song } from "@/types";
 import { camelToSnake } from "@/utils/dbUtils";
+import { diffRelations } from "@/utils/paramUtils";
+import { getSongArtistIds, getSongTagIds } from "./helpers";
 
 export async function getSongs(showId?: string): Promise<ShowSongsByParts> {
 	try {
@@ -271,23 +273,70 @@ export async function insertSong(newSong: any) {
 	}
 }
 
-export async function updateSong(updatedSong: any) {
+export async function updateSong(songId: string, updatedSong: any) {
 	try {
 		const { artists, tags, ...songFields } = updatedSong;
 
-		const songDBStructure = camelToSnake(songFields);
-		const { data: song, error } = await supabase
+		// 1. Update base fields
+		const songDB = camelToSnake(songFields);
+		const { error: songError } = await supabase
 			.from("songs")
-			.update(songDBStructure)
-			.select("id")
-			.single();
+			.update(songDB)
+			.eq("id", songId);
 
-		if (error) {
-			throw new Error(`Failed to create song: ${error.message}`);
+		if (songError) throw songError;
+
+		// 2. Fetch existing relations
+		const existingArtistIds = await getSongArtistIds(songId);
+		const existingTagIds = await getSongTagIds(songId);
+
+		// 3. Diff
+		const { toAdd: artistsToAdd, toRemove: artistsToRemove } =
+			diffRelations(existingArtistIds, artists);
+
+		const { toAdd: tagsToAdd, toRemove: tagsToRemove } =
+			diffRelations(existingTagIds, tags);
+
+		// 4. Apply artists diff
+		if (artistsToAdd.length > 0) {
+			const rows = artistsToAdd.map(artistId => ({
+				song_id: songId,
+				artist_id: artistId,
+			}));
+
+			const { error } = await supabase.from("song_artists").insert(rows);
+			if (error) throw error;
 		}
 
-		const songId = song.id;
-		// HOW TO HANDLE ARTISTS & TAGS?
+		if (artistsToRemove.length > 0) {
+			const { error } = await supabase
+				.from("song_artists")
+				.delete()
+				.in("artist_id", artistsToRemove)
+				.eq("song_id", songId);
+
+			if (error) throw error;
+		}
+
+		// 5. Apply tags diff
+		if (tagsToAdd.length > 0) {
+			const rows = tagsToAdd.map(tagId => ({
+				song_id: songId,
+				tag_id: tagId,
+			}));
+			const { error } = await supabase.from("song_tags").insert(rows);
+			if (error) throw error;
+		}
+
+		if (tagsToRemove.length > 0) {
+			const { error } = await supabase
+				.from("song_tags")
+				.delete()
+				.in("tag_id", tagsToRemove)
+				.eq("song_id", songId);
+
+			if (error) throw error;
+		}
 
 		return { songId };
 	} catch (err) {

@@ -14,3 +14,9 @@ export function generateHref<K extends keyof typeof routes>(
 		params,
 	} as Href;
 }
+
+export function diffRelations(existing: string[], incoming: string[]) {
+	const toAdd = incoming.filter(id => !existing.includes(id));
+	const toRemove = existing.filter(id => !incoming.includes(id));
+	return { toAdd, toRemove };
+}

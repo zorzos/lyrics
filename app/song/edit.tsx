@@ -18,10 +18,10 @@ import AutocompleteInput from "@/components/ui/Autocomplete";
 import KeyPicker from "@/components/ui/KeyPicker";
 import { useColors } from "@/hooks/use-colors";
 import { useArtists, useInsertArtists } from "@/hooks/useArtists";
-import { useInsertSong, useSong } from "@/hooks/useSongs";
+import { useSong, useUpsertSong } from "@/hooks/useSongs";
 import { useTags } from "@/hooks/useTags";
 import { getSingleParam } from "@/utils/paramUtils";
-import { showErrorToast } from "@/utils/toastUtils";
+import { showErrorToast, showSuccessToast } from "@/utils/toastUtils";
 
 export default function EditSongScreen() {
 	const colors = useColors();
@@ -33,7 +33,7 @@ export default function EditSongScreen() {
 	const { data: availableArtists, isLoading: isArtistsLoading } = useArtists();
 	const { data: song, isLoading: isSongLoading } = useSong(songId || "");
 
-	const insertSongMutation = useInsertSong();
+	const upsertSong = useUpsertSong();
 	const insertArtistMutation = useInsertArtists();
 
 	const [tempTitle, setTitle] = useState<string>("");
@@ -60,7 +60,6 @@ export default function EditSongScreen() {
 
 	useEffect(() => {
 		if (!song) return;
-
 		setTitle(song.title);
 		setDuration(song.duration ?? 0);
 		setLyrics(song.lyrics ?? "");
@@ -139,11 +138,12 @@ export default function EditSongScreen() {
 
 		try {
 			setLoading(true);
-			if (!songId) {
-				await insertSongMutation.mutateAsync(payload);
-			} else {
-				showErrorToast("Update implementation pending!");
-			}
+			await upsertSong.mutateAsync({
+				id: songId,
+				payload
+			});
+
+			showSuccessToast("Song successfully saved!");
 			router.back();
 		} catch (error: any) {
 			showErrorToast(error.message);
