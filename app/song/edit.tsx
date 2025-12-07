@@ -116,10 +116,10 @@ export default function EditSongScreen() {
 	useEffect(() => {
 		if (!song) return;
 		form.setFieldValue("title", song.title);
-		form.setFieldValue("duration", song.duration ?? 0);
-		form.setFieldValue("bpm", song.bpm ?? 0);
-		form.setFieldValue("lyrics", song.lyrics ?? "");
-		form.setFieldValue("originalKey", song.original_key ?? "");
+		form.setFieldValue("duration", song.duration);
+		form.setFieldValue("bpm", song.bpm);
+		form.setFieldValue("lyrics", song.lyrics);
+		form.setFieldValue("originalKey", song.original_key);
 		form.setFieldValue("spKey", song.sp_key ?? "");
 		form.setFieldValue(
 			"selectedArtists",

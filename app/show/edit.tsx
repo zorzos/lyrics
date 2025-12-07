@@ -16,25 +16,26 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { getSongs } from "@/lib/queries/songs";
-import { supabase } from "@/lib/supabase";
-import { Part, Show, Song } from "@/types";
+import { Part, Song } from "@/types";
 
 import { useColors } from "@/hooks/use-colors";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import Toast from "react-native-toast-message";
 
+import { useShow, useUpsertShow } from "@/hooks/useShows";
+import { useSongs } from "@/hooks/useSongs";
 import { getTotalPartTime } from "@/utils/dateUtils";
-import AvailableSongsModal from "./AvailableSongsModal";
+import { getSingleParam } from "@/utils/paramUtils";
+import { showErrorToast, showSuccessToast } from "@/utils/toastUtils";
 
 export default function EditShowScreen() {
 	const colors = useColors();
 	const queryClient = useQueryClient();
 	const { id } = useLocalSearchParams();
+	const showId = getSingleParam(id);
 	const router = useRouter();
 
 	const [loading, setLoading] = useState(false);
-	const [fetchingShow, setFetchingShow] = useState(false);
+	// const [fetchingShow, setFetchingShow] = useState(false);
 
 	const [title, setTitle] = useState("");
 	const [date, setDate] = useState("");
@@ -44,143 +45,94 @@ export default function EditShowScreen() {
 	const navigation = useNavigation();
 	useLayoutEffect(() => {
 		navigation.setOptions({
-			title: id ? "Edit Show" : "Add New Show",
+			title: showId ? "Edit Show" : "Add New Show",
 		});
 	}, [id, navigation]);
 
 	const [songsByPart, setSongsByPart] = useState<Part[]>([
 		{
 			partNumber: 1,
-			songs: [],
+			songs: [{
+				id: '1',
+				title: 'Kostis',
+				lyrics: "",
+				original_key: "A",
+				duration: 123,
+				bpm: 321,
+				artist: [
+					{ id: '28', name: 'Some Artist' },
+					{ id: '29', name: 'Another Artist' }
+				],
+			}, {
+				id: '2',
+				title: 'Kostis II',
+				lyrics: "",
+				original_key: "A",
+				duration: 220,
+				bpm: 321,
+				artist: [
+					{ id: '32', name: 'New Artist' },
+				],
+			}],
 		},
 	]);
-	const [availableSongs, setAvailableSongs] = useState<Song[]>([]);
-	console.log("AVAILABLE SONGS", availableSongs.length);
+
+	const {
+		data: show,
+		isLoading,
+		isError
+	} = useShow(showId || "");
+	const { data: availableSongs } = useSongs();
+	const upsertShow = useUpsertShow();
+	// console.log("AVAILABLE SONGS", availableSongs.length);
 
 	const [availableSongsModalContent, setAvailableSongsModalContent] =
 		useState<any>(undefined);
 
 	useEffect(() => {
-		async function fetchSongs() {
-			const songsByParts = await getSongs();
-			const allSongs: Song[] = songsByParts.parts.flatMap((part) => part.songs);
-			setAvailableSongs(allSongs);
-		}
-		fetchSongs();
-	}, []);
+		if (!show) return;
+		setTitle(show.title);
+		setDate(show.date.toLocaleDateString('en-GB'));
+		setDraft(show.draft ?? false);
+		setParts(show.parts ?? 1);
 
-	// Fetch show if editing
-	useEffect(() => {
-		async function fetchShow() {
-			if (!id) return;
-			setFetchingShow(true);
-			try {
-				const { data, error } = await supabase
-					.from("shows")
-					.select(
-						`
-						id, title, date, draft, parts,
-						show_songs(order, songs(id, title, artist, duration))
-					`
-					)
-					.eq("id", id)
-					.single();
+		const groupedParts: Part[] = Array.from(
+			{ length: show.parts },
+			(_, i) => ({ partNumber: i + 1, songs: [] })
+		);
 
-				if (error) throw error;
-				if (data) {
-					setTitle(data.title);
-					setDate(data.date);
-					setDraft(data.draft ?? false);
-					setParts(data.parts ?? 1);
+		// (show.show_songs ?? []).forEach((ss: any) => {
+		// 	const index = ss.order ? ss.order - 1 : 0;
+		// 	groupedParts[index].songs.push(ss.songs);
+		// });
 
-					const groupedParts: Part[] = Array.from(
-						{ length: data.parts },
-						(_, i) => ({ partNumber: i + 1, songs: [] })
-					);
-
-					(data.show_songs ?? []).forEach((ss: any) => {
-						const index = ss.order ? ss.order - 1 : 0;
-						groupedParts[index].songs.push(ss.songs);
-					});
-
-					setSongsByPart(groupedParts);
-				}
-			} catch (e) {
-				console.error(e);
-			} finally {
-				setFetchingShow(false);
-			}
-		}
-		fetchShow();
-	}, [id]);
+		setSongsByPart(groupedParts);
+	}, [show]);
 
 	const handleSave = async () => {
 		setLoading(true);
 		try {
-			const payload: Partial<Show> = {
-				title,
-				date: new Date(date),
-				draft,
-				parts,
-			};
-
-			if (id) {
-				const { error } = await supabase
-					.from("shows")
-					.update(payload)
-					.eq("id", id);
-				if (error) throw error;
-
-				await supabase.from("show_songs").delete().eq("show_id", id);
-
-				for (const part of songsByPart) {
-					const inserts = part.songs.map((song, idx) => ({
-						show_id: id,
-						song_id: song.id,
-						order: part.partNumber,
-						song_order: idx + 1,
-					}));
-					if (inserts.length > 0)
-						await supabase.from("show_songs").insert(inserts);
+			await upsertShow.mutateAsync({
+				id: showId,
+				payload: {
+					title,
+					date: new Date(date),
+					draft,
+					parts,
 				}
+			});
 
-				queryClient.invalidateQueries({ queryKey: ["shows"] });
-			} else {
-				const { data, error } = await supabase
-					.from("shows")
-					.insert(payload)
-					.select("id")
-					.single();
-				if (error) throw error;
-				const showId = data?.id;
-
-				for (const part of songsByPart) {
-					const inserts = part.songs.map((song, idx) => ({
-						show_id: showId,
-						song_id: song.id,
-						order: part.partNumber,
-						song_order: idx + 1,
-					}));
-					if (inserts.length > 0)
-						await supabase.from("show_songs").insert(inserts);
-				}
-
-				queryClient.invalidateQueries({ queryKey: ["shows"] });
-			}
-
-			Toast.show({ type: "success", text1: "Show saved!" });
+			showSuccessToast("Show successfully saved!");
 			router.back();
-		} catch (e: any) {
-			console.error(e);
-			Toast.show({ type: "error", text1: e.message || "Failed to save show" });
+		} catch (error: any) {
+			showErrorToast(error.message);
 		} finally {
 			setLoading(false);
 		}
 	};
 
-	const renderSongItem = ({ item, drag, isActive }: RenderItemParams<Song>) => {
-		const artistName =
-			item.artist.length > 1 ? "Various Artists" : item.artist[0].name;
+	const renderSongItem = ({ item, getIndex, drag, isActive }: RenderItemParams<Song>) => {
+		const artistName = item.artist.map(ar => ar.name).join(', ');
 		return (
 			<TouchableOpacity
 				style={{
@@ -193,13 +145,13 @@ export default function EditShowScreen() {
 				}}
 				onLongPress={drag}>
 				<ThemedText>
-					#1 {item.title} ({artistName})
+					#{(getIndex() ?? 0) + 1} {item.title} ({artistName})
 				</ThemedText>
 			</TouchableOpacity>
 		);
 	};
 
-	if (fetchingShow) {
+	if (isLoading) {
 		return (
 			<ThemedView
 				style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -405,7 +357,7 @@ export default function EditShowScreen() {
 					</ThemedText>
 				</TouchableOpacity>
 			</ThemedView>
-			<AvailableSongsModal
+			{/* <AvailableSongsModal
 				content={availableSongsModalContent}
 				setContent={setAvailableSongsModalContent}
 				onConfirm={(partNumber: number, selectedSongs: Song[]) => {
@@ -430,7 +382,7 @@ export default function EditShowScreen() {
 
 					setAvailableSongsModalContent(false);
 				}}
-			/>
+			/> */}
 		</GestureHandlerRootView>
 	);
 }
