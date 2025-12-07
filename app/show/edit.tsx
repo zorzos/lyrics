@@ -115,7 +115,6 @@ export default function EditShowScreen() {
 
 	useEffect(() => {
 		if (!show) return;
-		console.log("SHOW", show);
 		form.setFieldValue("title", show.title);
 		form.setFieldValue("draft", show.draft);
 		form.setFieldValue("parts", show.parts ?? 1);
@@ -125,11 +124,6 @@ export default function EditShowScreen() {
 			{ length: show.parts },
 			(_, i) => ({ partNumber: i + 1, songs: [] })
 		);
-
-		// (show.show_songs ?? []).forEach((ss: any) => {
-		// 	const index = ss.order ? ss.order - 1 : 0;
-		// 	groupedParts[index].songs.push(ss.songs);
-		// });
 
 		setSongsByPart(groupedParts);
 	}, [show]);

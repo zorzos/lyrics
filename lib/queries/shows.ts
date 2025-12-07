@@ -11,21 +11,43 @@ export async function getShows(): Promise<Show[]> {
 	return data ?? [];
 }
 
-export async function getShow(showId: string): Promise<Show> {
+export async function getShow(showId: string) {
 	const { data, error } = await supabase
 		.from("shows")
-		.select(
-			`
-						id, title, date, draft, parts					
-					`
-		)
+		.select(`
+      id,
+      title,
+      date,
+      draft,
+      parts,
+      show_songs (
+        id,
+        song_order,
+        part,
+        songs (
+          id,
+          title,
+          duration,
+          bpm,
+          lyrics,
+          original_key,
+          song_artists (
+            artists (
+              id,
+              name
+            )
+          )
+        )
+      )
+    `)
 		.eq("id", showId)
+		.order("song_order", { foreignTable: "show_songs", ascending: true })
 		.single();
 
 	if (error) throw error;
-	if (!data) throw new Error("Show not found");
-	return data ?? null;
+	return data;
 }
+
 
 export async function insertShow(payload: any) {
 
