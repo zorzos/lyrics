@@ -61,9 +61,7 @@ export default function EditSongScreen() {
 			selectedTagIds: [] as string[],
 		},
 		validators: {
-			onSubmit({ value }) {
-				return validate(value)
-			}
+			onSubmit: validate
 		},
 		onSubmit: async ({ value }) => {
 			try {
@@ -148,7 +146,6 @@ export default function EditSongScreen() {
 				) : (
 					<ThemedView style={{ justifyContent: "space-between", flex: 1 }}>
 						<ThemedView>
-							{/* Title */}
 							<ThemedText>Title</ThemedText>
 							<Field form={form} name="title">
 								{(field) => (

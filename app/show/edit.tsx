@@ -1,4 +1,3 @@
-import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useEffect, useLayoutEffect, useState } from "react";
 import {
@@ -24,23 +23,49 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useShow, useUpsertShow } from "@/hooks/useShows";
 import { useSongs } from "@/hooks/useSongs";
 import { getTotalPartTime } from "@/utils/dateUtils";
-import { getSingleParam } from "@/utils/paramUtils";
+import { getSingleParam, validate } from "@/utils/paramUtils";
 import { showErrorToast, showSuccessToast } from "@/utils/toastUtils";
+import { Field, useForm } from "@tanstack/react-form";
 
 export default function EditShowScreen() {
 	const colors = useColors();
-	const queryClient = useQueryClient();
 	const { id } = useLocalSearchParams();
 	const showId = getSingleParam(id);
 	const router = useRouter();
-
 	const [loading, setLoading] = useState(false);
-	// const [fetchingShow, setFetchingShow] = useState(false);
 
-	const [title, setTitle] = useState("");
-	const [date, setDate] = useState("");
-	const [draft, setDraft] = useState(false);
-	const [parts, setParts] = useState(1);
+	const form = useForm({
+		defaultValues: {
+			title: "",
+			date: "",
+			draft: false,
+			parts: 1,
+		},
+		validators: {
+			onSubmit: validate,
+		},
+		onSubmit: async ({ value }) => {
+			try {
+				setLoading(true);
+				await upsertShow.mutateAsync({
+					id: showId,
+					payload: {
+						title: value.title,
+						date: new Date(value.date),
+						draft: value.draft,
+						parts: value.parts,
+					}
+				});
+
+				showSuccessToast("Show successfully saved!");
+				router.back();
+			} catch (error: any) {
+				showErrorToast(error.message);
+			} finally {
+				setLoading(false);
+			}
+		}
+	});
 
 	const navigation = useNavigation();
 	useLayoutEffect(() => {
@@ -79,22 +104,22 @@ export default function EditShowScreen() {
 
 	const {
 		data: show,
-		isLoading,
-		isError
+		isLoading
 	} = useShow(showId || "");
 	const { data: availableSongs } = useSongs();
 	const upsertShow = useUpsertShow();
-	// console.log("AVAILABLE SONGS", availableSongs.length);
+	// console.log("AVAILABLE SONGS", availableSongs?.length);
 
 	const [availableSongsModalContent, setAvailableSongsModalContent] =
-		useState<any>(undefined);
+		useState<any>([]);
 
 	useEffect(() => {
 		if (!show) return;
-		setTitle(show.title);
-		setDate(show.date.toLocaleDateString('en-GB'));
-		setDraft(show.draft ?? false);
-		setParts(show.parts ?? 1);
+		console.log("SHOW", show);
+		form.setFieldValue("title", show.title);
+		form.setFieldValue("draft", show.draft);
+		form.setFieldValue("parts", show.parts ?? 1);
+		form.setFieldValue("date", new Date(show.date).toLocaleDateString('en-GB'));
 
 		const groupedParts: Part[] = Array.from(
 			{ length: show.parts },
@@ -108,28 +133,6 @@ export default function EditShowScreen() {
 
 		setSongsByPart(groupedParts);
 	}, [show]);
-
-	const handleSave = async () => {
-		setLoading(true);
-		try {
-			await upsertShow.mutateAsync({
-				id: showId,
-				payload: {
-					title,
-					date: new Date(date),
-					draft,
-					parts,
-				}
-			});
-
-			showSuccessToast("Show successfully saved!");
-			router.back();
-		} catch (error: any) {
-			showErrorToast(error.message);
-		} finally {
-			setLoading(false);
-		}
-	};
 
 	const renderSongItem = ({ item, getIndex, drag, isActive }: RenderItemParams<Song>) => {
 		const artistName = item.artist.map(ar => ar.name).join(', ');
@@ -167,22 +170,32 @@ export default function EditShowScreen() {
 		<GestureHandlerRootView style={{ flex: 1, paddingBottom: 16 }}>
 			<ThemedView style={{ flex: 1, padding: 16 }}>
 				<ThemedText>Title</ThemedText>
-				<TextInput
-					style={[styles.input, { color: colors.text }]}
-					value={title}
-					onChangeText={setTitle}
-					placeholder="Enter title"
-					placeholderTextColor={colors.placeholder}
-				/>
+				<Field form={form} name="title">
+					{(field) => (
+						<TextInput
+							style={[styles.input, { color: colors.text }]}
+							value={field.state.value}
+							onChangeText={field.handleChange}
+							placeholder="Enter title"
+							placeholderTextColor={colors.placeholder}
+						/>
+					)}
+				</Field>
+
 
 				<ThemedText>Date</ThemedText>
-				<TextInput
-					style={[styles.input, { color: colors.text }]}
-					value={date}
-					onChangeText={setDate}
-					placeholder="DD-MM-YYYY"
-					placeholderTextColor={colors.placeholder}
-				/>
+				<Field form={form} name="date">
+					{(field) => (
+						<TextInput
+							style={[styles.input, { color: colors.text }]}
+							value={field.state.value}
+							onChangeText={field.handleChange}
+							placeholder="DD-MM-YYYY"
+							placeholderTextColor={colors.placeholder}
+						/>
+					)}
+				</Field>
+
 
 				<ThemedView
 					style={{
@@ -191,12 +204,16 @@ export default function EditShowScreen() {
 						marginVertical: 8,
 					}}>
 					<ThemedText>Draft</ThemedText>
-					<Switch
-						value={draft}
-						onValueChange={setDraft}
-						thumbColor={draft ? colors.accent : "#fff"}
-						trackColor={{ false: "#ccc", true: "#DA291C80" }}
-					/>
+					<Field form={form} name="draft">
+						{(field) => (
+							<Switch
+								value={field.state.value}
+								onValueChange={field.handleChange}
+								thumbColor={form.getFieldValue("draft") ? colors.accent : "#fff"}
+								trackColor={{ false: "#ccc", true: "#DA291C80" }}
+							/>
+						)}
+					</Field>
 				</ThemedView>
 
 				<ThemedView
@@ -206,7 +223,7 @@ export default function EditShowScreen() {
 						marginBottom: 16,
 					}}>
 					{[1, 2, 3].map((p, index, availableParts) => {
-						const isSelected = parts === p;
+						const isSelected = form.getFieldValue("parts") === p;
 						return (
 							<TouchableOpacity
 								key={index}
@@ -221,7 +238,7 @@ export default function EditShowScreen() {
 									},
 								]}
 								onPress={() => {
-									setParts(p);
+									form.setFieldValue("parts", p);
 									setSongsByPart((prev) => {
 										if (prev.length === p) return prev;
 										if (prev.length < p) {
@@ -350,7 +367,7 @@ export default function EditShowScreen() {
 
 				<TouchableOpacity
 					style={styles.saveButton}
-					onPress={handleSave}
+					onPress={() => form.handleSubmit()}
 					disabled={loading}>
 					<ThemedText style={{ color: "#fff", textAlign: "center" }}>
 						{loading ? "Saving..." : "Save"}

@@ -148,8 +148,6 @@ export default function SongDetailScreen() {
 		/>,
 	];
 
-	console.log("SONG ARTIST(S)", song.artist);
-
 	return (
 		<ThemedView style={{ flex: 1 }}>
 			<ThemedView style={styles.songDataItemContainer}>

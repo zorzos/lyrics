@@ -31,6 +31,15 @@ export default function ShowDetailScreen() {
 	useLayoutEffect(() => {
 		navigation.setOptions({
 			title: title || "Show Details",
+			headerRight: () => (
+				<Link href={generateHref("editShow", { id })}>
+					<MaterialIcons
+						size={24}
+						name="edit"
+						color="white"
+					/>
+				</Link>
+			),
 		});
 	}, [navigation, title]);
 

@@ -16,14 +16,14 @@ export async function getShow(showId: string): Promise<Show> {
 		.from("shows")
 		.select(
 			`
-						id, title, date, draft, parts,
-						show_songs(order, songs(id, title, artist, duration))
+						id, title, date, draft, parts					
 					`
 		)
 		.eq("id", showId)
 		.single();
 
 	if (error) throw error;
+	if (!data) throw new Error("Show not found");
 	return data ?? null;
 }
 
