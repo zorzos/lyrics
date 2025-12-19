@@ -7,7 +7,7 @@ import {
 	Platform,
 	StyleSheet,
 	TextInput,
-	TouchableOpacity
+	TouchableOpacity,
 } from "react-native";
 
 import { useColors } from "@/hooks/use-colors";
@@ -61,7 +61,7 @@ export default function EditSongScreen() {
 			selectedTagIds: [] as string[],
 		},
 		validators: {
-			onSubmit: validate
+			onSubmit: validate,
 		},
 		onSubmit: async ({ value }) => {
 			try {
@@ -123,23 +123,22 @@ export default function EditSongScreen() {
 			"selectedArtists",
 			song.artist.map((a) => ({ id: a.id, label: a.name, isNew: false }))
 		);
-		form.setFieldValue(
-			"selectedTagIds",
-			song.tags?.map((t) => t.id) ?? []
-		);
-	}, [song]);
+		form.setFieldValue("selectedTagIds", song.tags?.map((t) => t.id) ?? []);
+	}, [form, song]);
 
 	const loadingComponent = (
 		<ThemedView style={{ flex: 1 }}>
-			<ActivityIndicator size="large" color={colors.text} />
+			<ActivityIndicator
+				size="large"
+				color={colors.text}
+			/>
 		</ThemedView>
 	);
 
 	return (
 		<KeyboardAvoidingView
 			style={{ flex: 1 }}
-			behavior={Platform.OS === "ios" ? "padding" : undefined}
-		>
+			behavior={Platform.OS === "ios" ? "padding" : undefined}>
 			<ThemedView style={{ flex: 1, padding: 8 }}>
 				{isSongLoading ? (
 					loadingComponent
@@ -147,7 +146,9 @@ export default function EditSongScreen() {
 					<ThemedView style={{ justifyContent: "space-between", flex: 1 }}>
 						<ThemedView>
 							<ThemedText>Title</ThemedText>
-							<Field form={form} name="title">
+							<Field
+								form={form}
+								name="title">
 								{(field) => (
 									<TextInput
 										style={[
@@ -163,7 +164,9 @@ export default function EditSongScreen() {
 							</Field>
 
 							<ThemedText>Artist</ThemedText>
-							<Field form={form} name="selectedArtists">
+							<Field
+								form={form}
+								name="selectedArtists">
 								{(field) =>
 									isArtistsLoading ? (
 										loadingComponent
@@ -187,17 +190,23 @@ export default function EditSongScreen() {
 							<ThemedView style={{ flexDirection: "row", gap: 12 }}>
 								<ThemedView style={{ flex: 1 }}>
 									<ThemedText>Duration (seconds)</ThemedText>
-									<Field form={form} name="duration">
+									<Field
+										form={form}
+										name="duration">
 										{(field) => (
 											<TextInput
 												style={[
 													styles.input,
 													{ borderColor: colors.tint, color: colors.text },
 												]}
-												value={field.state.value > 0 ? String(field.state.value) : ""}
+												value={
+													field.state.value > 0 ? String(field.state.value) : ""
+												}
 												onChangeText={(text) => {
 													const numericValue = parseInt(text, 10);
-													field.setValue(!isNaN(numericValue) ? numericValue : 0);
+													field.setValue(
+														!isNaN(numericValue) ? numericValue : 0
+													);
 												}}
 												keyboardType="numeric"
 												placeholder="Enter duration"
@@ -209,17 +218,23 @@ export default function EditSongScreen() {
 
 								<ThemedView style={{ flex: 1 }}>
 									<ThemedText>BPM</ThemedText>
-									<Field form={form} name="bpm">
+									<Field
+										form={form}
+										name="bpm">
 										{(field) => (
 											<TextInput
 												style={[
 													styles.input,
 													{ borderColor: colors.tint, color: colors.text },
 												]}
-												value={field.state.value > 0 ? String(field.state.value) : ""}
+												value={
+													field.state.value > 0 ? String(field.state.value) : ""
+												}
 												onChangeText={(text) => {
 													const numericValue = parseInt(text, 10);
-													field.setValue(!isNaN(numericValue) ? numericValue : 0);
+													field.setValue(
+														!isNaN(numericValue) ? numericValue : 0
+													);
 												}}
 												keyboardType="numeric"
 												placeholder="Enter BPM"
@@ -231,7 +246,9 @@ export default function EditSongScreen() {
 							</ThemedView>
 
 							<ThemedView style={styles.keysRow}>
-								<Field form={form} name="originalKey">
+								<Field
+									form={form}
+									name="originalKey">
 									{(field) => (
 										<KeyPicker
 											open={ogKeyOpen}
@@ -254,7 +271,9 @@ export default function EditSongScreen() {
 									)}
 								</Field>
 
-								<Field form={form} name="spKey">
+								<Field
+									form={form}
+									name="spKey">
 									{(field) => (
 										<KeyPicker
 											open={spKeyOpen}
@@ -274,7 +293,9 @@ export default function EditSongScreen() {
 												{
 													label: "None",
 													value: "none",
-													containerStyle: { backgroundColor: colors.background },
+													containerStyle: {
+														backgroundColor: colors.background,
+													},
 													labelStyle: { color: colors.text },
 												},
 											]}
@@ -286,12 +307,18 @@ export default function EditSongScreen() {
 							</ThemedView>
 
 							<ThemedText>Lyrics</ThemedText>
-							<Field form={form} name="lyrics">
+							<Field
+								form={form}
+								name="lyrics">
 								{(field) => (
 									<TextInput
 										style={[
 											styles.input,
-											{ height: 120, borderColor: colors.tint, color: colors.text },
+											{
+												height: 120,
+												borderColor: colors.tint,
+												color: colors.text,
+											},
 										]}
 										value={field.state.value}
 										onChangeText={field.handleChange}
@@ -301,7 +328,9 @@ export default function EditSongScreen() {
 							</Field>
 
 							<ThemedText>Tags</ThemedText>
-							<Field form={form} name="selectedTagIds">
+							<Field
+								form={form}
+								name="selectedTagIds">
 								{(field) =>
 									isTagsLoading ? (
 										loadingComponent
@@ -310,8 +339,7 @@ export default function EditSongScreen() {
 											style={[
 												styles.tagsContainer,
 												{ backgroundColor: colors.background },
-											]}
-										>
+											]}>
 											{tags?.map((tag) => (
 												<TouchableOpacity
 													key={tag.id}
@@ -327,15 +355,13 @@ export default function EditSongScreen() {
 																? prev.filter((id) => id !== tag.id)
 																: [...prev, tag.id]
 														);
-													}}
-												>
+													}}>
 													<ThemedText
 														style={{
 															color: field.state.value.includes(tag.id)
 																? "#FFF"
 																: "#999",
-														}}
-													>
+														}}>
 														{tag.name}
 													</ThemedText>
 												</TouchableOpacity>
@@ -349,8 +375,7 @@ export default function EditSongScreen() {
 						<TouchableOpacity
 							style={styles.saveButton}
 							onPress={() => form.handleSubmit()}
-							disabled={loading}
-						>
+							disabled={loading}>
 							<ThemedText style={{ color: colors.text, textAlign: "center" }}>
 								{loading ? "Saving..." : "Save"}
 							</ThemedText>
