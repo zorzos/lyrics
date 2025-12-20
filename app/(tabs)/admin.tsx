@@ -1,12 +1,12 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useState } from "react";
 import { Button } from "react-native";
 
 export default function Admin() {
 	const [date, setDate] = useState(new Date());
-	const [mode, setMode] = useState<any>('date');
+	const [mode, setMode] = useState<any>("date");
 	const [show, setShow] = useState(false);
 
 	const onChange = (event: any, selectedDate: any) => {
@@ -21,18 +21,26 @@ export default function Admin() {
 	};
 
 	const showDatepicker = () => {
-		showMode('date');
+		showMode("date");
 	};
 
 	const showTimepicker = () => {
-		showMode('time');
+		showMode("time");
 	};
 
 	return (
-		<ThemedView style={{ flex: 1, padding: 20 }}>
-			<ThemedText>{date?.toDateString()}</ThemedText>
-			<Button onPress={showDatepicker} title="Show date picker!" />
-			<Button onPress={showTimepicker} title="Show time picker!" />
+		<ThemedView style={{ flex: 1, padding: 20, display: "flex", gap: 10 }}>
+			<ThemedText style={{ fontWeight: "bold" }}>
+				Selected date: {date?.toDateString()}
+			</ThemedText>
+			<Button
+				onPress={showDatepicker}
+				title="Show date picker!"
+			/>
+			<Button
+				onPress={showTimepicker}
+				title="Show time picker!"
+			/>
 			{show && (
 				<DateTimePicker
 					testID="dateTimePicker"
@@ -44,4 +52,4 @@ export default function Admin() {
 			)}
 		</ThemedView>
 	);
-};
+}

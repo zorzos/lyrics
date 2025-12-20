@@ -129,7 +129,7 @@ interface AvailableSongModalContent {
 
 export interface AvailableSongsModalProps {
 	content: AvailableSongModalContent;
-	setContent: Dispatch<SetStateAction<boolean>>;
+	setContent: Dispatch<SetStateAction<any>>;
 	onConfirm: (partNumber: number, selectedSongs: Song[]) => void;
 }
 
@@ -148,4 +148,4 @@ export interface AutocompleteProps {
 
 export type ExtraConfig = {
 	[k: string]: string;
-}
+};
