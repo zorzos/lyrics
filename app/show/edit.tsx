@@ -147,7 +147,7 @@ export default function EditShowScreen() {
 
 	const FormHeader = () => {
 		return (
-			<>
+			<ThemedView style={{ paddingHorizontal: 8 }}>
 				<ThemedView style={{ display: "flex", flexDirection: "row", gap: 6 }}>
 					<ThemedView style={{ flex: 1 }}>
 						<ThemedText>Title</ThemedText>
@@ -207,7 +207,7 @@ export default function EditShowScreen() {
 					</ThemedView>
 
 					<ThemedView style={{ flex: 1 }}>
-						<ThemedText>Time</ThemedText>
+						<ThemedText>Time (range?)</ThemedText>
 						<Field
 							form={form}
 							name="time">
@@ -224,11 +224,12 @@ export default function EditShowScreen() {
 					</ThemedView>
 				</ThemedView>
 
-				<ThemedView>
+				<ThemedView style={{ display: "flex", flexDirection: "row", gap: 12 }}>
 					<ThemedView
 						style={{
-							flexDirection: "row",
-							alignItems: "center",
+							// flexDirection: "row",
+							alignItems: "flex-start",
+							flex: 1,
 						}}>
 						<ThemedText>Soundcheck</ThemedText>
 						<Field
@@ -244,31 +245,78 @@ export default function EditShowScreen() {
 							)}
 						</Field>
 					</ThemedView>
+
+					<form.Subscribe selector={(state) => state.values.soundcheck}>
+						{(soundcheck) => {
+							if (!soundcheck) return;
+							return (
+								<ThemedView style={{ flex: 1 }}>
+									<ThemedText>SC Time (range?)</ThemedText>
+									<Field
+										form={form}
+										name="soundcheckTime">
+										{(field) => (
+											<TextInput
+												style={[styles.input, { color: colors.text }]}
+												value={field.state.value}
+												onChangeText={field.handleChange}
+												placeholder="00:00"
+												placeholderTextColor={colors.placeholder}
+											/>
+										)}
+									</Field>
+								</ThemedView>
+							);
+						}}
+					</form.Subscribe>
 				</ThemedView>
 
-				<form.Subscribe selector={(state) => state.values.soundcheck}>
-					{(soundcheck) => {
-						if (!soundcheck) return;
-						return (
-							<ThemedView>
-								<ThemedText>Soundcheck Time</ThemedText>
-								<Field
-									form={form}
-									name="soundcheckTime">
-									{(field) => (
-										<TextInput
-											style={[styles.input, { color: colors.text }]}
-											value={field.state.value}
-											onChangeText={field.handleChange}
-											placeholder="00:00"
-											placeholderTextColor={colors.placeholder}
-										/>
-									)}
-								</Field>
-							</ThemedView>
-						);
-					}}
-				</form.Subscribe>
+				<ThemedView style={{ display: "flex", flexDirection: "row", gap: 12 }}>
+					<ThemedView
+						style={{
+							// flexDirection: "row",
+							alignItems: "flex-start",
+							flex: 1,
+						}}>
+						<ThemedText>Paid</ThemedText>
+						<Field
+							form={form}
+							name="paid">
+							{(field) => (
+								<Switch
+									value={field.state.value}
+									onValueChange={field.handleChange}
+									thumbColor={field.state.value ? colors.accent : "#fff"}
+									trackColor={{ false: "#ccc", true: "#DA291C80" }}
+								/>
+							)}
+						</Field>
+					</ThemedView>
+
+					<form.Subscribe selector={(state) => state.values.paid}>
+						{(paid) => {
+							if (!paid) return;
+							return (
+								<ThemedView style={{ flex: 1 }}>
+									<ThemedText>Amount</ThemedText>
+									<Field
+										form={form}
+										name="amount">
+										{(field) => (
+											<TextInput
+												style={[styles.input, { color: colors.text }]}
+												value={field.state.value}
+												onChangeText={field.handleChange}
+												placeholder="0"
+												placeholderTextColor={colors.placeholder}
+											/>
+										)}
+									</Field>
+								</ThemedView>
+							);
+						}}
+					</form.Subscribe>
+				</ThemedView>
 
 				<ThemedView
 					style={{
@@ -318,7 +366,7 @@ export default function EditShowScreen() {
 						);
 					})}
 				</ThemedView>
-			</>
+			</ThemedView>
 		);
 	};
 
