@@ -35,7 +35,6 @@ export default function AvailableSongsModal({
 	const handleConfirm = () => {
 		onConfirm(content?.partNumber, selectedSongs);
 		setSelectedSongs([]);
-		setContent(false);
 	};
 
 	const renderContent = () => {

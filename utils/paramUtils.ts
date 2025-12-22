@@ -17,15 +17,19 @@ export function generateHref<K extends keyof typeof routes>(
 }
 
 export function diffRelations(existing: string[], incoming: string[]) {
-	const toAdd = incoming.filter(id => !existing.includes(id));
-	const toRemove = existing.filter(id => !incoming.includes(id));
+	const toAdd = incoming.filter((id) => !existing.includes(id));
+	const toRemove = existing.filter((id) => !incoming.includes(id));
 	return { toAdd, toRemove };
 }
 
+const EXCLUDED_VALIDATION_KEYS = ["draft", "soundcheck", "paid"];
+
 export function validate(values: any): number | null {
-	for (const key in values) {
-		const value = values[key];
-		if (!value) {
+	const { value } = values;
+	for (const key in value) {
+		if (EXCLUDED_VALIDATION_KEYS.includes(key)) return null;
+		const valueToCheck = value[key];
+		if (!valueToCheck) {
 			const label = key
 				.replace(/([A-Z])/g, " $1")
 				.replace(/_/g, " ")

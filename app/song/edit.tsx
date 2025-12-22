@@ -392,7 +392,6 @@ const styles = StyleSheet.create({
 		borderWidth: 1,
 		borderRadius: 6,
 		padding: 8,
-		marginBottom: 12,
 	},
 	keysRow: {
 		flexDirection: "row",

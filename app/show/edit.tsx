@@ -28,7 +28,6 @@ import { useShow, useUpsertShow } from "@/hooks/useShows";
 import { useSongs } from "@/hooks/useSongs";
 import { getTotalPartTime } from "@/utils/dateUtils";
 import { getSingleParam, validate } from "@/utils/paramUtils";
-import { showErrorToast, showSuccessToast } from "@/utils/toastUtils";
 import { Field, useForm } from "@tanstack/react-form";
 import AvailableSongsModal from "./AvailableSongsModal";
 
@@ -39,7 +38,7 @@ export default function EditShowScreen() {
 	const router = useRouter();
 
 	const upsertShow = useUpsertShow();
-	const { data: show, isLoading } = useShow(showId || "");
+	const { data: show, isLoading: isShowLoading } = useShow(showId || "");
 	const { data: availableSongs } = useSongs();
 
 	const form = useForm({
@@ -49,6 +48,7 @@ export default function EditShowScreen() {
 			time: "",
 			draft: false,
 			parts: 1,
+			breakDuration: 0,
 			soundcheck: false,
 			soundcheckTime: "",
 			paid: false,
@@ -58,30 +58,33 @@ export default function EditShowScreen() {
 			onSubmit: validate,
 		},
 		onSubmit: async ({ value }) => {
-			try {
-				setLoading(true);
-				await upsertShow.mutateAsync({
-					id: showId,
-					payload: {
-						title: value.title,
-						date: new Date(value.date),
-						draft: value.draft,
-						parts: value.parts,
-					},
-				});
-				showSuccessToast("Show successfully saved!");
-				router.back();
-			} catch (error: any) {
-				showErrorToast(error.message);
-			} finally {
-				setLoading(false);
-			}
+			// SONGS ARE INSIDE songsByPart
+			console.log("SHOW DATA", value);
+			// try {
+			// 	await upsertShow.mutateAsync({
+			// 		id: showId,
+			// 		payload: {
+			// 			title: value.title,
+			// 			date: new Date(value.date),
+			// 			time: value.time,
+			// 			draft: value.draft,
+			// 			parts: value.parts,
+			// 			breakDuration: 0,
+			// 			soundcheck: value.soundcheck,
+			// 			soundcheckTime: value.soundcheckTime,
+			// 			paid: value.paid,
+			// 			amount: value.amount,
+			// 		},
+			// 	});
+			// 	showSuccessToast("Show successfully saved!");
+			// 	router.back();
+			// } catch (error: any) {
+			// 	showErrorToast(error.message);
+			// }
 		},
 	});
 
 	const navigation = useNavigation();
-	const [loading, setLoading] = useState(false);
-
 	useLayoutEffect(() => {
 		navigation.setOptions({
 			title: showId ? "Edit Show" : "Add New Show",
@@ -133,7 +136,7 @@ export default function EditShowScreen() {
 		);
 	};
 
-	if (isLoading) {
+	if (isShowLoading) {
 		return (
 			<ThemedView
 				style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -148,7 +151,11 @@ export default function EditShowScreen() {
 	const FormHeader = () => {
 		return (
 			<ThemedView style={{ paddingHorizontal: 8 }}>
-				<ThemedView style={{ display: "flex", flexDirection: "row", gap: 6 }}>
+				<ThemedView
+					style={[
+						styles.formRow,
+						{ display: "flex", flexDirection: "row", gap: 6 },
+					]}>
 					<ThemedView style={{ flex: 1 }}>
 						<ThemedText>Title</ThemedText>
 						<Field
@@ -188,7 +195,11 @@ export default function EditShowScreen() {
 					</ThemedView>
 				</ThemedView>
 
-				<ThemedView style={{ display: "flex", gap: 12, flexDirection: "row" }}>
+				<ThemedView
+					style={[
+						styles.formRow,
+						{ display: "flex", gap: 12, flexDirection: "row" },
+					]}>
 					<ThemedView style={{ flex: 1 }}>
 						<ThemedText>Date</ThemedText>
 						<Field
@@ -227,7 +238,6 @@ export default function EditShowScreen() {
 				<ThemedView style={{ display: "flex", flexDirection: "row", gap: 12 }}>
 					<ThemedView
 						style={{
-							// flexDirection: "row",
 							alignItems: "flex-start",
 							flex: 1,
 						}}>
@@ -305,9 +315,18 @@ export default function EditShowScreen() {
 										{(field) => (
 											<TextInput
 												style={[styles.input, { color: colors.text }]}
-												value={field.state.value}
-												onChangeText={field.handleChange}
-												placeholder="0"
+												value={
+													field.state.value > 0 ? String(field.state.value) : ""
+												}
+												onChangeText={(text) => {
+													const numericValue = parseInt(text, 10);
+													field.setValue(
+														!isNaN(numericValue) ? numericValue : 0
+													);
+												}}
+												keyboardType="numeric"
+												inputMode="numeric"
+												placeholder="Enter amount in euro"
 												placeholderTextColor={colors.placeholder}
 											/>
 										)}
@@ -339,6 +358,7 @@ export default function EditShowScreen() {
 								]}
 								onPress={() => {
 									form.setFieldValue("parts", p);
+									if (p === 1) form.setFieldValue("breakDuration", 0);
 									setSongsByPart((prev) => {
 										if (prev.length === p) return prev;
 										if (prev.length < p) {
@@ -366,6 +386,44 @@ export default function EditShowScreen() {
 						);
 					})}
 				</ThemedView>
+
+				<form.Subscribe selector={(state) => state.values.parts}>
+					{(parts) => {
+						if (parts === 1) return;
+						return (
+							<ThemedView
+								style={{
+									flexDirection: "row",
+									justifyContent: "center",
+									alignItems: "center",
+									gap: 12,
+									paddingBottom: 8,
+								}}>
+								<ThemedText>Break duration (mins)</ThemedText>
+								<Field
+									form={form}
+									name="breakDuration">
+									{(field) => (
+										<TextInput
+											style={[styles.input, { color: colors.text, flex: 1 }]}
+											value={
+												field.state.value > 0 ? String(field.state.value) : ""
+											}
+											onChangeText={(text) => {
+												const numericValue = parseInt(text, 10);
+												field.setValue(!isNaN(numericValue) ? numericValue : 0);
+											}}
+											keyboardType="numeric"
+											inputMode="numeric"
+											placeholder="Break duration"
+											placeholderTextColor={colors.placeholder}
+										/>
+									)}
+								</Field>
+							</ThemedView>
+						);
+					}}
+				</form.Subscribe>
 			</ThemedView>
 		);
 	};
@@ -473,7 +531,6 @@ export default function EditShowScreen() {
 						)}
 					/>
 
-					{/* Sticky Save Button */}
 					<SafeAreaView
 						edges={["bottom"]}
 						style={{ backgroundColor: colors.background }}>
@@ -491,15 +548,14 @@ export default function EditShowScreen() {
 									alignItems: "center",
 								}}
 								onPress={() => form.handleSubmit()}
-								disabled={loading}>
+								disabled={upsertShow.isPending}>
 								<ThemedText style={{ color: colors.text }}>
-									{loading ? "Saving..." : "Save"}
+									{upsertShow.isPending ? "Saving..." : "Save"}
 								</ThemedText>
 							</TouchableOpacity>
 						</View>
 					</SafeAreaView>
 
-					{/* AvailableSongsModal */}
 					<AvailableSongsModal
 						content={availableSongsModalContent}
 						setContent={setAvailableSongsModalContent}
@@ -526,12 +582,14 @@ export default function EditShowScreen() {
 }
 
 const styles = StyleSheet.create({
+	formRow: {
+		paddingBottom: 8,
+	},
 	input: {
 		borderWidth: 1,
 		borderColor: "#999",
 		borderRadius: 6,
 		padding: 8,
-		marginBottom: 12,
 	},
 	partSegment: {
 		flex: 1,
