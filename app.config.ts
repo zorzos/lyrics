@@ -9,14 +9,9 @@ export default ({ config }: { config: ExpoConfig }) => ({
 	name: `Lyrics ${mode}`,
 	slug: "lyrics-app",
 	version: "1.0.0",
-	platforms: ["ios", "android"],
+	platforms: ["android", "ios"],
 	orientation: "portrait",
 	icon: "./assets/images/icon.jpg",
-	splash: {
-		image: "./assets/images/icon.jpg",
-		resizeMode: "contain",
-		backgroundColor: "#000000",
-	},
 	assetBundlePatterns: ["**/*"],
 	extra: {
 		supabaseUrl: env.EXPO_PUBLIC_SUPABASE_URL,
@@ -29,5 +24,44 @@ export default ({ config }: { config: ExpoConfig }) => ({
 	},
 	android: {
 		package: "com.strangerpulse.app",
+		adaptiveIcon: {
+			backgroundColor: "#E6F4FE"
+		},
+		edgeToEdgeEnabled: true,
+		predictiveBackGestureEnabled: false,
 	},
+	ios: {
+		supportsTablet: true
+	},
+	web: {
+		output: "static"
+	},
+	runtimeVersion: {
+		policy: "appVersion"
+	},
+	updates: {
+		url: "https://u.expo.dev/18a96692-fc2b-4633-917a-e059cf2867e6"
+	},
+	experiments: {
+		typedRoutes: true,
+		reactCompiler: true,
+		newArchEnabled: false
+	},
+	scheme: "reactnativeboilerplate",
+	userInterfaceStyle: "automatic",
+	plugins: [
+		"expo-router",
+		[
+			"expo-splash-screen",
+			{
+				image: './assets/images/icon.jpg',
+				imageWidth: 200,
+				resizeMode: "contain",
+				backgroundColor: "#ffffff",
+				dark: {
+					backgroundColor: "#000000"
+				}
+			}
+		]
+	]
 });
