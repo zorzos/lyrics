@@ -27,6 +27,7 @@ export default function TabLayout() {
 
 	return (
 		<Tabs
+			initialRouteName="shows"
 			screenOptions={{
 				tabBarActiveTintColor: colors.tint,
 				tabBarInactiveTintColor: colors.placeholder,
