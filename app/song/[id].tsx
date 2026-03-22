@@ -12,7 +12,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Link, useLocalSearchParams, useNavigation } from "expo-router";
 import { useLayoutEffect, useState } from "react";
-import { ActivityIndicator, StyleSheet, TouchableOpacity } from "react-native";
+import {
+	ActivityIndicator,
+	Dimensions,
+	StyleSheet,
+	TouchableOpacity,
+} from "react-native";
 
 import Key from "@/components/ui/Key";
 import { useColors } from "@/hooks/use-colors";
@@ -123,7 +128,7 @@ export default function SongDetailScreen() {
 				label: "Duration",
 				value: formatDuration(song?.duration),
 			},
-			0
+			0,
 		),
 		renderInfo(
 			{
@@ -132,7 +137,7 @@ export default function SongDetailScreen() {
 				modalValue: shows,
 				opensModal: shows.length,
 			},
-			1
+			1,
 		),
 		<Metronome
 			key={2}
@@ -148,6 +153,9 @@ export default function SongDetailScreen() {
 		/>,
 	];
 
+	const { width } = Dimensions.get("window");
+	const testWidth = width * 0.25;
+
 	return (
 		<ThemedView style={{ flex: 1 }}>
 			<ThemedView style={styles.songDataItemContainer}>
@@ -159,7 +167,7 @@ export default function SongDetailScreen() {
 						label: "Artist",
 						value: song.artist.length,
 					},
-					0
+					0,
 				)}
 				{renderInfo(
 					{
@@ -167,8 +175,35 @@ export default function SongDetailScreen() {
 						value: 2005,
 						opensModal: false,
 					},
-					1
+					1,
 				)}
+			</ThemedView>
+
+			<ThemedView
+				style={{
+					borderColor: "blue",
+					borderWidth: 1,
+					flexDirection: "row",
+					flexWrap: "wrap",
+					justifyContent: "space-evenly",
+					alignItems: "center",
+					gap: 4,
+				}}>
+				{Array.from({ length: 7 }).map((_, index) => (
+					<ThemedView
+						key={index}
+						style={{
+							width: testWidth,
+							aspectRatio: 1,
+							justifyContent: "center",
+							alignItems: "center",
+							borderWidth: 2,
+							borderColor: "white",
+							borderRadius: 8,
+						}}>
+						<ThemedText>{index}</ThemedText>
+					</ThemedView>
+				))}
 			</ThemedView>
 
 			<ThemedView style={styles.tagsContainer}>

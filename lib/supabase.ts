@@ -8,7 +8,6 @@ type ExtraConfig = {
 };
 
 const extra = Constants.expoConfig?.extra as ExtraConfig;
-
 const { supabaseUrl, supabaseKey, mode } = extra;
 
 export const supabase = createClient(supabaseUrl, supabaseKey);

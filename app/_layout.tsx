@@ -18,14 +18,13 @@ export default function RootLayout() {
 	const toastConfig = useToastConfig();
 
 	const colorScheme = useColorScheme();
-	const isDarkTheme = colorScheme === 'dark';
-	const statusBarStyle = isDarkTheme ? 'light' : 'dark';
+	const isDarkTheme = colorScheme === "dark";
+	const statusBarStyle = isDarkTheme ? "light" : "dark";
 	const colors = useColors();
 	const extra = Constants.expoConfig?.extra as ExtraConfig;
-	const isExperimental = extra.mode === 'experiment';
 	const experimentalStyles = {
-		borderWidth: 5,
-		borderColor: extra.color
+		borderWidth: 3,
+		borderTopColor: extra.color,
 	};
 
 	return (
@@ -35,11 +34,10 @@ export default function RootLayout() {
 					style={[
 						{
 							flex: 1,
-							backgroundColor: colors.background
+							backgroundColor: colors.background,
 						},
-						isExperimental && experimentalStyles
-					]}
-				>
+						experimentalStyles,
+					]}>
 					<Stack
 						screenOptions={{
 							animation: "slide_from_right",
