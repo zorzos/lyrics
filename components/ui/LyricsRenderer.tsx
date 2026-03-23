@@ -6,15 +6,11 @@ import { useColors } from "@/hooks/use-colors";
 import { useTagColors } from "@/hooks/useTags";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import React, { useState } from "react";
-import {
-	ScrollView,
-	StyleSheet,
-	TouchableOpacity
-} from "react-native";
+import { ScrollView, StyleSheet, TouchableOpacity } from "react-native";
 
 const MIN_FONT_SIZE = 12;
-const DEFAULT_FONT_SIZE = 14;
-const MAX_FONT_SIZE = 36;
+const DEFAULT_FONT_SIZE = 16;
+const MAX_FONT_SIZE = 38;
 const ICON_SIZE = 18;
 
 export default function LyricsRenderer({ lyrics }: { lyrics: string }) {
@@ -23,11 +19,15 @@ export default function LyricsRenderer({ lyrics }: { lyrics: string }) {
 	const [fontSize, setFontSize] = useState(DEFAULT_FONT_SIZE);
 	const increaseFont = () =>
 		setFontSize((prev) =>
-			prev === MAX_FONT_SIZE ? MAX_FONT_SIZE : Math.min(prev + 2, 40)
+			prev === MAX_FONT_SIZE
+				? MAX_FONT_SIZE
+				: Math.min(prev + 2, MAX_FONT_SIZE),
 		);
 	const decreaseFont = () =>
 		setFontSize((prev) =>
-			prev === MIN_FONT_SIZE ? MIN_FONT_SIZE : Math.max(prev - 2, 10)
+			prev === MIN_FONT_SIZE
+				? MIN_FONT_SIZE
+				: Math.max(prev - 2, MIN_FONT_SIZE),
 		);
 
 	const isIncreaseDisabled = fontSize === MAX_FONT_SIZE;
@@ -36,7 +36,7 @@ export default function LyricsRenderer({ lyrics }: { lyrics: string }) {
 	const renderLine = (
 		line: string | Record<string, unknown>,
 		lineIndex: number,
-		elementType: string
+		elementType: string,
 	) => {
 		const isObjectLine = typeof line === "object" && line !== null;
 		const tagString = isObjectLine && "tag" in line ? String(line.tag) : "";
@@ -82,7 +82,6 @@ export default function LyricsRenderer({ lyrics }: { lyrics: string }) {
 
 	return (
 		<ThemedView style={{ backgroundColor: colors.background, flex: 1 }}>
-			{/* Font size controls */}
 			{lyrics && (
 				<ThemedView style={styles.controls}>
 					<TouchableOpacity
@@ -109,7 +108,6 @@ export default function LyricsRenderer({ lyrics }: { lyrics: string }) {
 				</ThemedView>
 			)}
 
-			{/* Lyrics renderer */}
 			{lyrics ? (
 				<ScrollView
 					style={{ backgroundColor: colors.background }}
@@ -131,7 +129,7 @@ export default function LyricsRenderer({ lyrics }: { lyrics: string }) {
 								</ThemedText>
 								{element.lines.map(
 									(line: string | Record<string, unknown>, lineIndex: number) =>
-										renderLine(line, lineIndex, element.type)
+										renderLine(line, lineIndex, element.type),
 								)}
 							</ThemedView>
 						))}
@@ -140,7 +138,7 @@ export default function LyricsRenderer({ lyrics }: { lyrics: string }) {
 			) : (
 				<ThemedView
 					style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-					<ThemedText>INSTRUMENTAL</ThemedText>
+					<ThemedText>[INSTRUMENTAL]</ThemedText>
 				</ThemedView>
 			)}
 		</ThemedView>

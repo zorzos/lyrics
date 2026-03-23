@@ -12,16 +12,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Link, useLocalSearchParams, useNavigation } from "expo-router";
 import { useLayoutEffect, useState } from "react";
-import {
-	ActivityIndicator,
-	Dimensions,
-	StyleSheet,
-	TouchableOpacity,
-} from "react-native";
+import { ActivityIndicator, StyleSheet, TouchableOpacity } from "react-native";
 
 import Key from "@/components/ui/Key";
 import { useColors } from "@/hooks/use-colors";
 import { getSong } from "@/lib/queries/songs";
+import { width } from "@/utils/utils";
 
 export default function SongDetailScreen() {
 	const colors = useColors();
@@ -133,7 +129,7 @@ export default function SongDetailScreen() {
 		renderInfo(
 			{
 				label: "Shows",
-				value: shows.length,
+				value: shows.length || "N/A",
 				modalValue: shows,
 				opensModal: shows.length,
 			},
@@ -153,8 +149,7 @@ export default function SongDetailScreen() {
 		/>,
 	];
 
-	const { width } = Dimensions.get("window");
-	const testWidth = width * 0.25;
+	const testWidth = width * 0.18;
 
 	return (
 		<ThemedView style={{ flex: 1 }}>
@@ -177,33 +172,172 @@ export default function SongDetailScreen() {
 					},
 					1,
 				)}
+				{renderInfo(
+					{
+						label: "Notes",
+						// value: 2005,
+						opensModal: false,
+					},
+					2,
+				)}
 			</ThemedView>
 
 			<ThemedView
 				style={{
 					borderColor: "blue",
-					borderWidth: 1,
+					borderWidth: 4,
+					paddingHorizontal: 2,
 					flexDirection: "row",
 					flexWrap: "wrap",
 					justifyContent: "space-evenly",
 					alignItems: "center",
 					gap: 4,
 				}}>
-				{Array.from({ length: 7 }).map((_, index) => (
-					<ThemedView
-						key={index}
-						style={{
-							width: testWidth,
-							aspectRatio: 1,
-							justifyContent: "center",
-							alignItems: "center",
-							borderWidth: 2,
-							borderColor: "white",
-							borderRadius: 8,
-						}}>
-						<ThemedText>{index}</ThemedText>
+				<ThemedView
+					key={1}
+					style={{
+						width: testWidth,
+						justifyContent: "center",
+						alignItems: "center",
+						borderWidth: 2,
+						borderColor: "white",
+						borderRadius: 8,
+						padding: 6,
+					}}>
+					<ThemedView>
+						<ThemedText style={{ fontSize: 12, textAlign: "center" }}>
+							Duration
+						</ThemedText>
+						<ThemedText style={{ fontSize: 12, textAlign: "center" }}>
+							3:40
+						</ThemedText>
 					</ThemedView>
-				))}
+				</ThemedView>
+				<ThemedView
+					key={2}
+					style={{
+						width: testWidth,
+						justifyContent: "center",
+						alignItems: "center",
+						borderWidth: 2,
+						borderColor: "white",
+						borderRadius: 8,
+						padding: 6,
+					}}>
+					<ThemedView>
+						<ThemedText style={{ fontSize: 12, textAlign: "center" }}>
+							Shows
+						</ThemedText>
+						<ThemedText style={{ fontSize: 12, textAlign: "center" }}>
+							2
+						</ThemedText>
+					</ThemedView>
+				</ThemedView>
+				<ThemedView
+					key={3}
+					style={{
+						width: testWidth,
+						justifyContent: "center",
+						alignItems: "center",
+						borderWidth: 2,
+						borderColor: "white",
+						borderRadius: 8,
+						padding: 6,
+					}}>
+					<ThemedView>
+						<ThemedText style={{ fontSize: 12, textAlign: "center" }}>
+							BPM
+						</ThemedText>
+						<ThemedText style={{ fontSize: 12, textAlign: "center" }}>
+							160
+						</ThemedText>
+					</ThemedView>
+				</ThemedView>
+				<ThemedView
+					key={4}
+					style={{
+						width: testWidth,
+						justifyContent: "center",
+						alignItems: "center",
+						borderWidth: 2,
+						borderColor: "white",
+						borderRadius: 8,
+						padding: 6,
+					}}>
+					<ThemedView>
+						<ThemedText style={{ fontSize: 12, textAlign: "center" }}>
+							Key (+3)
+						</ThemedText>
+						<ThemedText style={{ fontSize: 12, textAlign: "center" }}>
+							A# to C#
+						</ThemedText>
+					</ThemedView>
+				</ThemedView>
+				<ThemedView
+					key={5}
+					style={{
+						width: testWidth,
+						justifyContent: "center",
+						alignItems: "center",
+						borderWidth: 2,
+						borderColor: "white",
+						borderRadius: 8,
+						padding: 6,
+					}}>
+					<ThemedView>
+						<ThemedText style={{ fontSize: 12, textAlign: "center" }}>
+							Artist
+						</ThemedText>
+						<ThemedText style={{ fontSize: 12, textAlign: "center" }}>
+							1
+						</ThemedText>
+					</ThemedView>
+				</ThemedView>
+				<ThemedView
+					key={6}
+					style={{
+						width: testWidth,
+						justifyContent: "center",
+						alignItems: "center",
+						borderWidth: 2,
+						borderColor: "white",
+						borderRadius: 8,
+						padding: 6,
+					}}>
+					<ThemedView>
+						<ThemedText style={{ fontSize: 12, textAlign: "center" }}>
+							Year
+						</ThemedText>
+						<ThemedText style={{ fontSize: 12, textAlign: "center" }}>
+							2005
+						</ThemedText>
+					</ThemedView>
+				</ThemedView>
+				<ThemedView
+					key={7}
+					style={{
+						width: testWidth,
+						justifyContent: "center",
+						alignItems: "center",
+						borderWidth: 2,
+						borderColor: "white",
+						borderRadius: 8,
+						padding: 6,
+					}}>
+					<ThemedView>
+						<ThemedText style={{ fontSize: 12, textAlign: "center" }}>
+							Notes
+						</ThemedText>
+						<ThemedText>
+							<MaterialIcons
+								color={colors.text}
+								size={12}
+								name="open-in-new"
+								style={{ textAlign: "center" }}
+							/>
+						</ThemedText>
+					</ThemedView>
+				</ThemedView>
 			</ThemedView>
 
 			<ThemedView style={styles.tagsContainer}>

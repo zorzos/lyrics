@@ -2,7 +2,8 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useColors } from "@/hooks/use-colors";
 import { useShowSongs } from "@/hooks/useSongs";
-import { ShowInfoTypes } from "@/types";
+import { ShowInfoTypes, Song } from "@/types";
+import { formatDuration, formatShowDuration } from "@/utils/dateUtils";
 import { generateHref, getSingleParam } from "@/utils/paramUtils";
 
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -22,11 +23,7 @@ export default function ShowDetailScreen() {
 	const showDate = getSingleParam(date);
 
 	const navigation = useNavigation();
-	const {
-		data: songs,
-		isLoading,
-		isError,
-	} = useShowSongs(showId);
+	const { data: songs, isLoading, isError } = useShowSongs(showId);
 
 	useLayoutEffect(() => {
 		navigation.setOptions({
@@ -41,7 +38,7 @@ export default function ShowDetailScreen() {
 				</Link>
 			),
 		});
-	}, [navigation, title]);
+	}, [id, navigation, title]);
 
 	if (isLoading)
 		return (
@@ -59,10 +56,19 @@ export default function ShowDetailScreen() {
 			</ThemedView>
 		);
 
+	// console.log(
+	// 	"SONGS IN THIS SHOW",
+	// 	JSON.stringify(songs?.parts[0].songs[1], null, 2),
+	// );
+
+	const getPartDuration = (songs: Song[]): string => {
+		const duration = songs.reduce((total, song) => total + song.duration, 0);
+		return formatShowDuration(duration);
+	};
+
 	return (
 		<ThemedView
 			style={{
-				// flex: 1,
 				backgroundColor: colors.background,
 				paddingHorizontal: "2.5%",
 			}}>
@@ -121,8 +127,16 @@ export default function ShowDetailScreen() {
 					{[
 						{ label: "Type", value: "SP Gig", type: ShowInfoTypes.TYPE },
 						{
-							label: "Time",
-							value: showDate ? new Date(showDate).toLocaleTimeString() : "N/A",
+							label: "Starts (Soundcheck)",
+							value: showDate
+								? `${new Date(showDate).toLocaleTimeString("en-CY", {
+										timeStyle: "short",
+										hour12: false,
+									})} (${new Date().toLocaleTimeString("en-CY", {
+										timeStyle: "short",
+										hour12: false,
+									})})`
+								: "N/A",
 							type: ShowInfoTypes.TIME,
 						},
 					].map((item, i) => (
@@ -147,9 +161,15 @@ export default function ShowDetailScreen() {
 					<ThemedView
 						key={i}
 						style={{ backgroundColor: "transparent" }}>
-						<ThemedText style={{ fontSize: 18 }}>
-							Part {part.partNumber}
-						</ThemedText>
+						<ThemedView
+							style={{ flexDirection: "row", justifyContent: "space-between" }}>
+							<ThemedText style={{ fontSize: 18 }}>
+								Part {part.partNumber}
+							</ThemedText>
+							<ThemedText style={{ fontSize: 14 }}>
+								Total: {getPartDuration(part.songs)}
+							</ThemedText>
+						</ThemedView>
 						<FlatList
 							data={part.songs}
 							keyExtractor={(item) => item.id}
@@ -162,11 +182,14 @@ export default function ShowDetailScreen() {
 										asChild>
 										<TouchableOpacity style={styles.item}>
 											<ThemedText style={styles.text}>{item.title}</ThemedText>
-											<MaterialIcons
-												color="white"
-												size={28}
-												name="play-arrow"
-											/>
+											<ThemedView style={{ flexDirection: "row" }}>
+												<ThemedText>{formatDuration(item.duration)}</ThemedText>
+												<MaterialIcons
+													color="white"
+													size={28}
+													name="play-arrow"
+												/>
+											</ThemedView>
 										</TouchableOpacity>
 									</Link>
 								);

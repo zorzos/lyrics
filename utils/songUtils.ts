@@ -43,14 +43,12 @@ export function parseLyrics(xml: string) {
 }
 
 export const normaliseLyric = (line: string | Record<string, unknown>) => {
-	let lyric: string;
+	let lyric: string = "";
 	if (typeof line === "string") {
 		lyric = line;
 	} else if (line && typeof line === "object" && "#text" in line) {
 		const maybeText = (line as Record<string, unknown>)["#text"];
 		lyric = typeof maybeText === "string" ? maybeText : String(maybeText ?? "");
-	} else {
-		lyric = "";
 	}
 
 	return lyric;

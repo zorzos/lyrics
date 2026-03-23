@@ -51,11 +51,7 @@ export default function Shows() {
 	const colors = useColors();
 	const styles = createStyles(colors);
 
-	const {
-		data: shows,
-		isLoading,
-		isError,
-	} = useShows();
+	const { data: shows, isLoading, isError } = useShows();
 
 	if (isLoading) {
 		return (
@@ -84,7 +80,7 @@ export default function Shows() {
 	}
 
 	const sections = categoriseShows(shows).filter(
-		(section) => section.data.length > 0
+		(section) => section.data.length > 0,
 	);
 
 	return (
@@ -106,7 +102,7 @@ export default function Shows() {
 						<TouchableOpacity style={styles.item}>
 							<ThemedText style={styles.text}>
 								{`${item.title.substring(0, 15)} ${formatDate(
-									new Date(item.date)
+									new Date(item.date),
 								)}`}
 							</ThemedText>
 							<MaterialIcons

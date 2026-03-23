@@ -6,6 +6,7 @@ import { ThemedView } from "@/components/themed-view";
 
 import { NetworkProvider } from "@/context/NetworkContext";
 import { useColors } from "@/hooks/use-colors";
+import { isCustomMode } from "@/lib/supabase";
 import { useToastConfig } from "@/lib/toastConfig";
 import { ExtraConfig } from "@/types";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -22,8 +23,8 @@ export default function RootLayout() {
 	const statusBarStyle = isDarkTheme ? "light" : "dark";
 	const colors = useColors();
 	const extra = Constants.expoConfig?.extra as ExtraConfig;
-	const experimentalStyles = {
-		borderWidth: 3,
+	const customStyles = {
+		borderTopWidth: 10,
 		borderTopColor: extra.color,
 	};
 
@@ -36,7 +37,7 @@ export default function RootLayout() {
 							flex: 1,
 							backgroundColor: colors.background,
 						},
-						experimentalStyles,
+						isCustomMode && customStyles,
 					]}>
 					<Stack
 						screenOptions={{

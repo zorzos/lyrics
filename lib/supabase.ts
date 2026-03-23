@@ -12,3 +12,4 @@ const { supabaseUrl, supabaseKey, mode } = extra;
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 export const isAdmin = mode === "admin";
+export const isCustomMode = ["admin", "experiment"].includes(mode);
