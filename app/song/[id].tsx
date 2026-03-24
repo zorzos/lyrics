@@ -12,8 +12,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Link, useLocalSearchParams, useNavigation } from "expo-router";
 import { useLayoutEffect, useState } from "react";
-import { ActivityIndicator, StyleSheet, TouchableOpacity } from "react-native";
+import { ActivityIndicator, StyleSheet } from "react-native";
 
+import InfoBlock from "@/components/ui/InfoBlock";
 import Key from "@/components/ui/Key";
 import { useColors } from "@/hooks/use-colors";
 import { getSong } from "@/lib/queries/songs";
@@ -23,10 +24,7 @@ export default function SongDetailScreen() {
 	const colors = useColors();
 	const { id } = useLocalSearchParams();
 	const queryClient = useQueryClient();
-
 	const [modalInfo, setModalInfo] = useState<any>(undefined);
-
-	// Try to get the song from cache first
 	const cachedSongs = queryClient.getQueryData<Song[]>(["allSongs"]);
 
 	const {
@@ -67,36 +65,6 @@ export default function SongDetailScreen() {
 		});
 	}, [id, navigation, song]);
 
-	const renderInfo = (item: any, index: number) => {
-		const isTouchable = item.opensModal;
-		const Wrapper: React.ElementType = isTouchable
-			? TouchableOpacity
-			: ThemedView;
-		const labelText = isTouchable ? (
-			<ThemedView
-				style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
-				<ThemedText style={{ fontSize: 12 }}>{item.label}</ThemedText>
-				<MaterialIcons
-					color={colors.text}
-					size={12}
-					name="open-in-new"
-				/>
-			</ThemedView>
-		) : (
-			item.label
-		);
-
-		return (
-			<Wrapper
-				key={`song-data-${index}`}
-				style={[styles.songItem, { width: `${85 / 4}%` }]}
-				onPress={item.opensModal ? () => setModalInfo(item) : undefined}>
-				<ThemedText style={styles.songItemText}>{labelText}</ThemedText>
-				<ThemedText style={styles.songItemText}>{item.value}</ThemedText>
-			</Wrapper>
-		);
-	};
-
 	if (isLoading) {
 		return (
 			<ThemedView
@@ -118,226 +86,91 @@ export default function SongDetailScreen() {
 		);
 	}
 
-	const songDataComponents = [
-		renderInfo(
-			{
-				label: "Duration",
-				value: formatDuration(song?.duration),
-			},
-			0,
-		),
-		renderInfo(
-			{
-				label: "Shows",
-				value: shows.length || "N/A",
-				modalValue: shows,
-				opensModal: shows.length,
-			},
-			1,
-		),
-		<Metronome
-			key={2}
-			value={120}
-			containerStyle={{ borderColor: colors.text, width: `${85 / 4}%` }}
-			contentStyle={{ fontSize: 12 }}
-		/>,
-		<Key
-			key={3}
-			originalKey={song.original_key}
-			spKey={song.sp_key}
-			containerStyle={{ borderColor: colors.text, width: `${85 / 4}%` }}
-		/>,
-	];
+	const COLUMNS = 4;
+	const blockWidth = (width * 0.9) / COLUMNS;
 
-	const testWidth = width * 0.18;
+	const infoBlocks = [
+		{ label: "Duration", value: formatDuration(song.duration) },
+		{
+			label: `Show${shows.length > 1 ? "s" : ""}`,
+			value: shows.length || "N/A",
+			onPress: shows.length
+				? () =>
+						setModalInfo({
+							title: "Shows",
+							modalValue: shows.map(
+								(show) =>
+									`${show.title} - ${new Date(show.date).toLocaleDateString()}`,
+							),
+						})
+				: undefined,
+			opensModal: shows.length > 0,
+		},
+		{
+			label: "BPM",
+			custom: (
+				<Metronome
+					containerStyle={{
+						borderColor: colors.text,
+						width: blockWidth,
+					}}
+					value={song.bpm}
+				/>
+			),
+		},
+		{
+			label: "Key",
+			custom: (
+				<Key
+					originalKey={song.original_key}
+					spKey={song.sp_key}
+					containerStyle={{
+						borderColor: colors.text,
+						width: blockWidth,
+					}}
+				/>
+			),
+		},
+		{
+			label: `Artist${song.artist.length > 1 ? "s" : ""}`,
+			value: song.artist.length,
+			onPress: () =>
+				setModalInfo({
+					title: "Artists",
+					modalValue: song.artist.map((artist) => artist.name),
+				}),
+			opensModal: true,
+		},
+		{ label: "Year", value: "2005" },
+		{
+			label: "Notes",
+			value: song.bpm ?? "N/A",
+			onPress: () =>
+				setModalInfo({
+					title: "Notes",
+					modalValue: "SOME NOTES HERE",
+				}),
+			opensModal: true,
+		},
+	];
 
 	return (
 		<ThemedView style={{ flex: 1 }}>
-			<ThemedView style={styles.songDataItemContainer}>
-				{songDataComponents}
-			</ThemedView>
-			<ThemedView style={styles.songDataItemContainer}>
-				{renderInfo(
-					{
-						label: "Artist",
-						value: song.artist.length,
-					},
-					0,
-				)}
-				{renderInfo(
-					{
-						label: "Year",
-						value: 2005,
-						opensModal: false,
-					},
-					1,
-				)}
-				{renderInfo(
-					{
-						label: "Notes",
-						// value: 2005,
-						opensModal: false,
-					},
-					2,
-				)}
-			</ThemedView>
-
 			<ThemedView
 				style={{
-					borderColor: "blue",
-					borderWidth: 4,
-					paddingHorizontal: 2,
 					flexDirection: "row",
 					flexWrap: "wrap",
-					justifyContent: "space-evenly",
-					alignItems: "center",
 					gap: 4,
+					paddingHorizontal: "1.5%",
+					justifyContent: "center",
 				}}>
-				<ThemedView
-					key={1}
-					style={{
-						width: testWidth,
-						justifyContent: "center",
-						alignItems: "center",
-						borderWidth: 2,
-						borderColor: "white",
-						borderRadius: 8,
-						padding: 6,
-					}}>
-					<ThemedView>
-						<ThemedText style={{ fontSize: 12, textAlign: "center" }}>
-							Duration
-						</ThemedText>
-						<ThemedText style={{ fontSize: 12, textAlign: "center" }}>
-							3:40
-						</ThemedText>
-					</ThemedView>
-				</ThemedView>
-				<ThemedView
-					key={2}
-					style={{
-						width: testWidth,
-						justifyContent: "center",
-						alignItems: "center",
-						borderWidth: 2,
-						borderColor: "white",
-						borderRadius: 8,
-						padding: 6,
-					}}>
-					<ThemedView>
-						<ThemedText style={{ fontSize: 12, textAlign: "center" }}>
-							Shows
-						</ThemedText>
-						<ThemedText style={{ fontSize: 12, textAlign: "center" }}>
-							2
-						</ThemedText>
-					</ThemedView>
-				</ThemedView>
-				<ThemedView
-					key={3}
-					style={{
-						width: testWidth,
-						justifyContent: "center",
-						alignItems: "center",
-						borderWidth: 2,
-						borderColor: "white",
-						borderRadius: 8,
-						padding: 6,
-					}}>
-					<ThemedView>
-						<ThemedText style={{ fontSize: 12, textAlign: "center" }}>
-							BPM
-						</ThemedText>
-						<ThemedText style={{ fontSize: 12, textAlign: "center" }}>
-							160
-						</ThemedText>
-					</ThemedView>
-				</ThemedView>
-				<ThemedView
-					key={4}
-					style={{
-						width: testWidth,
-						justifyContent: "center",
-						alignItems: "center",
-						borderWidth: 2,
-						borderColor: "white",
-						borderRadius: 8,
-						padding: 6,
-					}}>
-					<ThemedView>
-						<ThemedText style={{ fontSize: 12, textAlign: "center" }}>
-							Key (+3)
-						</ThemedText>
-						<ThemedText style={{ fontSize: 12, textAlign: "center" }}>
-							A# to C#
-						</ThemedText>
-					</ThemedView>
-				</ThemedView>
-				<ThemedView
-					key={5}
-					style={{
-						width: testWidth,
-						justifyContent: "center",
-						alignItems: "center",
-						borderWidth: 2,
-						borderColor: "white",
-						borderRadius: 8,
-						padding: 6,
-					}}>
-					<ThemedView>
-						<ThemedText style={{ fontSize: 12, textAlign: "center" }}>
-							Artist
-						</ThemedText>
-						<ThemedText style={{ fontSize: 12, textAlign: "center" }}>
-							1
-						</ThemedText>
-					</ThemedView>
-				</ThemedView>
-				<ThemedView
-					key={6}
-					style={{
-						width: testWidth,
-						justifyContent: "center",
-						alignItems: "center",
-						borderWidth: 2,
-						borderColor: "white",
-						borderRadius: 8,
-						padding: 6,
-					}}>
-					<ThemedView>
-						<ThemedText style={{ fontSize: 12, textAlign: "center" }}>
-							Year
-						</ThemedText>
-						<ThemedText style={{ fontSize: 12, textAlign: "center" }}>
-							2005
-						</ThemedText>
-					</ThemedView>
-				</ThemedView>
-				<ThemedView
-					key={7}
-					style={{
-						width: testWidth,
-						justifyContent: "center",
-						alignItems: "center",
-						borderWidth: 2,
-						borderColor: "white",
-						borderRadius: 8,
-						padding: 6,
-					}}>
-					<ThemedView>
-						<ThemedText style={{ fontSize: 12, textAlign: "center" }}>
-							Notes
-						</ThemedText>
-						<ThemedText>
-							<MaterialIcons
-								color={colors.text}
-								size={12}
-								name="open-in-new"
-								style={{ textAlign: "center" }}
-							/>
-						</ThemedText>
-					</ThemedView>
-				</ThemedView>
+				{infoBlocks.map((block, i) => (
+					<InfoBlock
+						key={i}
+						{...block}
+						width={blockWidth}
+					/>
+				))}
 			</ThemedView>
 
 			<ThemedView style={styles.tagsContainer}>

@@ -1,10 +1,11 @@
-import { normaliseLyric, parseLyrics } from "@/utils/songUtils";
-import { ThemedText } from "../themed-text";
-import { ThemedView } from "../themed-view";
-
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { useSettings } from "@/context/SettingsContext";
 import { useColors } from "@/hooks/use-colors";
 import { useTagColors } from "@/hooks/useTags";
+import { LyricBlock, LyricLine, Segment, parseLyrics } from "@/utils/songUtils";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity } from "react-native";
 
@@ -13,10 +14,137 @@ const DEFAULT_FONT_SIZE = 16;
 const MAX_FONT_SIZE = 38;
 const ICON_SIZE = 18;
 
+const getSegmentColors = (
+	tags: string[],
+	tagColors: Record<string, string>,
+): string[] => {
+	const colors = tags.map((tag) => tagColors[tag] ?? null).filter(Boolean);
+	return colors.length > 0 ? colors : [];
+};
+
+const SegmentText = ({
+	segment,
+	fontSize,
+	textColor,
+	tagColors,
+	highlightStyle,
+}: {
+	segment: Segment;
+	fontSize: number;
+	textColor: string;
+	tagColors: Record<string, string>;
+	highlightStyle: string;
+}) => {
+	const segmentColors = getSegmentColors(segment.tags, tagColors);
+	const hasColors = segmentColors.length > 0;
+
+	// Ensure at least 2 colors for LinearGradient
+	const gradientColors = hasColors
+		? segmentColors.length === 1
+			? [segmentColors[0], segmentColors[0]]
+			: segmentColors
+		: null;
+
+	const textElement = (
+		<ThemedText
+			style={{ fontSize, color: textColor, lineHeight: fontSize + 6 }}>
+			{segment.text}
+		</ThemedText>
+	);
+
+	if (!hasColors || highlightStyle === "none") return textElement;
+
+	if (highlightStyle === "background") {
+		return (
+			<LinearGradient
+				colors={gradientColors as [string, string, ...string[]]}
+				start={{ x: 0, y: 0 }}
+				end={{ x: 1, y: 0 }}
+				style={{ borderRadius: 4, paddingHorizontal: 2 }}>
+				{textElement}
+			</LinearGradient>
+		);
+	}
+
+	if (highlightStyle === "underline") {
+		return (
+			<ThemedView>
+				{textElement}
+				<ThemedView style={{ flexDirection: "column", gap: 1, marginTop: 1 }}>
+					{segment.tags.length === 0
+						? null
+						: segment.tags.map((tag, i) => {
+								const color = tagColors[tag] ?? "transparent";
+								return (
+									<ThemedView
+										key={i}
+										style={{
+											height: 4,
+											borderRadius: 1,
+											backgroundColor: color,
+										}}
+									/>
+								);
+							})}
+				</ThemedView>
+			</ThemedView>
+		);
+	}
+
+	if (highlightStyle === "border") {
+		return (
+			<ThemedView
+				style={{
+					borderLeftWidth: 3,
+					borderLeftColor: segmentColors[0],
+					paddingLeft: 4,
+				}}>
+				{textElement}
+			</ThemedView>
+		);
+	}
+
+	return textElement;
+};
+
+const renderLine = (
+	line: LyricLine,
+	lineIndex: number,
+	elementType: string,
+	fontSize: number,
+	textColor: string,
+	tagColors: Record<string, string>,
+	highlightStyle: string,
+) => {
+	return (
+		<ThemedView
+			key={`${elementType}-line-${lineIndex + 1}`}
+			style={{
+				flexDirection: "row",
+				alignItems: "center",
+				marginVertical: 2,
+				flexWrap: "wrap",
+			}}>
+			{line.map((segment, segIndex) => (
+				<SegmentText
+					key={segIndex}
+					segment={segment}
+					fontSize={fontSize}
+					textColor={textColor}
+					tagColors={tagColors}
+					highlightStyle={highlightStyle}
+				/>
+			))}
+		</ThemedView>
+	);
+};
+
 export default function LyricsRenderer({ lyrics }: { lyrics: string }) {
 	const colors = useColors();
 	const tagColors = useTagColors();
+	const { highlightStyle } = useSettings();
 	const [fontSize, setFontSize] = useState(DEFAULT_FONT_SIZE);
+
 	const increaseFont = () =>
 		setFontSize((prev) =>
 			prev === MAX_FONT_SIZE
@@ -32,53 +160,6 @@ export default function LyricsRenderer({ lyrics }: { lyrics: string }) {
 
 	const isIncreaseDisabled = fontSize === MAX_FONT_SIZE;
 	const isDecreaseDisabled = fontSize === MIN_FONT_SIZE;
-
-	const renderLine = (
-		line: string | Record<string, unknown>,
-		lineIndex: number,
-		elementType: string,
-	) => {
-		const isObjectLine = typeof line === "object" && line !== null;
-		const tagString = isObjectLine && "tag" in line ? String(line.tag) : "";
-		const lineTags = tagString ? tagString.split(",") : [];
-
-		const lyric = typeof line === "string" ? line : normaliseLyric(line);
-
-		return (
-			<ThemedView
-				key={`${elementType}-line-${lineIndex + 1}`}
-				style={{
-					flexDirection: "row",
-					alignItems: "center",
-					marginVertical: 2,
-					gap: 2,
-				}}>
-				{lineTags.map((tag) => {
-					const color = tagColors[tag.trim().toLowerCase()] ?? "transparent";
-					return (
-						<ThemedView
-							key={tag}
-							style={{
-								width: 6,
-								height: 6,
-								borderRadius: 3,
-								backgroundColor: color,
-								marginRight: 4,
-							}}
-						/>
-					);
-				})}
-				<ThemedText
-					style={{
-						fontSize,
-						color: colors.text,
-						lineHeight: fontSize + 6,
-					}}>
-					{lyric}
-				</ThemedText>
-			</ThemedView>
-		);
-	};
 
 	return (
 		<ThemedView style={{ backgroundColor: colors.background, flex: 1 }}>
@@ -113,7 +194,7 @@ export default function LyricsRenderer({ lyrics }: { lyrics: string }) {
 					style={{ backgroundColor: colors.background }}
 					contentContainerStyle={styles.scrollViewContainer}>
 					<ThemedView style={{ marginTop: fontSize }}>
-						{parseLyrics(lyrics).map((element, index: number) => (
+						{parseLyrics(lyrics).map((block: LyricBlock, index: number) => (
 							<ThemedView
 								style={lyricStyles.common}
 								key={index}>
@@ -125,11 +206,19 @@ export default function LyricsRenderer({ lyrics }: { lyrics: string }) {
 										textTransform: "capitalize",
 										lineHeight: fontSize + 6,
 									}}>
-									[{element.type}]
+									[{block.type}
+									{block.repeatIndex > 1 ? ` x${block.repeatIndex}` : ""}]
 								</ThemedText>
-								{element.lines.map(
-									(line: string | Record<string, unknown>, lineIndex: number) =>
-										renderLine(line, lineIndex, element.type),
+								{block.lines.map((line: LyricLine, lineIndex: number) =>
+									renderLine(
+										line,
+										lineIndex,
+										block.type,
+										fontSize,
+										colors.text,
+										tagColors,
+										highlightStyle,
+									),
 								)}
 							</ThemedView>
 						))}
@@ -146,13 +235,7 @@ export default function LyricsRenderer({ lyrics }: { lyrics: string }) {
 }
 
 const lyricStyles = StyleSheet.create({
-	common: {
-		marginBottom: 10,
-	},
-	verse: {},
-	chorus: {},
-	bridge: {},
-	special: {},
+	common: { marginBottom: 10 },
 });
 
 const styles = StyleSheet.create({

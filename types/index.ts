@@ -55,7 +55,6 @@ export interface ModalProps {
 export interface MetronomeProps {
 	value: number;
 	containerStyle: object;
-	contentStyle: object;
 }
 
 export type TagColorMap = Record<string, string>;

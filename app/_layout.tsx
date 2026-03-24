@@ -5,6 +5,7 @@ import "react-native-reanimated";
 import { ThemedView } from "@/components/themed-view";
 
 import { NetworkProvider } from "@/context/NetworkContext";
+import { SettingsProvider } from "@/context/SettingsContext";
 import { useColors } from "@/hooks/use-colors";
 import { isCustomMode } from "@/lib/supabase";
 import { useToastConfig } from "@/lib/toastConfig";
@@ -30,31 +31,33 @@ export default function RootLayout() {
 
 	return (
 		<QueryClientProvider client={queryClient}>
-			<NetworkProvider>
-				<ThemedView
-					style={[
-						{
-							flex: 1,
-							backgroundColor: colors.background,
-						},
-						isCustomMode && customStyles,
-					]}>
-					<Stack
-						screenOptions={{
-							animation: "slide_from_right",
-							contentStyle: { backgroundColor: colors.background },
-							headerStyle: { backgroundColor: colors.background },
-							headerTintColor: colors.text,
-						}}>
-						<Stack.Screen
-							name="(tabs)"
-							options={{ headerShown: false }}
-						/>
-					</Stack>
-					<StatusBar style={statusBarStyle} />
-				</ThemedView>
-				<Toast config={toastConfig} />
-			</NetworkProvider>
+			<SettingsProvider>
+				<NetworkProvider>
+					<ThemedView
+						style={[
+							{
+								flex: 1,
+								backgroundColor: colors.background,
+							},
+							isCustomMode && customStyles,
+						]}>
+						<Stack
+							screenOptions={{
+								animation: "slide_from_right",
+								contentStyle: { backgroundColor: colors.background },
+								headerStyle: { backgroundColor: colors.background },
+								headerTintColor: colors.text,
+							}}>
+							<Stack.Screen
+								name="(tabs)"
+								options={{ headerShown: false }}
+							/>
+						</Stack>
+						<StatusBar style={statusBarStyle} />
+					</ThemedView>
+					<Toast config={toastConfig} />
+				</NetworkProvider>
+			</SettingsProvider>
 		</QueryClientProvider>
 	);
 }

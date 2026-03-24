@@ -1,58 +1,92 @@
 import { KeyInfo, KeyQuality } from "@/types";
 import { XMLParser } from "fast-xml-parser";
 
+export type Segment = {
+	text: string;
+	tags: string[];
+};
+
+export type LyricLine = Segment[];
+
+export type LyricBlock = {
+	type: string;
+	order: number;
+	repeatIndex: number;
+	lines: LyricLine[];
+};
+
 const xmlParser = new XMLParser({
 	ignoreAttributes: false,
 	attributeNamePrefix: "",
 	removeNSPrefix: true,
+	preserveOrder: true,
+	textNodeName: "#text",
 });
 
-export function parseLyrics(xml: string) {
-	let lyrics;
+function parseLineSegments(lineNode: any[]): LyricLine {
+	const segments: Segment[] = [];
+
+	for (const node of lineNode) {
+		if ("#text" in node) {
+			// Plain text node
+			const text = String(node["#text"]).trim();
+			if (text) segments.push({ text, tags: [] });
+		} else if ("span" in node) {
+			// Span node with optional tags
+			const spanChildren = node["span"];
+			const attrs = node[":@"] ?? {};
+			const tagAttr = attrs["tag"] ?? "";
+			const tags = tagAttr
+				? tagAttr.split(",").map((t: string) => t.trim().toLowerCase())
+				: [];
+			const text = spanChildren
+				.filter((n: any) => "#text" in n)
+				.map((n: any) => String(n["#text"]))
+				.join("");
+			if (text) segments.push({ text, tags });
+		}
+	}
+
+	return segments;
+}
+
+export function parseLyrics(xml: string): LyricBlock[] {
+	let parsed;
 	try {
-		lyrics = xmlParser.parse(xml).lyrics;
+		parsed = xmlParser.parse(xml);
 	} catch (error) {
 		console.error("Error parsing XML:", error);
 		return [];
 	}
 
-	if (!lyrics) return [];
+	const lyricsNode = parsed.find((n: any) => "lyrics" in n);
+	if (!lyricsNode) return [];
 
-	const blocks: any[] = [];
-	for (const [key, value] of Object.entries(lyrics)) {
-		const elements = Array.isArray(value) ? value : [value];
+	const lyricChildren: any[] = lyricsNode["lyrics"];
+	const blocks: LyricBlock[] = [];
 
-		for (const el of elements) {
-			const order = Number(el.order) || 0;
-			const repeat = Number(el.repeat) || 1;
-			const lines = Array.isArray(el.line) ? el.line : [el.line];
+	for (const child of lyricChildren) {
+		const type = Object.keys(child).find((k) => k !== ":@");
+		if (!type) continue;
 
-			for (let i = 0; i < repeat; i++) {
-				blocks.push({
-					type: key,
-					order,
-					repeatIndex: i + 1,
-					lines,
-				});
-			}
+		const attrs = child[":@"] ?? {};
+		const order = Number(attrs["order"]) || 0;
+		const repeat = Number(attrs["repeat"]) || 1;
+
+		const lineNodes = child[type].filter((n: any) => "line" in n);
+
+		const lines: LyricLine[] = lineNodes.map((lineNode: any) =>
+			parseLineSegments(lineNode["line"]),
+		);
+
+		for (let i = 0; i < repeat; i++) {
+			blocks.push({ type, order, repeatIndex: i + 1, lines });
 		}
 	}
 
 	blocks.sort((a, b) => a.order - b.order);
 	return blocks;
 }
-
-export const normaliseLyric = (line: string | Record<string, unknown>) => {
-	let lyric: string = "";
-	if (typeof line === "string") {
-		lyric = line;
-	} else if (line && typeof line === "object" && "#text" in line) {
-		const maybeText = (line as Record<string, unknown>)["#text"];
-		lyric = typeof maybeText === "string" ? maybeText : String(maybeText ?? "");
-	}
-
-	return lyric;
-};
 
 const keyToSemitone: Record<string, number> = {
 	C: 0,

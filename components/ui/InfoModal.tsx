@@ -1,8 +1,7 @@
-import { ModalProps, Show } from "@/types";
+import { ModalProps } from "@/types";
 import { ThemedText } from "../themed-text";
 
 import { useColors } from "@/hooks/use-colors";
-import { formatDate } from "@/utils/dateUtils";
 import {
 	Modal,
 	Pressable,
@@ -16,19 +15,18 @@ export default function InfoModal(modalProps: ModalProps) {
 	const { modalInfo, setModalInfo } = modalProps;
 	const colors = useColors();
 
-	const renderModalValue = () => (
-		<ScrollView>
-			<ThemedView style={styles.modalContentContainer}>
-				{modalInfo?.modalValue?.map((item: Show, index: number) => (
-					<ThemedText
-						key={index}
-						style={styles.modalValue}>
-						{`${item.title} ${formatDate(new Date(item.date))}`}
-					</ThemedText>
-				))}
-			</ThemedView>
-		</ScrollView>
-	);
+	console.log("MODAL INFO", JSON.stringify(modalInfo, null, 2));
+
+	const renderModalValue = (modalValue: any) => {
+		const isArray = Array.isArray(modalValue);
+		if (isArray) {
+			return modalValue.map((item, i) => (
+				<ThemedText key={i}>{item}</ThemedText>
+			));
+		} else {
+			return <ThemedText>{modalValue}</ThemedText>;
+		}
+	};
 
 	return (
 		<Modal
@@ -42,8 +40,14 @@ export default function InfoModal(modalProps: ModalProps) {
 				<Pressable
 					style={[styles.inner, { backgroundColor: colors.background }]}
 					onPress={(e) => e.stopPropagation()}>
-					<ThemedText>{modalInfo?.label}</ThemedText>
-					<ThemedText>{renderModalValue()}</ThemedText>
+					<ThemedText>{modalInfo?.title}</ThemedText>
+					<ThemedText>
+						<ScrollView>
+							<ThemedView style={styles.modalContentContainer}>
+								{renderModalValue(modalInfo?.modalValue)}
+							</ThemedView>
+						</ScrollView>
+					</ThemedText>
 					<TouchableOpacity
 						onPress={() => setModalInfo(false)}
 						style={{
