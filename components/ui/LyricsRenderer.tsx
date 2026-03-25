@@ -74,18 +74,18 @@ const SegmentText = ({
 					{segment.tags.length === 0
 						? null
 						: segment.tags.map((tag, i) => {
-								const color = tagColors[tag] ?? "transparent";
-								return (
-									<ThemedView
-										key={i}
-										style={{
-											height: 4,
-											borderRadius: 1,
-											backgroundColor: color,
-										}}
-									/>
-								);
-							})}
+							const color = tagColors[tag] ?? "transparent";
+							return (
+								<ThemedView
+									key={i}
+									style={{
+										height: 4,
+										borderRadius: 1,
+										backgroundColor: color,
+									}}
+								/>
+							);
+						})}
 				</ThemedView>
 			</ThemedView>
 		);
@@ -121,7 +121,7 @@ const renderLine = (
 			key={`${elementType}-line-${lineIndex + 1}`}
 			style={{
 				flexDirection: "row",
-				alignItems: "center",
+				alignItems: "flex-start",
 				marginVertical: 2,
 				flexWrap: "wrap",
 			}}>

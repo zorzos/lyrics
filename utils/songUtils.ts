@@ -21,6 +21,7 @@ const xmlParser = new XMLParser({
 	removeNSPrefix: true,
 	preserveOrder: true,
 	textNodeName: "#text",
+	trimValues: false
 });
 
 function parseLineSegments(lineNode: any[]): LyricLine {
@@ -28,11 +29,10 @@ function parseLineSegments(lineNode: any[]): LyricLine {
 
 	for (const node of lineNode) {
 		if ("#text" in node) {
-			// Plain text node
-			const text = String(node["#text"]).trim();
+			// const text = String(node["#text"]).trim();
+			const text = String(node["#text"]);
 			if (text) segments.push({ text, tags: [] });
 		} else if ("span" in node) {
-			// Span node with optional tags
 			const spanChildren = node["span"];
 			const attrs = node[":@"] ?? {};
 			const tagAttr = attrs["tag"] ?? "";
@@ -73,7 +73,9 @@ export function parseLyrics(xml: string): LyricBlock[] {
 		const order = Number(attrs["order"]) || 0;
 		const repeat = Number(attrs["repeat"]) || 1;
 
-		const lineNodes = child[type].filter((n: any) => "line" in n);
+		const rawLines = child[type];
+		if (!Array.isArray(rawLines)) continue;
+		const lineNodes = rawLines.filter((n: any) => "line" in n);
 
 		const lines: LyricLine[] = lineNodes.map((lineNode: any) =>
 			parseLineSegments(lineNode["line"]),
