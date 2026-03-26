@@ -12,7 +12,7 @@
 			"env": {
 				"EXPO_PUBLIC_SUPABASE_URL": "https://krseuuhibkrdaljozptu.supabase.co",
 				"EXPO_PUBLIC_SUPABASE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtyc2V1dWhpYmtyZGFsam96cHR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEwNzg0NTAsImV4cCI6MjA3NjY1NDQ1MH0.nyIXHoguidUinpJlydY4bGucxdO8dHMbcbihyZfeDcE",
-				"EXPO_MODE": "PROD",
+				"EXPO_MODE": "production",
 				"ENV_COLOR": "transparent"
 			}
 		},
@@ -24,8 +24,8 @@
 			"env": {
 				"EXPO_PUBLIC_SUPABASE_URL": "https://krseuuhibkrdaljozptu.supabase.co",
 				"EXPO_PUBLIC_SUPABASE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtyc2V1dWhpYmtyZGFsam96cHR1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MTA3ODQ1MCwiZXhwIjoyMDc2NjU0NDUwfQ.mJPd7pROcmFtXvuWL-N32RraQYT5pm_AnIJ79F_4dgA",
-				"EXPO_MODE": "ADMIN",
-				"ENV_COLOR": "transparent"
+				"EXPO_MODE": "admin",
+				"ENV_COLOR": "red"
 			}
 		}
 	},

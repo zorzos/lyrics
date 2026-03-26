@@ -7,15 +7,14 @@ import { ThemedView } from "../themed-view";
 
 export default function Key({
     originalKey,
-    spKey,
-    containerStyle
+    spKey
 }: KeyProps) {
     const keyDifference = spKey ? semitoneDifference(originalKey, spKey) : 'OG';
     const totalLength = originalKey.length + (spKey?.length ?? 0);
     const fontSize = totalLength > 4 ? 10 : 12;
 
     return (
-        <ThemedView style={[styles.container, containerStyle]}>
+        <ThemedView style={styles.container}>
             <ThemedText style={styles.label}>Key ({keyDifference})</ThemedText>
             <ThemedView
                 style={styles.view}>
@@ -41,7 +40,8 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         alignItems: "center",
         padding: 6,
-        borderWidth: 1
+        borderWidth: 1,
+        fontSize: 12
     },
     label: {
         fontSize: 12

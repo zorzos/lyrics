@@ -15,7 +15,7 @@ export default ({ config }: { config: ExpoConfig }) => {
 		slug: "lyrics-app",
 		version: "1.0.0",
 		platforms: ["android", "ios"],
-		orientation: "portrait",
+		orientation: "default",
 		icon: "./assets/images/icon.jpg",
 		assetBundlePatterns: ["**/*"],
 		extra: {

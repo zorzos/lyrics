@@ -29,7 +29,6 @@ function parseLineSegments(lineNode: any[]): LyricLine {
 
 	for (const node of lineNode) {
 		if ("#text" in node) {
-			// const text = String(node["#text"]).trim();
 			const text = String(node["#text"]);
 			if (text) segments.push({ text, tags: [] });
 		} else if ("span" in node) {

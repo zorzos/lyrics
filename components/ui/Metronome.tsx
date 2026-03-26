@@ -5,7 +5,7 @@ import { MetronomeProps } from "@/types";
 import { ThemedText } from "../themed-text";
 import { ThemedView } from "../themed-view";
 
-export default function Metronome({ value, containerStyle }: MetronomeProps) {
+export default function Metronome({ value }: MetronomeProps) {
 	const [running, setRunning] = useState(false);
 	const pulseAnim = useRef(new Animated.Value(0)).current;
 
@@ -40,7 +40,7 @@ export default function Metronome({ value, containerStyle }: MetronomeProps) {
 	return (
 		<TouchableOpacity
 			key="song-data-2"
-			style={[styles.container, containerStyle]}
+			style={[styles.container]}
 			onPress={toggleMetronome}>
 			<ThemedView style={styles.view}>
 				<ThemedText style={styles.label}>BPM</ThemedText>
@@ -71,6 +71,7 @@ const styles = StyleSheet.create({
 		borderRadius: 8,
 		alignItems: "center",
 		padding: 6,
+		fontSize: 12
 	},
 	label: {
 		fontSize: 12,

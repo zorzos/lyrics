@@ -54,7 +54,6 @@ export interface ModalProps {
 
 export interface MetronomeProps {
 	value: number;
-	containerStyle: object;
 }
 
 export type TagColorMap = Record<string, string>;
@@ -80,7 +79,6 @@ export enum ShowInfoTypes {
 export interface KeyProps {
 	originalKey: string;
 	spKey?: string;
-	containerStyle: object;
 }
 
 export type KeyQuality = "major" | "minor";
