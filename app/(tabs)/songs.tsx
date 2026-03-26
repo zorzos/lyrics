@@ -16,6 +16,7 @@ import {
 } from "react-native";
 
 export default function Songs() {
+	const { selectedId } = useTablet();
 	const colors = useColors();
 	const { isTablet } = useDevice();
 	const { setSelected } = useTablet();
@@ -43,7 +44,8 @@ export default function Songs() {
 
 	if (isLoading) {
 		return (
-			<ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+			<ThemedView
+				style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
 				<ActivityIndicator size="large" />
 			</ThemedView>
 		);
@@ -51,7 +53,8 @@ export default function Songs() {
 
 	if (isError || !memoizedSongs) {
 		return (
-			<ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+			<ThemedView
+				style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
 				<ThemedText>Error loading songs</ThemedText>
 			</ThemedView>
 		);
@@ -59,15 +62,28 @@ export default function Songs() {
 
 	const renderItem = ({ item }: { item: Song }) => {
 		if (isTablet) {
+			const isSelected = item.id === selectedId;
 			return (
 				<TouchableOpacity
-					style={{
-						padding: 10,
-						borderBottomWidth: 1,
-						borderBottomColor: "lightgray",
-					}}
+					style={[
+						{
+							padding: 10,
+						},
+						isSelected && {
+							borderColor: "red",
+							borderWidth: 1,
+							borderRadius: 24,
+							borderBottomColor: "red",
+							borderBottomWidth: 1,
+							backgroundColor: `${colors.accent}15`,
+						},
+					]}
 					onPress={() => setSelected(item.id, "song", { title: item.title })}>
-					<ThemedText style={{ color: colors.text, fontSize: 16 }}>
+					<ThemedText
+						style={{
+							color: colors.text,
+							fontSize: 16,
+						}}>
 						{item.title}
 					</ThemedText>
 				</TouchableOpacity>
@@ -107,7 +123,8 @@ export default function Songs() {
 				keyExtractor={(item) => item.title}
 				renderItem={renderItem}
 				renderSectionHeader={({ section: { title } }) => (
-					<ThemedView style={{ backgroundColor: colors.background, padding: 8 }}>
+					<ThemedView
+						style={{ backgroundColor: colors.background, padding: 8 }}>
 						<ThemedText style={{ color: colors.text, fontWeight: "bold" }}>
 							{title}
 						</ThemedText>

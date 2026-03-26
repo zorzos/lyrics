@@ -27,6 +27,7 @@ export interface Song {
 	original_key: string;
 	sp_key?: string;
 	bpm: number;
+	year: number;
 }
 
 export interface Show {
@@ -54,6 +55,7 @@ export interface ModalProps {
 
 export interface MetronomeProps {
 	value: number;
+	fontSize: number;
 }
 
 export type TagColorMap = Record<string, string>;
@@ -79,6 +81,7 @@ export enum ShowInfoTypes {
 export interface KeyProps {
 	originalKey: string;
 	spKey?: string;
+	fontSize: number;
 }
 
 export type KeyQuality = "major" | "minor";

@@ -1,7 +1,8 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useSettings } from "@/context/SettingsContext";
-import { useColors } from "@/hooks/use-colors";
+import { ColorTheme, useColors } from "@/hooks/use-colors";
+import { useDevice } from "@/hooks/use-device";
 import { useTagColors } from "@/hooks/useTags";
 import { LyricBlock, LyricLine, Segment, parseLyrics } from "@/utils/songUtils";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -10,8 +11,9 @@ import React, { useState } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity } from "react-native";
 
 const MIN_FONT_SIZE = 12;
-const DEFAULT_FONT_SIZE = 16;
-const MAX_FONT_SIZE = 38;
+const DEFAULT_FONT_SIZE_PHONE = 16;
+const DEFAULT_FONT_SIZE_TABLET = 20;
+const MAX_FONT_SIZE = 50;
 const ICON_SIZE = 18;
 
 const getSegmentColors = (
@@ -70,22 +72,22 @@ const SegmentText = ({
 		return (
 			<ThemedView>
 				{textElement}
-				<ThemedView style={{ flexDirection: "column", gap: 1, marginTop: 1 }}>
+				<ThemedView style={{ flexDirection: "column", gap: 2, marginTop: 1 }}>
 					{segment.tags.length === 0
 						? null
 						: segment.tags.map((tag, i) => {
-							const color = tagColors[tag] ?? "transparent";
-							return (
-								<ThemedView
-									key={i}
-									style={{
-										height: 4,
-										borderRadius: 1,
-										backgroundColor: color,
-									}}
-								/>
-							);
-						})}
+								const color = tagColors[tag] ?? "transparent";
+								return (
+									<ThemedView
+										key={i}
+										style={{
+											height: 4,
+											borderRadius: 1,
+											backgroundColor: color,
+										}}
+									/>
+								);
+							})}
 				</ThemedView>
 			</ThemedView>
 		);
@@ -139,12 +141,48 @@ const renderLine = (
 	);
 };
 
+const createStyles = (colors: ColorTheme) =>
+	StyleSheet.create({
+		scrollViewContainer: {
+			paddingHorizontal: "1.5%",
+			paddingBottom: "10%",
+		},
+		controls: {
+			flexDirection: "row",
+			alignItems: "center",
+			marginBottom: 6,
+			width: "100%",
+			paddingHorizontal: "2.5%",
+		},
+		button: {
+			backgroundColor: colors.text,
+			color: colors.background,
+			paddingVertical: 6,
+			borderRadius: 8,
+			alignItems: "center",
+			flex: 1,
+		},
+		disabledButton: {
+			backgroundColor: "#a5a5a5",
+			opacity: 0.5,
+		},
+		fontLabel: {
+			fontSize: 16,
+			textAlign: "center",
+			flex: 2,
+		},
+	});
+
 export default function LyricsRenderer({ lyrics }: { lyrics: string }) {
+	const { isTablet } = useDevice();
 	const colors = useColors();
+	const styles = createStyles(colors);
 	const tagColors = useTagColors();
 	const { highlightStyle } = useSettings();
-	const [fontSize, setFontSize] = useState(DEFAULT_FONT_SIZE);
-
+	const defaultFontSize = isTablet
+		? DEFAULT_FONT_SIZE_TABLET
+		: DEFAULT_FONT_SIZE_PHONE;
+	const [fontSize, setFontSize] = useState(defaultFontSize);
 	const increaseFont = () =>
 		setFontSize((prev) =>
 			prev === MAX_FONT_SIZE
@@ -170,7 +208,7 @@ export default function LyricsRenderer({ lyrics }: { lyrics: string }) {
 						onPress={decreaseFont}
 						disabled={isDecreaseDisabled}>
 						<MaterialIcons
-							color={colors.text}
+							color={colors.background}
 							size={ICON_SIZE}
 							name={isDecreaseDisabled ? "block" : "text-decrease"}
 						/>
@@ -181,7 +219,7 @@ export default function LyricsRenderer({ lyrics }: { lyrics: string }) {
 						onPress={increaseFont}
 						disabled={isIncreaseDisabled}>
 						<MaterialIcons
-							color={colors.text}
+							color={colors.background}
 							size={ICON_SIZE}
 							name={isIncreaseDisabled ? "block" : "text-increase"}
 						/>
@@ -236,34 +274,4 @@ export default function LyricsRenderer({ lyrics }: { lyrics: string }) {
 
 const lyricStyles = StyleSheet.create({
 	common: { marginBottom: 10 },
-});
-
-const styles = StyleSheet.create({
-	scrollViewContainer: {
-		paddingHorizontal: "1.5%",
-		paddingBottom: "10%",
-	},
-	controls: {
-		flexDirection: "row",
-		alignItems: "center",
-		marginBottom: 6,
-		width: "100%",
-		paddingHorizontal: "2.5%",
-	},
-	button: {
-		backgroundColor: "#333",
-		paddingVertical: 6,
-		borderRadius: 8,
-		alignItems: "center",
-		flex: 1,
-	},
-	disabledButton: {
-		backgroundColor: "#a5a5a5",
-		opacity: 0.5,
-	},
-	fontLabel: {
-		fontSize: 16,
-		textAlign: "center",
-		flex: 2,
-	},
 });

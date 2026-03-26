@@ -15,7 +15,7 @@ export default function InfoModal(modalProps: ModalProps) {
 	const { modalInfo, setModalInfo } = modalProps;
 	const colors = useColors();
 
-	console.log("MODAL INFO", JSON.stringify(modalInfo, null, 2));
+	// console.log("MODAL INFO", JSON.stringify(modalInfo, null, 2));
 
 	const renderModalValue = (modalValue: any) => {
 		const isArray = Array.isArray(modalValue);

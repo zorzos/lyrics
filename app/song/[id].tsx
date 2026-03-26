@@ -12,7 +12,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Link, useLocalSearchParams, useNavigation } from "expo-router";
 import { useLayoutEffect, useState } from "react";
-import { ActivityIndicator, StyleSheet, TouchableOpacity } from "react-native";
+import {
+	ActivityIndicator,
+	StyleSheet,
+	useWindowDimensions,
+} from "react-native";
 
 import InfoBlock from "@/components/ui/InfoBlock";
 import Key from "@/components/ui/Key";
@@ -20,9 +24,9 @@ import { useTablet } from "@/context/TabletContext";
 import { useColors } from "@/hooks/use-colors";
 import { useDevice } from "@/hooks/use-device";
 import { getSong } from "@/lib/queries/songs";
-import { width } from "@/utils/utils";
 
 export default function SongDetailScreen() {
+	const { width: screenWidth } = useWindowDimensions();
 	const colors = useColors();
 	const { isTablet } = useDevice();
 	const { id: paramId } = useLocalSearchParams();
@@ -59,75 +63,109 @@ export default function SongDetailScreen() {
 			title: song?.title ?? "Song Details",
 			headerRight: () => (
 				<Link href={generateHref("editSong", { id })}>
-					<MaterialIcons size={24} name="edit" color="white" />
+					<MaterialIcons
+						size={24}
+						name="edit"
+						color="white"
+					/>
 				</Link>
 			),
 		});
 	}, [id, navigation, song, isTablet]);
 
-	const renderInfo = (item: any, index: number) => {
-		const isTouchable = item.opensModal;
-		const Wrapper: React.ElementType = isTouchable ? TouchableOpacity : ThemedView;
-		const labelText = isTouchable ? (
-			<ThemedView style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
-				<ThemedText style={{ fontSize: 12 }}>{item.label}</ThemedText>
-				<MaterialIcons color={colors.text} size={12} name="open-in-new" />
-			</ThemedView>
-		) : (
-			item.label
-		);
-
-		return (
-			<Wrapper
-				key={`song-data-${index}`}
-				style={[styles.songItem, { width: `${85 / 4}%` }]}
-				onPress={item.opensModal ? () => setModalInfo(item) : undefined}>
-				<ThemedText style={styles.songItemText}>{labelText}</ThemedText>
-				<ThemedText style={styles.songItemText}>{item.value}</ThemedText>
-			</Wrapper>
-		);
-	};
-
 	if (isLoading) {
 		return (
-			<ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-				<ActivityIndicator size="large" color={colors.text} />
+			<ThemedView
+				style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+				<ActivityIndicator
+					size="large"
+					color={colors.text}
+				/>
 			</ThemedView>
 		);
 	}
 
 	if (isError || !id || !song) {
 		return (
-			<ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+			<ThemedView
+				style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
 				<ThemedText>Song not found</ThemedText>
 			</ThemedView>
 		);
 	}
 
-	const COLUMNS = 4;
-	const blockWidth = width * 0.9 / COLUMNS;
+	const BORDER_WIDTH = 1;
+	const COLUMNS_PER_ROW = isTablet ? 6 : 3;
+	const availableWidth = isTablet ? screenWidth * 0.75 : screenWidth;
+	const horizontalPadding = availableWidth * 0.03;
+	const totalGap = (COLUMNS_PER_ROW - 1) * 4;
+	const totalBorders = COLUMNS_PER_ROW * BORDER_WIDTH * 2;
+	const blockWidth =
+		(availableWidth - horizontalPadding - totalGap - totalBorders) /
+		COLUMNS_PER_ROW;
 
 	const infoBlocks = [
 		{ label: "Duration", value: formatDuration(song.duration) },
-		{ label: "Shows", value: shows.length || "N/A", onPress: shows.length ? () => setModalInfo({ label: "Shows", modalValue: shows }) : undefined, opensModal: !!shows.length },
-		{ label: "BPM", custom: <Metronome value={song.bpm} /> },
-		{ label: "Key", custom: <Key originalKey={song.original_key} spKey={song.sp_key} /> },
-		{ label: "Artist", value: song.artist.length },
-		{ label: "Year", value: '2005' },
-		{ label: "Notes", value: "..." },
+		{
+			label: "Shows",
+			value: shows.length || "N/A",
+			onPress: shows.length
+				? () => setModalInfo({ label: "Shows", modalValue: shows })
+				: undefined,
+			opensModal: !!shows.length,
+		},
+		{
+			label: "BPM",
+			custom: (
+				<Metronome
+					value={song.bpm}
+					fontSize={16}
+				/>
+			),
+		},
+		{
+			label: "Key",
+			custom: (
+				<Key
+					originalKey={song.original_key}
+					spKey={song.sp_key}
+					fontSize={16}
+				/>
+			),
+		},
+		{ label: "Artists", value: song.artist.length || "N/A" },
+		{ label: "Year", value: song.year },
+		// {
+		// 	label: "Notes",
+		// 	value: "Tap to view",
+		// 	opensModal: Math.random() > 0.5,
+		// },
 	];
 
 	return (
-		<ThemedView style={{ flex: 1 }}>
-			<ThemedView style={{ flexDirection: "row", flexWrap: "wrap", gap: 4, paddingHorizontal: "1.5%", justifyContent: "center" }}>
+		<ThemedView style={{ flex: 1, gap: "1%" }}>
+			<ThemedView
+				style={{
+					flexDirection: "row",
+					flexWrap: "wrap",
+					gap: 4,
+					paddingHorizontal: "1.5%",
+					justifyContent: "center",
+				}}>
 				{infoBlocks.map((block, i) => (
-					<InfoBlock key={i} {...block} width={blockWidth} />
+					<InfoBlock
+						key={i}
+						{...block}
+						width={blockWidth}
+					/>
 				))}
 			</ThemedView>
 
 			<ThemedView style={styles.tagsContainer}>
 				{song?.tags?.map((tag: TagType) => (
-					<ThemedView key={tag.id} style={styles.individualTagContainer}>
+					<ThemedView
+						key={tag.id}
+						style={styles.individualTagContainer}>
 						<Tag tag={tag} />
 					</ThemedView>
 				))}
@@ -135,7 +173,10 @@ export default function SongDetailScreen() {
 
 			<LyricsRenderer lyrics={song?.lyrics ?? ""} />
 
-			<InfoModal modalInfo={modalInfo} setModalInfo={setModalInfo} />
+			<InfoModal
+				modalInfo={modalInfo}
+				setModalInfo={setModalInfo}
+			/>
 		</ThemedView>
 	);
 }

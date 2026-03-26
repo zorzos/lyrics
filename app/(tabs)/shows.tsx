@@ -7,13 +7,12 @@ import {
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 import { ColorTheme, useColors } from "@/hooks/use-colors";
 import { useShows } from "@/hooks/useShows";
 import { formatDate } from "@/utils/dateUtils";
 import { generateHref } from "@/utils/paramUtils";
-import { categoriseShows } from "@/utils/showUtils"; // your new helper
+import { categoriseShows } from "@/utils/showUtils";
 import { Link } from "expo-router";
 
 const createStyles = (colors: ColorTheme) =>
@@ -105,11 +104,6 @@ export default function Shows() {
 									new Date(item.date),
 								)}`}
 							</ThemedText>
-							<MaterialIcons
-								color={colors.text}
-								size={28}
-								name="play-arrow"
-							/>
 						</TouchableOpacity>
 					</Link>
 				)}

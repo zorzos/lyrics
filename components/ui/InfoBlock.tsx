@@ -1,6 +1,6 @@
-import { useColors } from "@/hooks/use-colors";
+import { ColorTheme, useColors } from "@/hooks/use-colors";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { TouchableOpacity } from "react-native";
+import { StyleSheet, TouchableOpacity } from "react-native";
 import { ThemedText } from "../themed-text";
 import { ThemedView } from "../themed-view";
 
@@ -25,14 +25,9 @@ export default function InfoBlock({
 	const Wrapper: React.ElementType =
 		onPress || opensModal ? TouchableOpacity : ThemedView;
 
-	if (custom) {
-		return <ThemedView style={{ width, borderWidth: 1 }}>{custom}</ThemedView>;
-	}
-
-	return (
-		<Wrapper
-			onPress={onPress}
-			style={{
+	const createStyles = (colors: ColorTheme) =>
+		StyleSheet.create({
+			wrapper: {
 				width,
 				justifyContent: "center",
 				alignItems: "center",
@@ -40,10 +35,21 @@ export default function InfoBlock({
 				borderColor: colors.text,
 				borderRadius: 8,
 				padding: 4,
-			}}>
+			},
+		});
+	const wrapperStyles = createStyles(colors);
+
+	if (custom) {
+		return <ThemedView style={wrapperStyles.wrapper}>{custom}</ThemedView>;
+	}
+
+	return (
+		<Wrapper
+			onPress={onPress}
+			style={wrapperStyles.wrapper}>
 			<ThemedView
 				style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
-				<ThemedText style={{ fontSize: 12, textAlign: "center" }}>
+				<ThemedText style={{ fontSize: 16, textAlign: "center" }}>
 					{label}
 				</ThemedText>
 				{opensModal && (
@@ -55,7 +61,7 @@ export default function InfoBlock({
 				)}
 			</ThemedView>
 			{value && (
-				<ThemedText style={{ fontSize: 12, textAlign: "center" }}>
+				<ThemedText style={{ fontSize: 16, textAlign: "center" }}>
 					{value}
 				</ThemedText>
 			)}

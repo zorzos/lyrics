@@ -5,9 +5,30 @@ import { MetronomeProps } from "@/types";
 import { ThemedText } from "../themed-text";
 import { ThemedView } from "../themed-view";
 
-export default function Metronome({ value }: MetronomeProps) {
+export default function Metronome({ fontSize, value }: MetronomeProps) {
 	const [running, setRunning] = useState(false);
 	const pulseAnim = useRef(new Animated.Value(0)).current;
+
+	const styles = StyleSheet.create({
+		ledIndicator: {
+			width: 10,
+			height: 10,
+			borderRadius: 5,
+		},
+		container: {
+			flexDirection: "column",
+			alignItems: "center",
+			padding: 6,
+		},
+		label: {
+			fontSize,
+		},
+		view: {
+			flexDirection: "row",
+			alignItems: "center",
+			gap: 4,
+		},
+	});
 
 	const toggleMetronome = () => {
 		if (running) {
@@ -54,31 +75,7 @@ export default function Metronome({ value }: MetronomeProps) {
                     ]}
                 /> */}
 			</ThemedView>
-			<ThemedText style={{ fontSize: 12 }}>{value}</ThemedText>
+			<ThemedText style={{ fontSize }}>{value}</ThemedText>
 		</TouchableOpacity>
 	);
 }
-
-const styles = StyleSheet.create({
-	ledIndicator: {
-		width: 10,
-		height: 10,
-		borderRadius: 5,
-	},
-	container: {
-		flexDirection: "column",
-		borderWidth: 1,
-		borderRadius: 8,
-		alignItems: "center",
-		padding: 6,
-		fontSize: 12
-	},
-	label: {
-		fontSize: 12,
-	},
-	view: {
-		flexDirection: "row",
-		alignItems: "center",
-		gap: 4,
-	},
-});

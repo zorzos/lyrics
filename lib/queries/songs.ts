@@ -33,7 +33,7 @@ export async function getSongs(showId?: string): Promise<ShowSongsByParts> {
                 )
               )
             )
-          `
+          `,
 				)
 				.eq("show_id", showId)
 				.order("part", { ascending: true })
@@ -75,6 +75,7 @@ export async function getSongs(showId?: string): Promise<ShowSongsByParts> {
 					original_key: song.original_key,
 					sp_key: song.sp_key,
 					bpm: song.bpm,
+					year: song.year,
 				};
 
 				if (!grouped[partNumber]) grouped[partNumber] = [];
@@ -111,7 +112,7 @@ export async function getSongs(showId?: string): Promise<ShowSongsByParts> {
                 draft
               )
             )
-          `
+          `,
 				)
 				.order("title", { ascending: true });
 
@@ -145,6 +146,7 @@ export async function getSongs(showId?: string): Promise<ShowSongsByParts> {
 					original_key: song.original_key,
 					sp_key: song.sp_key,
 					bpm: song.bpm,
+					year: song.year,
 				} as Song;
 			});
 
@@ -180,7 +182,7 @@ export async function getSong(songId: string): Promise<Song> {
               parts
             )
           )
-        `
+        `,
 			)
 			.eq("id", songId)
 			.single();
@@ -221,6 +223,7 @@ export async function getSong(songId: string): Promise<Song> {
 			original_key: data.original_key,
 			sp_key: data.sp_key,
 			bpm: data.bpm,
+			year: data.year,
 		} as Song;
 	} catch (err) {
 		console.error("getSong() failed:", err);
@@ -291,15 +294,19 @@ export async function updateSong(songId: string, updatedSong: any) {
 		const existingTagIds = await getSongTagIds(songId);
 
 		// 3. Diff
-		const { toAdd: artistsToAdd, toRemove: artistsToRemove } =
-			diffRelations(existingArtistIds, artists);
+		const { toAdd: artistsToAdd, toRemove: artistsToRemove } = diffRelations(
+			existingArtistIds,
+			artists,
+		);
 
-		const { toAdd: tagsToAdd, toRemove: tagsToRemove } =
-			diffRelations(existingTagIds, tags);
+		const { toAdd: tagsToAdd, toRemove: tagsToRemove } = diffRelations(
+			existingTagIds,
+			tags,
+		);
 
 		// 4. Apply artists diff
 		if (artistsToAdd.length > 0) {
-			const rows = artistsToAdd.map(artistId => ({
+			const rows = artistsToAdd.map((artistId) => ({
 				song_id: songId,
 				artist_id: artistId,
 			}));
@@ -320,7 +327,7 @@ export async function updateSong(songId: string, updatedSong: any) {
 
 		// 5. Apply tags diff
 		if (tagsToAdd.length > 0) {
-			const rows = tagsToAdd.map(tagId => ({
+			const rows = tagsToAdd.map((tagId) => ({
 				song_id: songId,
 				tag_id: tagId,
 			}));

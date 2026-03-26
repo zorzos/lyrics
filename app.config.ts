@@ -68,6 +68,7 @@ export default ({ config }: { config: ExpoConfig }) => {
 					},
 				},
 			],
+			"react-native-edge-to-edge",
 		],
 	};
 };
