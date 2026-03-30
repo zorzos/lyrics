@@ -21,9 +21,9 @@ import { useCallback } from "react";
 
 const createStyles = (colors: ColorTheme) =>
 	StyleSheet.create({
-		container: { flex: 1, paddingHorizontal: "2.5%" },
+		container: { flex: 1, paddingHorizontal: "2.5%", paddingTop: "1%" },
 		item: {
-			padding: 10,
+			padding: 12,
 		},
 		text: {
 			fontSize: 16,
@@ -82,7 +82,7 @@ export default function Shows() {
 		const selectedStyle = isSelected && {
 			borderColor: colors.accent,
 			borderWidth: 1,
-			borderRadius: 24,
+			borderRadius: 20,
 			borderBottomColor: colors.accent,
 			borderBottomWidth: 1,
 			backgroundColor: `${colors.accent}15`,
@@ -130,8 +130,10 @@ export default function Shows() {
 							padding: 8,
 							borderBottomWidth: 1,
 							borderBottomColor: `${colors.text}45`,
+							marginBottom: 4,
 						}}>
-						<ThemedText style={{ color: colors.text, fontWeight: "bold" }}>
+						<ThemedText
+							style={{ fontSize: 18, color: colors.text, fontWeight: "bold" }}>
 							{title}
 						</ThemedText>
 					</ThemedView>

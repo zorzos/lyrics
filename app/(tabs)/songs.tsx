@@ -80,7 +80,7 @@ export default function Songs() {
 		const selectedStyle = isSelected && {
 			borderColor: colors.accent,
 			borderWidth: 1,
-			borderRadius: 24,
+			borderRadius: 20,
 			borderBottomColor: colors.accent,
 			borderBottomWidth: 1,
 			backgroundColor: `${colors.accent}15`,
@@ -89,7 +89,7 @@ export default function Songs() {
 		if (isTablet) {
 			return (
 				<TouchableOpacity
-					style={[{ padding: 10 }, selectedStyle]}
+					style={[{ padding: 12 }, selectedStyle]}
 					onPress={() => setSelected(item.id, "song", { title: item.title })}>
 					{content}
 				</TouchableOpacity>
@@ -126,8 +126,10 @@ export default function Songs() {
 							padding: 8,
 							borderBottomWidth: 1,
 							borderBottomColor: `${colors.text}35`,
+							marginBottom: 4,
 						}}>
-						<ThemedText style={{ color: colors.text, fontWeight: "bold" }}>
+						<ThemedText
+							style={{ fontSize: 18, color: colors.text, fontWeight: "bold" }}>
 							{title}
 						</ThemedText>
 					</ThemedView>

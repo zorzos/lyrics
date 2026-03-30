@@ -67,10 +67,14 @@ export default function TabLayout() {
 						<MaterialIcons
 							size={24}
 							color={color}
-							name="queue-play-next"
+							name="library-music"
 						/>
 					),
 					...tabStyle,
+					tabBarItemStyle: {
+						borderRightWidth: 1.5,
+						borderRightColor: `${colors.accent}40`,
+					},
 				}}
 			/>
 			<Tabs.Screen
@@ -100,6 +104,10 @@ export default function TabLayout() {
 						/>
 					),
 					...tabStyle,
+					tabBarItemStyle: {
+						borderRightWidth: 1.5,
+						borderRightColor: `${colors.accent}40`,
+					},
 				}}
 			/>
 			<Tabs.Screen
@@ -115,6 +123,10 @@ export default function TabLayout() {
 						/>
 					),
 					...tabStyle,
+					tabBarItemStyle: {
+						borderRightWidth: 1.5,
+						borderRightColor: `${colors.accent}40`,
+					},
 				}}
 			/>
 			<Tabs.Screen

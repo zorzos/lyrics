@@ -3,7 +3,7 @@ import { getMusicalKeys } from "@/constants/keys";
 import { useColors } from "@/hooks/use-colors";
 import { KeyPickerProps } from "@/types";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import React, { useEffect, useState } from "react";
+import React, { useMemo } from "react";
 import { StyleSheet } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import { ThemedView } from "../themed-view";
@@ -28,27 +28,23 @@ export default function KeyPicker({
 	const colors = useColors();
 	const items = getMusicalKeys(colors.background, colors.text);
 
-	const buildDropItems = () => {
+	const dropItems = useMemo(() => {
 		const combinedItems = extraOptions ? [...extraOptions, ...items] : items;
-		const filteredItems = combinedItems.filter((i) => i.value !== removeKey);
-		return filteredItems.map((i) => ({
-			...i,
-			containerStyle: {
-				backgroundColor:
-					i.value === removeKey ? colors.text : colors.background,
-				...(i.containerStyle || {}),
-			},
-			labelStyle: {
-				color: colors.text,
-				...(i.labelStyle || {}),
-			},
-		}));
-	};
 
-	const [dropItems, setDropItems] = useState(buildDropItems);
-
-	useEffect(() => {
-		setDropItems(buildDropItems());
+		return combinedItems
+			.filter((i) => i.value !== removeKey)
+			.map((i) => ({
+				...i,
+				containerStyle: {
+					backgroundColor:
+						i.value === removeKey ? colors.text : colors.background,
+					...(i.containerStyle || {}),
+				},
+				labelStyle: {
+					color: colors.text,
+					...(i.labelStyle || {}),
+				},
+			}));
 	}, [removeKey, items, extraOptions, colors]);
 
 	return (
@@ -63,7 +59,6 @@ export default function KeyPicker({
 					const actualValue = typeof val === "function" ? val(value) : val;
 					onChange(actualValue as string);
 				}}
-				setItems={setDropItems}
 				placeholder="Select key"
 				style={{
 					borderColor: colors.text,
