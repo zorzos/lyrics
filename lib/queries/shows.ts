@@ -14,7 +14,8 @@ export async function getShows(): Promise<Show[]> {
 export async function getShow(showId: string) {
 	const { data, error } = await supabase
 		.from("shows")
-		.select(`
+		.select(
+			`
       id,
       title,
       date,
@@ -39,7 +40,8 @@ export async function getShow(showId: string) {
           )
         )
       )
-    `)
+    `,
+		)
 		.eq("id", showId)
 		.order("song_order", { foreignTable: "show_songs", ascending: true })
 		.single();
@@ -48,11 +50,6 @@ export async function getShow(showId: string) {
 	return data;
 }
 
+export async function insertShow(payload: any) {}
 
-export async function insertShow(payload: any) {
-
-}
-
-export async function updateShow(showId: string, payload: any) {
-
-}
+export async function updateShow(showId: string, payload: any) {}

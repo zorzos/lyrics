@@ -6,8 +6,8 @@ import { useDevice } from "@/hooks/use-device";
 import { useSongs } from "@/hooks/useSongs";
 import { Section, Song } from "@/types";
 import { generateHref } from "@/utils/paramUtils";
-import { Link } from "expo-router";
-import { useMemo, useRef } from "react";
+import { Link, useFocusEffect } from "expo-router";
+import { useCallback, useMemo, useRef } from "react";
 import {
 	ActivityIndicator,
 	SectionList,
@@ -15,14 +15,23 @@ import {
 	TouchableOpacity,
 } from "react-native";
 
+const styles = StyleSheet.create({
+	container: {
+		flex: 1,
+		paddingHorizontal: "2.5%",
+	},
+});
+
 export default function Songs() {
 	const { selectedId } = useTablet();
 	const colors = useColors();
 	const { isTablet } = useDevice();
-	const { setSelected } = useTablet();
+	const { setSelected, clearSelected } = useTablet();
 
 	const sectionListRef = useRef<SectionList<Song>>(null);
 	const { data: rawSongs, isLoading, isError } = useSongs();
+
+	useFocusEffect(useCallback(() => clearSelected, [clearSelected]));
 
 	const memoizedSongs = useMemo(() => rawSongs ?? [], [rawSongs]);
 	const sections: Section[] = useMemo(() => {
@@ -61,31 +70,28 @@ export default function Songs() {
 	}
 
 	const renderItem = ({ item }: { item: Song }) => {
+		const isSelected = item.id === selectedId;
+		const content = (
+			<ThemedText style={{ color: colors.text, fontSize: 16 }}>
+				{item.title}
+			</ThemedText>
+		);
+
+		const selectedStyle = isSelected && {
+			borderColor: colors.accent,
+			borderWidth: 1,
+			borderRadius: 24,
+			borderBottomColor: colors.accent,
+			borderBottomWidth: 1,
+			backgroundColor: `${colors.accent}15`,
+		};
+
 		if (isTablet) {
-			const isSelected = item.id === selectedId;
 			return (
 				<TouchableOpacity
-					style={[
-						{
-							padding: 10,
-						},
-						isSelected && {
-							borderColor: "red",
-							borderWidth: 1,
-							borderRadius: 24,
-							borderBottomColor: "red",
-							borderBottomWidth: 1,
-							backgroundColor: `${colors.accent}15`,
-						},
-					]}
+					style={[{ padding: 10 }, selectedStyle]}
 					onPress={() => setSelected(item.id, "song", { title: item.title })}>
-					<ThemedText
-						style={{
-							color: colors.text,
-							fontSize: 16,
-						}}>
-						{item.title}
-					</ThemedText>
+					{content}
 				</TouchableOpacity>
 			);
 		}
@@ -101,16 +107,7 @@ export default function Songs() {
 					shows: JSON.stringify(item.shows),
 				})}
 				asChild>
-				<TouchableOpacity
-					style={{
-						padding: 10,
-						borderBottomWidth: 1,
-						borderBottomColor: "lightgray",
-					}}>
-					<ThemedText style={{ color: colors.text, fontSize: 16 }}>
-						{item.title}
-					</ThemedText>
-				</TouchableOpacity>
+				<TouchableOpacity style={{ padding: 10 }}>{content}</TouchableOpacity>
 			</Link>
 		);
 	};
@@ -124,7 +121,12 @@ export default function Songs() {
 				renderItem={renderItem}
 				renderSectionHeader={({ section: { title } }) => (
 					<ThemedView
-						style={{ backgroundColor: colors.background, padding: 8 }}>
+						style={{
+							backgroundColor: colors.background,
+							padding: 8,
+							borderBottomWidth: 1,
+							borderBottomColor: `${colors.text}35`,
+						}}>
 						<ThemedText style={{ color: colors.text, fontWeight: "bold" }}>
 							{title}
 						</ThemedText>
@@ -135,10 +137,3 @@ export default function Songs() {
 		</ThemedView>
 	);
 }
-
-const styles = StyleSheet.create({
-	container: {
-		flex: 1,
-		paddingHorizontal: "2.5%",
-	},
-});

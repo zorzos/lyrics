@@ -5,6 +5,7 @@ import { NetworkProvider } from "@/context/NetworkContext";
 import { SettingsProvider } from "@/context/SettingsContext";
 import { TabletProvider } from "@/context/TabletContext";
 import { useColors } from "@/hooks/use-colors";
+import { useDevice } from "@/hooks/use-device";
 import { useToastConfig } from "@/lib/toastConfig";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useColorScheme } from "react-native";
@@ -17,9 +18,11 @@ const queryClient = new QueryClient();
 export default function RootLayout() {
 	const toastConfig = useToastConfig();
 	const colorScheme = useColorScheme();
+	const { isTablet } = useDevice();
 	const isDarkTheme = colorScheme === "dark";
 	const statusBarStyle = isDarkTheme ? "light" : "dark";
 	const colors = useColors();
+	const bottom = isTablet ? "off" : "additive";
 
 	return (
 		<QueryClientProvider client={queryClient}>
@@ -28,7 +31,7 @@ export default function RootLayout() {
 					<TabletProvider>
 						<SafeAreaProvider>
 							<SafeAreaView
-								edges={[]}
+								edges={{ bottom }}
 								style={[
 									{
 										flex: 1,
@@ -53,6 +56,7 @@ export default function RootLayout() {
 						</SafeAreaProvider>
 					</TabletProvider>
 				</NetworkProvider>
+				z
 			</SettingsProvider>
 		</QueryClientProvider>
 	);

@@ -1,12 +1,19 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { useTablet } from "@/context/TabletContext";
 import { useColors } from "@/hooks/use-colors";
+import { useDevice } from "@/hooks/use-device";
 import { useShowSongs } from "@/hooks/useSongs";
 import { ShowInfoTypes, Song } from "@/types";
-import { formatDuration, formatShowDuration } from "@/utils/dateUtils";
+import {
+	formatDate,
+	formatDuration,
+	formatShowDuration,
+} from "@/utils/dateUtils";
 import { generateHref, getSingleParam } from "@/utils/paramUtils";
 
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import dayjs from "dayjs";
 import { Link, useLocalSearchParams, useNavigation } from "expo-router";
 import { useLayoutEffect } from "react";
 import {
@@ -16,16 +23,59 @@ import {
 	TouchableOpacity,
 } from "react-native";
 
+const styles = StyleSheet.create({
+	container: {
+		flex: 1,
+		paddingHorizontal: "2.5%",
+	},
+	item: {
+		paddingVertical: 16,
+		borderBottomWidth: 1,
+		borderBottomColor: "#ddd",
+		flexDirection: "row",
+		justifyContent: "space-between",
+		alignItems: "center",
+		flex: 1,
+	},
+	text: {
+		fontSize: 16,
+		display: "flex",
+		gap: 4,
+	},
+	alphabetContainer: {
+		position: "absolute",
+		right: 0,
+		top: 0,
+		bottom: 0,
+		justifyContent: "center",
+		paddingVertical: 16,
+		width: 24,
+	},
+	letterContainer: {
+		flex: 1,
+		alignItems: "center",
+		justifyContent: "center",
+	},
+});
+
 export default function ShowDetailScreen() {
 	const colors = useColors();
-	const { id, title, date } = useLocalSearchParams();
-	const showId: string | undefined = getSingleParam(id);
-	const showDate = getSingleParam(date);
+	const { isTablet } = useDevice();
+	const { id: paramId, title, date: paramDate } = useLocalSearchParams();
+	const { selectedId, selectedMeta } = useTablet();
+
+	const id = isTablet ? selectedId : getSingleParam(paramId);
+	const showId = id ?? undefined;
+	const rawDate = isTablet
+		? String(selectedMeta?.date ?? "")
+		: getSingleParam(paramDate);
+	const showDate = rawDate ? dayjs(rawDate).toDate() : undefined;
 
 	const navigation = useNavigation();
 	const { data: songs, isLoading, isError } = useShowSongs(showId);
 
 	useLayoutEffect(() => {
+		if (isTablet) return;
 		navigation.setOptions({
 			title: title || "Show Details",
 			headerRight: () => (
@@ -33,12 +83,12 @@ export default function ShowDetailScreen() {
 					<MaterialIcons
 						size={24}
 						name="edit"
-						color="white"
+						color={colors.text}
 					/>
 				</Link>
 			),
 		});
-	}, [id, navigation, title]);
+	}, [id, navigation, title, isTablet, colors.text]);
 
 	if (isLoading)
 		return (
@@ -56,14 +106,26 @@ export default function ShowDetailScreen() {
 			</ThemedView>
 		);
 
-	// console.log(
-	// 	"SONGS IN THIS SHOW",
-	// 	JSON.stringify(songs?.parts[0].songs[1], null, 2),
-	// );
+	// console.log("SONGS IN THIS SHOW", JSON.stringify(songs, null, 2));
 
 	const getPartDuration = (songs: Song[]): string => {
 		const duration = songs.reduce((total, song) => total + song.duration, 0);
 		return formatShowDuration(duration);
+	};
+
+	const renderSongItem = (item: any) => {
+		return (
+			<Link
+				href={generateHref("viewSong", {
+					id: item.id,
+				})}
+				asChild>
+				<TouchableOpacity style={styles.item}>
+					<ThemedText style={styles.text}>{item.title}</ThemedText>
+					<ThemedText>{formatDuration(item.duration)}</ThemedText>
+				</TouchableOpacity>
+			</Link>
+		);
 	};
 
 	return (
@@ -84,7 +146,7 @@ export default function ShowDetailScreen() {
 					{[
 						{
 							label: "Date",
-							value: showDate ? new Date(showDate).toDateString() : "N/A",
+							value: showDate ? formatDate(new Date(showDate)) : "N/A",
 							type: ShowInfoTypes.DATE,
 						},
 						{
@@ -160,7 +222,7 @@ export default function ShowDetailScreen() {
 				return (
 					<ThemedView
 						key={i}
-						style={{ backgroundColor: "transparent" }}>
+						style={{ backgroundColor: "transparent", padding: 6 }}>
 						<ThemedView
 							style={{ flexDirection: "row", justifyContent: "space-between" }}>
 							<ThemedText style={{ fontSize: 18 }}>
@@ -173,27 +235,7 @@ export default function ShowDetailScreen() {
 						<FlatList
 							data={part.songs}
 							keyExtractor={(item) => item.id}
-							renderItem={({ item }) => {
-								return (
-									<Link
-										href={generateHref("viewSong", {
-											id: item.id,
-										})}
-										asChild>
-										<TouchableOpacity style={styles.item}>
-											<ThemedText style={styles.text}>{item.title}</ThemedText>
-											<ThemedView style={{ flexDirection: "row" }}>
-												<ThemedText>{formatDuration(item.duration)}</ThemedText>
-												<MaterialIcons
-													color="white"
-													size={28}
-													name="play-arrow"
-												/>
-											</ThemedView>
-										</TouchableOpacity>
-									</Link>
-								);
-							}}
+							renderItem={({ item }) => renderSongItem(item)}
 						/>
 					</ThemedView>
 				);
@@ -201,38 +243,3 @@ export default function ShowDetailScreen() {
 		</ThemedView>
 	);
 }
-
-const styles = StyleSheet.create({
-	container: {
-		flex: 1,
-		paddingHorizontal: "2.5%",
-	},
-	item: {
-		paddingVertical: 16,
-		borderBottomWidth: 1,
-		borderBottomColor: "#ddd",
-		flexDirection: "row",
-		justifyContent: "space-between",
-		alignItems: "center",
-		flex: 1,
-	},
-	text: {
-		fontSize: 16,
-		display: "flex",
-		gap: 4,
-	},
-	alphabetContainer: {
-		position: "absolute",
-		right: 0,
-		top: 0,
-		bottom: 0,
-		justifyContent: "center",
-		paddingVertical: 16,
-		width: 24,
-	},
-	letterContainer: {
-		flex: 1,
-		alignItems: "center",
-		justifyContent: "center",
-	},
-});

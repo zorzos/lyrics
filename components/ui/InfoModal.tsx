@@ -1,7 +1,7 @@
 import { ModalProps } from "@/types";
 import { ThemedText } from "../themed-text";
 
-import { useColors } from "@/hooks/use-colors";
+import { ColorTheme, useColors } from "@/hooks/use-colors";
 import {
 	Modal,
 	Pressable,
@@ -11,9 +11,49 @@ import {
 } from "react-native";
 import { ThemedView } from "../themed-view";
 
+const createStyles = (colors: ColorTheme) =>
+	StyleSheet.create({
+		wrapper: {
+			position: "absolute",
+			top: 0,
+			left: 0,
+			right: 0,
+			bottom: 0,
+			backgroundColor: "rgba(0,0,0,0.3)",
+			justifyContent: "center",
+			alignItems: "center",
+		},
+		inner: {
+			width: "85%",
+			borderRadius: 10,
+			padding: 20,
+			shadowColor: "#000",
+			shadowOffset: {
+				width: 0,
+				height: 4,
+			},
+			shadowOpacity: 0.25,
+			shadowRadius: 8,
+			elevation: 5,
+			flexDirection: "column",
+			gap: 16,
+			borderWidth: 2,
+			borderColor: "white",
+			alignItems: "center",
+		},
+		modalValue: {
+			fontSize: 14,
+		},
+		modalContentContainer: {
+			backgroundColor: "transparent",
+			gap: 4,
+		},
+	});
+
 export default function InfoModal(modalProps: ModalProps) {
 	const { modalInfo, setModalInfo } = modalProps;
 	const colors = useColors();
+	const styles = createStyles(colors);
 
 	// console.log("MODAL INFO", JSON.stringify(modalInfo, null, 2));
 
@@ -66,41 +106,3 @@ export default function InfoModal(modalProps: ModalProps) {
 		</Modal>
 	);
 }
-
-const styles = StyleSheet.create({
-	wrapper: {
-		position: "absolute",
-		top: 0,
-		left: 0,
-		right: 0,
-		bottom: 0,
-		backgroundColor: "rgba(0,0,0,0.3)",
-		justifyContent: "center",
-		alignItems: "center",
-	},
-	inner: {
-		width: "85%",
-		borderRadius: 10,
-		padding: 20,
-		shadowColor: "#000",
-		shadowOffset: {
-			width: 0,
-			height: 4,
-		},
-		shadowOpacity: 0.25,
-		shadowRadius: 8,
-		elevation: 5,
-		flexDirection: "column",
-		gap: 16,
-		borderWidth: 2,
-		borderColor: "white",
-		alignItems: "center",
-	},
-	modalValue: {
-		fontSize: 14,
-	},
-	modalContentContainer: {
-		backgroundColor: "transparent",
-		gap: 4,
-	},
-});

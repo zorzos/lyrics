@@ -25,6 +25,39 @@ import KeyPicker from "@/components/ui/KeyPicker";
 import { AutocompleteItem } from "@/types";
 import { Field, useForm } from "@tanstack/react-form";
 
+const styles = StyleSheet.create({
+	input: {
+		borderWidth: 1,
+		borderRadius: 6,
+		padding: 8,
+	},
+	keysRow: {
+		flexDirection: "row",
+		gap: 12,
+		marginBottom: "2.5%",
+		overflow: "visible",
+	},
+	tagsContainer: {
+		flexDirection: "row",
+		flexWrap: "wrap",
+	},
+	tagCheckbox: {
+		borderWidth: 1,
+		borderColor: "#999",
+		borderRadius: 4,
+		paddingVertical: 4,
+		paddingHorizontal: 8,
+		margin: "1%",
+	},
+	saveButton: {
+		backgroundColor: "#007AFF",
+		paddingVertical: 12,
+		borderRadius: 6,
+		marginTop: 12,
+		marginBottom: "7.5%",
+	},
+});
+
 export default function EditSongScreen() {
 	const colors = useColors();
 	const { id } = useLocalSearchParams();
@@ -74,11 +107,10 @@ export default function EditSongScreen() {
 						name: label,
 						...rest,
 					}));
-					const createdNewArtists = await insertArtistMutation.mutateAsync(
-						artistsToCreate
-					);
+					const createdNewArtists =
+						await insertArtistMutation.mutateAsync(artistsToCreate);
 					createdArtists.push(
-						...createdNewArtists.map((a: any) => a.id.toString())
+						...createdNewArtists.map((a: any) => a.id.toString()),
 					);
 				}
 
@@ -121,7 +153,7 @@ export default function EditSongScreen() {
 		form.setFieldValue("spKey", song.sp_key ?? "");
 		form.setFieldValue(
 			"selectedArtists",
-			song.artist.map((a) => ({ id: a.id, label: a.name, isNew: false }))
+			song.artist.map((a) => ({ id: a.id, label: a.name, isNew: false })),
 		);
 		form.setFieldValue("selectedTagIds", song.tags?.map((t) => t.id) ?? []);
 	}, [form, song]);
@@ -205,7 +237,7 @@ export default function EditSongScreen() {
 												onChangeText={(text) => {
 													const numericValue = parseInt(text, 10);
 													field.setValue(
-														!isNaN(numericValue) ? numericValue : 0
+														!isNaN(numericValue) ? numericValue : 0,
 													);
 												}}
 												keyboardType="numeric"
@@ -233,7 +265,7 @@ export default function EditSongScreen() {
 												onChangeText={(text) => {
 													const numericValue = parseInt(text, 10);
 													field.setValue(
-														!isNaN(numericValue) ? numericValue : 0
+														!isNaN(numericValue) ? numericValue : 0,
 													);
 												}}
 												keyboardType="numeric"
@@ -353,7 +385,7 @@ export default function EditSongScreen() {
 														field.setValue((prev: string[]) =>
 															prev.includes(tag.id)
 																? prev.filter((id) => id !== tag.id)
-																: [...prev, tag.id]
+																: [...prev, tag.id],
 														);
 													}}>
 													<ThemedText
@@ -386,36 +418,3 @@ export default function EditSongScreen() {
 		</KeyboardAvoidingView>
 	);
 }
-
-const styles = StyleSheet.create({
-	input: {
-		borderWidth: 1,
-		borderRadius: 6,
-		padding: 8,
-	},
-	keysRow: {
-		flexDirection: "row",
-		gap: 12,
-		marginBottom: "2.5%",
-		overflow: "visible",
-	},
-	tagsContainer: {
-		flexDirection: "row",
-		flexWrap: "wrap",
-	},
-	tagCheckbox: {
-		borderWidth: 1,
-		borderColor: "#999",
-		borderRadius: 4,
-		paddingVertical: 4,
-		paddingHorizontal: 8,
-		margin: "1%",
-	},
-	saveButton: {
-		backgroundColor: "#007AFF",
-		paddingVertical: 12,
-		borderRadius: 6,
-		marginTop: 12,
-		marginBottom: "7.5%",
-	},
-});

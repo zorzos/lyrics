@@ -6,6 +6,25 @@ import { StyleSheet } from "react-native";
 import { ThemedText } from "../themed-text";
 import { ThemedView } from "../themed-view";
 
+const styles = StyleSheet.create({
+	container: {
+		flexDirection: "column",
+		alignItems: "center",
+		padding: 6,
+	},
+	label: {
+		fontSize: 16,
+	},
+	keyText: {
+		fontSize: 10,
+	},
+	view: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 4,
+	},
+});
+
 export default function Key({ originalKey, spKey, fontSize }: KeyProps) {
 	const colors = useColors();
 	const keyDifference = spKey ? semitoneDifference(originalKey, spKey) : "OG";
@@ -29,22 +48,3 @@ export default function Key({ originalKey, spKey, fontSize }: KeyProps) {
 		</ThemedView>
 	);
 }
-
-const styles = StyleSheet.create({
-	container: {
-		flexDirection: "column",
-		alignItems: "center",
-		padding: 6,
-	},
-	label: {
-		fontSize: 16,
-	},
-	keyText: {
-		fontSize: 10,
-	},
-	view: {
-		flexDirection: "row",
-		alignItems: "center",
-		gap: 4,
-	},
-});

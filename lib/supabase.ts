@@ -5,11 +5,14 @@ type ExtraConfig = {
 	supabaseUrl: string;
 	supabaseKey: string;
 	mode: "admin" | "production" | "experiment";
+	color: string;
 };
 
 const extra = Constants.expoConfig?.extra as ExtraConfig;
-const { supabaseUrl, supabaseKey, mode } = extra;
+const { supabaseUrl, supabaseKey, mode, color } = extra;
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 export const isAdmin = mode === "admin";
-export const isCustomMode = ["admin", "experiment"].includes(mode);
+export const isProduction = mode === "production";
+export const envColor = color;
+export const envName = mode;

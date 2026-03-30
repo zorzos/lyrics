@@ -5,11 +5,8 @@ import { MetronomeProps } from "@/types";
 import { ThemedText } from "../themed-text";
 import { ThemedView } from "../themed-view";
 
-export default function Metronome({ fontSize, value }: MetronomeProps) {
-	const [running, setRunning] = useState(false);
-	const pulseAnim = useRef(new Animated.Value(0)).current;
-
-	const styles = StyleSheet.create({
+const createStyles = (fontSize: number) =>
+	StyleSheet.create({
 		ledIndicator: {
 			width: 10,
 			height: 10,
@@ -29,6 +26,11 @@ export default function Metronome({ fontSize, value }: MetronomeProps) {
 			gap: 4,
 		},
 	});
+
+export default function Metronome({ fontSize, value }: MetronomeProps) {
+	const [running, setRunning] = useState(false);
+	const pulseAnim = useRef(new Animated.Value(0)).current;
+	const styles = createStyles(fontSize);
 
 	const toggleMetronome = () => {
 		if (running) {

@@ -14,7 +14,7 @@ export function useSongs() {
 
 export function useShowSongs(showId: any) {
 	return useQuery({
-		queryKey: ["song", showId],
+		queryKey: ["showSongs", showId],
 		queryFn: async () => await getSongs(showId),
 		enabled: !!showId,
 	});
@@ -32,7 +32,7 @@ export function useUpsertSong() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: async ({ id, payload }: { id?: string, payload: any }) => {
+		mutationFn: async ({ id, payload }: { id?: string; payload: any }) => {
 			if (id) {
 				return updateSong(id, payload);
 			} else {

@@ -8,31 +8,22 @@ import {
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 
+import { useTablet } from "@/context/TabletContext";
 import { ColorTheme, useColors } from "@/hooks/use-colors";
+import { useDevice } from "@/hooks/use-device";
 import { useShows } from "@/hooks/useShows";
+import { Show } from "@/types";
 import { formatDate } from "@/utils/dateUtils";
 import { generateHref } from "@/utils/paramUtils";
 import { categoriseShows } from "@/utils/showUtils";
-import { Link } from "expo-router";
+import { Link, useFocusEffect } from "expo-router";
+import { useCallback } from "react";
 
 const createStyles = (colors: ColorTheme) =>
 	StyleSheet.create({
 		container: { flex: 1, paddingHorizontal: "2.5%" },
-		sectionHeader: {
-			fontSize: 18,
-			fontWeight: "bold",
-			marginTop: 16,
-			marginBottom: 8,
-			color: colors.text,
-		},
 		item: {
-			paddingVertical: 12,
-			borderBottomWidth: 1,
-			borderBottomColor: "lightgray",
-			flexDirection: "row",
-			justifyContent: "space-between",
-			alignItems: "center",
-			flex: 1,
+			padding: 10,
 		},
 		text: {
 			fontSize: 16,
@@ -49,8 +40,11 @@ const createStyles = (colors: ColorTheme) =>
 export default function Shows() {
 	const colors = useColors();
 	const styles = createStyles(colors);
-
+	const { isTablet } = useDevice();
+	const { selectedId, setSelected, clearSelected } = useTablet();
 	const { data: shows, isLoading, isError } = useShows();
+
+	useFocusEffect(useCallback(() => clearSelected, [clearSelected]));
 
 	if (isLoading) {
 		return (
@@ -82,31 +76,68 @@ export default function Shows() {
 		(section) => section.data.length > 0,
 	);
 
+	const renderItem = ({ item }: { item: Show }) => {
+		const label = `${item.title.substring(0, 15)} ${formatDate(new Date(item.date))}`;
+		const isSelected = item.id === selectedId;
+		const selectedStyle = isSelected && {
+			borderColor: colors.accent,
+			borderWidth: 1,
+			borderRadius: 24,
+			borderBottomColor: colors.accent,
+			borderBottomWidth: 1,
+			backgroundColor: `${colors.accent}15`,
+		};
+
+		const content = <ThemedText style={styles.text}>{label}</ThemedText>;
+
+		if (isTablet) {
+			return (
+				<TouchableOpacity
+					style={[styles.item, selectedStyle]}
+					onPress={() =>
+						setSelected(item.id, "show", {
+							title: item.title,
+							date: item.date.toString(),
+						})
+					}>
+					{content}
+				</TouchableOpacity>
+			);
+		}
+
+		return (
+			<Link
+				href={generateHref("viewShow", {
+					id: item.id,
+					title: item.title,
+					date: item.date,
+				})}
+				asChild>
+				<TouchableOpacity style={styles.item}>{content}</TouchableOpacity>
+			</Link>
+		);
+	};
+
 	return (
 		<ThemedView style={styles.container}>
 			<SectionList
 				sections={sections}
 				keyExtractor={(item) => item.id}
 				renderSectionHeader={({ section: { title } }) => (
-					<ThemedText style={styles.sectionHeader}>{title}</ThemedText>
+					<ThemedView
+						style={{
+							backgroundColor: colors.background,
+							padding: 8,
+							borderBottomWidth: 1,
+							borderBottomColor: `${colors.text}45`,
+						}}>
+						<ThemedText style={{ color: colors.text, fontWeight: "bold" }}>
+							{title}
+						</ThemedText>
+					</ThemedView>
 				)}
-				renderItem={({ item }) => (
-					<Link
-						href={generateHref("viewShow", {
-							id: item.id,
-							title: item.title,
-							date: item.date,
-						})}
-						asChild>
-						<TouchableOpacity style={styles.item}>
-							<ThemedText style={styles.text}>
-								{`${item.title.substring(0, 15)} ${formatDate(
-									new Date(item.date),
-								)}`}
-							</ThemedText>
-						</TouchableOpacity>
-					</Link>
-				)}
+				stickySectionHeadersEnabled
+				renderItem={renderItem}
 			/>
 		</ThemedView>
 	);

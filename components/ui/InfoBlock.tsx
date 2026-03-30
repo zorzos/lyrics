@@ -13,6 +13,19 @@ interface InfoBlockProps {
 	opensModal?: boolean;
 }
 
+const createStyles = (colors: ColorTheme, width: number) =>
+	StyleSheet.create({
+		wrapper: {
+			width,
+			justifyContent: "center",
+			alignItems: "center",
+			borderWidth: 1,
+			borderColor: colors.text,
+			borderRadius: 8,
+			padding: 4,
+		},
+	});
+
 export default function InfoBlock({
 	label,
 	value,
@@ -24,20 +37,7 @@ export default function InfoBlock({
 	const colors = useColors();
 	const Wrapper: React.ElementType =
 		onPress || opensModal ? TouchableOpacity : ThemedView;
-
-	const createStyles = (colors: ColorTheme) =>
-		StyleSheet.create({
-			wrapper: {
-				width,
-				justifyContent: "center",
-				alignItems: "center",
-				borderWidth: 1,
-				borderColor: colors.text,
-				borderRadius: 8,
-				padding: 4,
-			},
-		});
-	const wrapperStyles = createStyles(colors);
+	const wrapperStyles = createStyles(colors, width);
 
 	if (custom) {
 		return <ThemedView style={wrapperStyles.wrapper}>{custom}</ThemedView>;

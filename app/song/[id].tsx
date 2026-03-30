@@ -21,9 +21,32 @@ import {
 import InfoBlock from "@/components/ui/InfoBlock";
 import Key from "@/components/ui/Key";
 import { useTablet } from "@/context/TabletContext";
-import { useColors } from "@/hooks/use-colors";
+import { ColorTheme, useColors } from "@/hooks/use-colors";
 import { useDevice } from "@/hooks/use-device";
 import { getSong } from "@/lib/queries/songs";
+
+const createStyles = (colors: ColorTheme) =>
+	StyleSheet.create({
+		tagsContainer: {
+			flexDirection: "row",
+			flexWrap: "wrap",
+			paddingHorizontal: "1.5%",
+		},
+		individualTagContainer: {
+			padding: 2,
+		},
+		songItem: {
+			flexDirection: "column",
+			borderColor: colors.text,
+			borderRadius: 8,
+			alignItems: "center",
+			padding: 6,
+			borderWidth: 1,
+		},
+		songItemText: {
+			fontSize: 12,
+		},
+	});
 
 export default function SongDetailScreen() {
 	const { width: screenWidth } = useWindowDimensions();
@@ -37,6 +60,7 @@ export default function SongDetailScreen() {
 	const [modalInfo, setModalInfo] = useState<any>(undefined);
 
 	const cachedSongs = queryClient.getQueryData<Song[]>(["allSongs"]);
+	const styles = createStyles(colors);
 
 	const {
 		data: song,
@@ -66,12 +90,12 @@ export default function SongDetailScreen() {
 					<MaterialIcons
 						size={24}
 						name="edit"
-						color="white"
+						color={colors.text}
 					/>
 				</Link>
 			),
 		});
-	}, [id, navigation, song, isTablet]);
+	}, [id, navigation, song, isTablet, colors.text]);
 
 	if (isLoading) {
 		return (
@@ -180,25 +204,3 @@ export default function SongDetailScreen() {
 		</ThemedView>
 	);
 }
-
-const styles = StyleSheet.create({
-	tagsContainer: {
-		flexDirection: "row",
-		flexWrap: "wrap",
-		paddingHorizontal: "1.5%",
-	},
-	individualTagContainer: {
-		padding: 2,
-	},
-	songItem: {
-		flexDirection: "column",
-		borderColor: "white",
-		borderRadius: 8,
-		alignItems: "center",
-		padding: 6,
-		borderWidth: 1,
-	},
-	songItemText: {
-		fontSize: 12,
-	},
-});

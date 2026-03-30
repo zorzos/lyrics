@@ -31,6 +31,27 @@ import { getSingleParam, validate } from "@/utils/paramUtils";
 import { Field, useForm } from "@tanstack/react-form";
 import AvailableSongsModal from "./AvailableSongsModal";
 
+const styles = StyleSheet.create({
+	formRow: {
+		paddingBottom: 8,
+	},
+	input: {
+		borderWidth: 1,
+		borderColor: "#999",
+		borderRadius: 6,
+		padding: 8,
+	},
+	partSegment: {
+		flex: 1,
+		paddingVertical: 10,
+		alignItems: "center",
+	},
+	partSegmentText: {
+		fontSize: 14,
+		fontWeight: "500",
+	},
+});
+
 export default function EditShowScreen() {
 	const colors = useColors();
 	const { id } = useLocalSearchParams();
@@ -321,7 +342,7 @@ export default function EditShowScreen() {
 												onChangeText={(text) => {
 													const numericValue = parseInt(text, 10);
 													field.setValue(
-														!isNaN(numericValue) ? numericValue : 0
+														!isNaN(numericValue) ? numericValue : 0,
 													);
 												}}
 												keyboardType="numeric"
@@ -367,7 +388,7 @@ export default function EditShowScreen() {
 												(_, i) => ({
 													partNumber: prev.length + i + 1,
 													songs: [],
-												})
+												}),
 											);
 											return [...prev, ...newParts];
 										} else {
@@ -563,7 +584,7 @@ export default function EditShowScreen() {
 							setSongsByPart((prevParts) => {
 								const updated = [...prevParts];
 								const index = updated.findIndex(
-									(p) => p.partNumber === partNumber
+									(p) => p.partNumber === partNumber,
 								);
 								if (index !== -1) {
 									updated[index] = { ...updated[index], songs: selectedSongs };
@@ -580,24 +601,3 @@ export default function EditShowScreen() {
 		</GestureHandlerRootView>
 	);
 }
-
-const styles = StyleSheet.create({
-	formRow: {
-		paddingBottom: 8,
-	},
-	input: {
-		borderWidth: 1,
-		borderColor: "#999",
-		borderRadius: 6,
-		padding: 8,
-	},
-	partSegment: {
-		flex: 1,
-		paddingVertical: 10,
-		alignItems: "center",
-	},
-	partSegmentText: {
-		fontSize: 14,
-		fontWeight: "500",
-	},
-});

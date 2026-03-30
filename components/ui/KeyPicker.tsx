@@ -8,6 +8,12 @@ import { StyleSheet } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import { ThemedView } from "../themed-view";
 
+const styles = StyleSheet.create({
+	container: {
+		flex: 1,
+	},
+});
+
 export default function KeyPicker({
 	open,
 	setOpen,
@@ -74,14 +80,14 @@ export default function KeyPicker({
 					<MaterialIcons
 						name="keyboard-arrow-up"
 						size={20}
-						color="white"
+						color={colors.text}
 					/>
 				)}
 				ArrowDownIconComponent={() => (
 					<MaterialIcons
 						name="keyboard-arrow-down"
 						size={20}
-						color="white"
+						color={colors.text}
 					/>
 				)}
 				zIndex={zIndex}
@@ -93,9 +99,3 @@ export default function KeyPicker({
 		</ThemedView>
 	);
 }
-
-const styles = StyleSheet.create({
-	container: {
-		flex: 1,
-	},
-});

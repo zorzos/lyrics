@@ -132,7 +132,7 @@ export default function AvailableSongsModal({
 						flexDirection: "column",
 						gap: 16,
 						borderWidth: 2,
-						borderColor: "white",
+						borderColor: colors.text,
 						alignItems: "center",
 						backgroundColor: colors.background,
 					}}

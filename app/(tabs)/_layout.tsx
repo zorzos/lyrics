@@ -151,14 +151,20 @@ export default function TabLayout() {
 					borderBottomColor: colors.placeholder,
 					backgroundColor: colors.background,
 				}}>
-				<ThemedText
-					style={{ fontSize: 22, fontWeight: "bold", color: colors.text }}>
-					{selectedMeta?.title ?? "Details"}
-				</ThemedText>
 				<ThemedView
 					style={{
 						flexDirection: "row",
-						gap: 12,
+						gap: 10,
+					}}>
+					<ThemedText
+						style={{ fontSize: 22, fontWeight: "bold", color: colors.text }}>
+						{selectedMeta?.title ?? "Details"}
+					</ThemedText>
+				</ThemedView>
+				<ThemedView
+					style={{
+						flexDirection: "row",
+						gap: 8,
 						backgroundColor: "transparent",
 					}}>
 					<Link
