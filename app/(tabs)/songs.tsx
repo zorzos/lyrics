@@ -15,25 +15,24 @@ import {
 	TouchableOpacity,
 } from "react-native";
 
-const styles = StyleSheet.create({
-	container: {
-		flex: 1,
-		paddingHorizontal: "2.5%",
-	},
-});
+const PLACEHOLDER_ID = "__new_song__";
 
 export default function Songs() {
-	const { selectedId } = useTablet();
 	const colors = useColors();
 	const { isTablet } = useDevice();
-	const { setSelected, clearSelected } = useTablet();
+	const { clearSelected, selectedId, isAdding, setSelected } = useTablet();
 
 	const sectionListRef = useRef<SectionList<Song>>(null);
 	const { data: rawSongs, isLoading, isError } = useSongs();
 
-	useFocusEffect(useCallback(() => clearSelected, [clearSelected]));
+	useFocusEffect(
+		useCallback(() => {
+			clearSelected();
+		}, [clearSelected]),
+	);
 
 	const memoizedSongs = useMemo(() => rawSongs ?? [], [rawSongs]);
+
 	const sections: Section[] = useMemo(() => {
 		const grouped: Record<string, Song[]> = {};
 
@@ -43,13 +42,40 @@ export default function Songs() {
 			grouped[firstLetter].push(song);
 		});
 
-		return Object.keys(grouped)
+		const sorted = Object.keys(grouped)
 			.sort()
 			.map((letter) => ({
 				title: letter,
 				data: grouped[letter].sort((a, b) => a.title.localeCompare(b.title)),
 			}));
-	}, [memoizedSongs]);
+
+		// Prepend placeholder section when adding on tablet
+		if (isTablet && isAdding) {
+			return [
+				{
+					title: "",
+					data: [
+						{
+							id: PLACEHOLDER_ID,
+							title: "New Song",
+							duration: 0,
+							bpm: 0,
+							lyrics: "",
+							original_key: "",
+							sp_key: "",
+							year: 0,
+							artist: [],
+							tags: [],
+							shows: [],
+						} as Song,
+					],
+				},
+				...sorted,
+			];
+		}
+
+		return sorted;
+	}, [memoizedSongs, isAdding, isTablet]);
 
 	if (isLoading) {
 		return (
@@ -70,27 +96,44 @@ export default function Songs() {
 	}
 
 	const renderItem = ({ item }: { item: Song }) => {
-		const isSelected = item.id === selectedId;
-		const content = (
-			<ThemedText style={{ color: colors.text, fontSize: 16 }}>
-				{item.title}
-			</ThemedText>
-		);
+		const isPlaceholder = item.id === PLACEHOLDER_ID;
+		const isSelected = item.id === selectedId || (isPlaceholder && isAdding);
 
 		const selectedStyle = isSelected && {
 			borderColor: colors.accent,
 			borderWidth: 1,
-			borderRadius: 20,
+			borderRadius: 24,
 			borderBottomColor: colors.accent,
 			borderBottomWidth: 1,
 			backgroundColor: `${colors.accent}15`,
 		};
 
+		const content = (
+			<ThemedView style={{ gap: 2, backgroundColor: "transparent" }}>
+				<ThemedText
+					style={{
+						color: isPlaceholder ? colors.placeholder : colors.text,
+						fontSize: 16,
+						fontStyle: isPlaceholder ? "italic" : "normal",
+					}}>
+					{item.title}
+				</ThemedText>
+				{isPlaceholder && (
+					<ThemedText style={{ color: colors.placeholder, fontSize: 12 }}>
+						Not saved yet
+					</ThemedText>
+				)}
+			</ThemedView>
+		);
+
 		if (isTablet) {
 			return (
 				<TouchableOpacity
-					style={[{ padding: 12 }, selectedStyle]}
-					onPress={() => setSelected(item.id, "song", { title: item.title })}>
+					style={[{ padding: 10 }, selectedStyle]}
+					onPress={() => {
+						if (isPlaceholder) return;
+						setSelected(item.id, "song", { title: item.title });
+					}}>
 					{content}
 				</TouchableOpacity>
 			);
@@ -107,7 +150,14 @@ export default function Songs() {
 					shows: JSON.stringify(item.shows),
 				})}
 				asChild>
-				<TouchableOpacity style={{ padding: 10 }}>{content}</TouchableOpacity>
+				<TouchableOpacity
+					style={{
+						padding: 10,
+						borderBottomWidth: 1,
+						borderBottomColor: "lightgray",
+					}}>
+					{content}
+				</TouchableOpacity>
 			</Link>
 		);
 	};
@@ -117,25 +167,27 @@ export default function Songs() {
 			<SectionList
 				ref={sectionListRef}
 				sections={sections}
-				keyExtractor={(item) => item.title}
+				keyExtractor={(item) => item.id}
 				renderItem={renderItem}
-				renderSectionHeader={({ section: { title } }) => (
-					<ThemedView
-						style={{
-							backgroundColor: colors.background,
-							padding: 8,
-							borderBottomWidth: 1,
-							borderBottomColor: `${colors.text}35`,
-							marginBottom: 4,
-						}}>
-						<ThemedText
-							style={{ fontSize: 18, color: colors.text, fontWeight: "bold" }}>
-							{title}
-						</ThemedText>
-					</ThemedView>
-				)}
+				renderSectionHeader={({ section: { title } }) =>
+					title ? (
+						<ThemedView
+							style={{ backgroundColor: colors.background, padding: 8 }}>
+							<ThemedText style={{ color: colors.text, fontWeight: "bold" }}>
+								{title}
+							</ThemedText>
+						</ThemedView>
+					) : null
+				}
 				stickySectionHeadersEnabled
 			/>
 		</ThemedView>
 	);
 }
+
+const styles = StyleSheet.create({
+	container: {
+		flex: 1,
+		paddingHorizontal: "2.5%",
+	},
+});

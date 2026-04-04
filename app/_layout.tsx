@@ -56,7 +56,6 @@ export default function RootLayout() {
 						</SafeAreaProvider>
 					</TabletProvider>
 				</NetworkProvider>
-				z
 			</SettingsProvider>
 		</QueryClientProvider>
 	);

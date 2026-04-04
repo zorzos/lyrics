@@ -5,6 +5,7 @@ import {
 	Keyboard,
 	KeyboardAvoidingView,
 	Platform,
+	ScrollView,
 	StyleSheet,
 	TextInput,
 	TouchableOpacity,
@@ -22,6 +23,8 @@ import { ThemedView } from "@/components/themed-view";
 import AutocompleteInput from "@/components/ui/Autocomplete";
 import KeyPicker from "@/components/ui/KeyPicker";
 
+import { useTablet } from "@/context/TabletContext";
+import { useDevice } from "@/hooks/use-device";
 import { AutocompleteItem } from "@/types";
 import { Field, useForm } from "@tanstack/react-form";
 
@@ -60,8 +63,11 @@ const styles = StyleSheet.create({
 
 export default function EditSongScreen() {
 	const colors = useColors();
-	const { id } = useLocalSearchParams();
-	const songId = getSingleParam(id);
+	const { isTablet } = useDevice();
+	const { id: paramId } = useLocalSearchParams();
+	const { selectedId, setIsEditing } = useTablet();
+	const songId = isTablet ? (selectedId ?? undefined) : getSingleParam(paramId);
+
 	const router = useRouter();
 	const navigation = useNavigation();
 
@@ -77,10 +83,11 @@ export default function EditSongScreen() {
 	const [spKeyOpen, setSPKeyOpen] = useState<boolean>(false);
 
 	useLayoutEffect(() => {
+		if (isTablet) return;
 		navigation.setOptions({
-			title: id ? "Edit Song" : "Add new Song",
+			title: paramId ? "Edit Song" : "Add new Song",
 		});
-	}, [navigation, id]);
+	}, [navigation, paramId, isTablet]);
 
 	const form = useForm({
 		defaultValues: {
@@ -134,7 +141,11 @@ export default function EditSongScreen() {
 				});
 
 				showSuccessToast("Song successfully saved!");
-				router.back();
+				if (isTablet) {
+					setIsEditing(false);
+				} else {
+					router.back();
+				}
 			} catch (error: any) {
 				showErrorToast(error.message);
 			} finally {
@@ -171,7 +182,10 @@ export default function EditSongScreen() {
 		<KeyboardAvoidingView
 			style={{ flex: 1 }}
 			behavior={Platform.OS === "ios" ? "padding" : undefined}>
-			<ThemedView style={{ flex: 1, padding: 8 }}>
+			<ScrollView
+				style={{ flex: 1 }}
+				contentContainerStyle={{ padding: 8 }}
+				keyboardShouldPersistTaps="handled">
 				{isSongLoading ? (
 					loadingComponent
 				) : (
@@ -414,7 +428,7 @@ export default function EditSongScreen() {
 						</TouchableOpacity>
 					</ThemedView>
 				)}
-			</ThemedView>
+			</ScrollView>
 		</KeyboardAvoidingView>
 	);
 }

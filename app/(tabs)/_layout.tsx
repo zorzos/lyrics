@@ -11,7 +11,9 @@ import { PlatformPressable } from "@react-navigation/elements";
 import { TouchableOpacity } from "react-native";
 
 import ShowDetailScreen from "@/app/show/[id]";
+import ShowEditScreen from "@/app/show/edit";
 import SongDetailScreen from "@/app/song/[id]";
+import SongEditScreen from "@/app/song/edit";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useTablet } from "@/context/TabletContext";
@@ -21,81 +23,99 @@ export default function TabLayout() {
 	const insets = useSafeAreaInsets();
 	const colors = useColors();
 	const { isTablet } = useDevice();
-	const { selectedId, selectedType, selectedMeta, clearSelected } = useTablet();
+	const {
+		selectedId,
+		selectedType,
+		selectedMeta,
+		clearSelected,
+		isEditing,
+		isAdding,
+		setIsEditing,
+		setIsAdding,
+	} = useTablet();
 
 	const tabStyle = {
 		tabBarLabelStyle: { fontSize: 15 },
 		headerStyle: { backgroundColor: colors.background },
 		headerTitleStyle: { color: colors.text },
+		tabBarItemStyle: {
+			borderRightWidth: 0.5,
+			borderRightColor: colors.placeholder,
+			marginVertical: 8,
+		},
+	};
+
+	const lastTabStyle = {
+		...tabStyle,
+		tabBarItemStyle: { marginVertical: 8 },
+	};
+
+	const AddButton = ({ type }: { type: "song" | "show" }) => {
+		if (!isAdmin) return null;
+
+		if (isTablet) {
+			return (
+				<TouchableOpacity
+					style={{ marginRight: "2.5%" }}
+					onPress={() => setIsAdding(true, type)}>
+					<MaterialIcons
+						color={colors.text}
+						size={28}
+						name="add"
+					/>
+				</TouchableOpacity>
+			);
+		}
+
+		return (
+			<Link
+				href={generateHref(type === "song" ? "editSong" : "editShow", {})}
+				asChild>
+				<TouchableOpacity style={{ marginRight: "2.5%" }}>
+					<MaterialIcons
+						color={colors.text}
+						size={28}
+						name="add"
+					/>
+				</TouchableOpacity>
+			</Link>
+		);
 	};
 
 	const tabs = (
 		<Tabs
 			initialRouteName="shows"
 			screenOptions={{
-				tabBarActiveTintColor: colors.accent,
+				tabBarActiveTintColor: colors.tint,
+				tabBarInactiveTintColor: colors.placeholder,
 				tabBarButton: (props: BottomTabBarButtonProps) => (
 					<PlatformPressable
 						{...props}
 						onPressIn={props.onPressIn}
 					/>
 				),
-				tabBarStyle: {
-					backgroundColor: colors.background,
-				},
+				tabBarStyle: { backgroundColor: colors.background },
 			}}>
 			<Tabs.Screen
 				name="shows"
 				options={{
 					title: "Shows",
-					headerRight: () =>
-						isAdmin && (
-							<Link
-								href={generateHref("editShow", {})}
-								asChild>
-								<TouchableOpacity>
-									<MaterialIcons
-										color={colors.text}
-										size={28}
-										name="add"
-										style={{ marginRight: "2.5%" }}
-									/>
-								</TouchableOpacity>
-							</Link>
-						),
+					headerRight: () => <AddButton type="show" />,
 					tabBarIcon: ({ color }) => (
 						<MaterialIcons
 							size={24}
 							color={color}
-							name="library-music"
+							name="queue-play-next"
 						/>
 					),
 					...tabStyle,
-					tabBarItemStyle: {
-						borderRightWidth: 1.5,
-						borderRightColor: `${colors.accent}40`,
-					},
 				}}
 			/>
 			<Tabs.Screen
 				name="songs"
 				options={{
 					title: "Songs",
-					headerRight: () =>
-						isAdmin && (
-							<Link
-								href={generateHref("editSong", {})}
-								asChild>
-								<TouchableOpacity>
-									<MaterialIcons
-										color={colors.text}
-										size={28}
-										name="add"
-										style={{ marginRight: "2.5%" }}
-									/>
-								</TouchableOpacity>
-							</Link>
-						),
+					headerRight: () => <AddButton type="song" />,
 					tabBarIcon: ({ color }) => (
 						<MaterialIcons
 							color={color}
@@ -104,29 +124,6 @@ export default function TabLayout() {
 						/>
 					),
 					...tabStyle,
-					tabBarItemStyle: {
-						borderRightWidth: 1.5,
-						borderRightColor: `${colors.accent}40`,
-					},
-				}}
-			/>
-			<Tabs.Screen
-				name="stats"
-				options={{
-					title: "Stats",
-					href: isAdmin ? "/(tabs)/stats" : null,
-					tabBarIcon: ({ color }) => (
-						<MaterialIcons
-							color={color}
-							size={24}
-							name="leaderboard"
-						/>
-					),
-					...tabStyle,
-					tabBarItemStyle: {
-						borderRightWidth: 1.5,
-						borderRightColor: `${colors.accent}40`,
-					},
 				}}
 			/>
 			<Tabs.Screen
@@ -141,7 +138,7 @@ export default function TabLayout() {
 							name="admin-panel-settings"
 						/>
 					),
-					...tabStyle,
+					...lastTabStyle,
 				}}
 			/>
 		</Tabs>
@@ -150,7 +147,13 @@ export default function TabLayout() {
 	if (!isTablet) return tabs;
 
 	const renderRightPanelHeader = () => {
-		if (!selectedId || !selectedType) return null;
+		if (!selectedId && !isAdding && !isEditing) return null;
+
+		const title = isAdding
+			? `New ${selectedType === "song" ? "Song" : "Show"}`
+			: isEditing
+				? `Edit ${selectedType === "song" ? "Song" : "Show"}`
+				: (selectedMeta?.title ?? "Details");
 
 		return (
 			<ThemedView
@@ -163,50 +166,55 @@ export default function TabLayout() {
 					borderBottomColor: colors.placeholder,
 					backgroundColor: colors.background,
 				}}>
+				<ThemedText
+					style={{ fontSize: 22, fontWeight: "bold", color: colors.text }}>
+					{title}
+				</ThemedText>
 				<ThemedView
 					style={{
 						flexDirection: "row",
-						gap: 10,
-					}}>
-					<ThemedText
-						style={{ fontSize: 22, fontWeight: "bold", color: colors.text }}>
-						{selectedMeta?.title ?? "Details"}
-					</ThemedText>
-				</ThemedView>
-				<ThemedView
-					style={{
-						flexDirection: "row",
-						gap: 8,
+						gap: 12,
 						backgroundColor: "transparent",
 					}}>
-					<Link
-						href={generateHref(
-							selectedType === "song" ? "editSong" : "editShow",
-							{ id: selectedId },
-						)}
-						asChild>
-						<TouchableOpacity>
+					{isEditing || isAdding ? (
+						<TouchableOpacity
+							onPress={() => {
+								setIsEditing(false);
+								setIsAdding(false);
+							}}>
 							<MaterialIcons
 								size={24}
-								name="edit"
+								name="close"
 								color={colors.text}
 							/>
 						</TouchableOpacity>
-					</Link>
-					<TouchableOpacity onPress={clearSelected}>
-						<MaterialIcons
-							size={24}
-							name="close"
-							color={colors.text}
-						/>
-					</TouchableOpacity>
+					) : (
+						<>
+							{isAdmin && (
+								<TouchableOpacity onPress={() => setIsEditing(true)}>
+									<MaterialIcons
+										size={24}
+										name="edit"
+										color={colors.text}
+									/>
+								</TouchableOpacity>
+							)}
+							<TouchableOpacity onPress={clearSelected}>
+								<MaterialIcons
+									size={24}
+									name="close"
+									color={colors.text}
+								/>
+							</TouchableOpacity>
+						</>
+					)}
 				</ThemedView>
 			</ThemedView>
 		);
 	};
 
 	const renderRightPanel = () => {
-		if (!selectedId || !selectedType) {
+		if (!selectedId && !isAdding) {
 			return (
 				<ThemedView
 					style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -224,10 +232,19 @@ export default function TabLayout() {
 		}
 
 		return (
-			<ThemedView style={{ flex: 1, gap: "1.5%" }}>
+			<ThemedView style={{ flex: 1 }}>
 				{renderRightPanelHeader()}
-				{selectedType === "song" && <SongDetailScreen />}
-				{selectedType === "show" && <ShowDetailScreen />}
+				{isAdding || isEditing ? (
+					selectedType === "song" ? (
+						<SongEditScreen />
+					) : (
+						<ShowEditScreen />
+					)
+				) : selectedType === "song" ? (
+					<SongDetailScreen />
+				) : (
+					<ShowDetailScreen />
+				)}
 			</ThemedView>
 		);
 	};
