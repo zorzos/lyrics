@@ -3,11 +3,11 @@ import { AutocompleteItem, AutocompleteProps } from "@/types";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import React, { useEffect, useMemo, useState } from "react";
 import {
-	FlatList,
 	Keyboard,
+	ScrollView,
 	StyleSheet,
 	TextInput,
-	TouchableOpacity,
+	TouchableOpacity
 } from "react-native";
 import { ThemedText } from "../themed-text";
 import { ThemedView } from "../themed-view";
@@ -197,9 +197,7 @@ export default function AutocompleteInput({
 					/>
 
 					{/* Dropdown list */}
-					<FlatList
-						data={filteredOptions}
-						keyExtractor={(item) => item.id}
+					<ScrollView
 						style={{
 							...styles.dropdown,
 							backgroundColor: colors.background,
@@ -207,26 +205,24 @@ export default function AutocompleteInput({
 							zIndex: 2,
 						}}
 						keyboardShouldPersistTaps="handled"
-						renderItem={({ item }) => (
-							<TouchableOpacity
-								style={styles.item}
-								onPress={() => handleSelect(item)}>
-								<ThemedText style={{ color: colors.text }}>
-									{item.isNew ? `Create "${item.label}"` : item.label}
-								</ThemedText>
-							</TouchableOpacity>
-						)}
-						ListEmptyComponent={() => (
-							<ThemedText
-								style={{
-									color: colors.placeholder,
-									textAlign: "center",
-									paddingVertical: 6,
-								}}>
+						nestedScrollEnabled>
+						{filteredOptions.length === 0 ? (
+							<ThemedText style={{ color: colors.placeholder, textAlign: "center", paddingVertical: 6 }}>
 								There are no artists left!
 							</ThemedText>
+						) : (
+							filteredOptions.map((item) => (
+								<TouchableOpacity
+									key={item.id}
+									style={styles.item}
+									onPress={() => handleSelect(item)}>
+									<ThemedText style={{ color: colors.text }}>
+										{item.isNew ? `Create "${item.label}"` : item.label}
+									</ThemedText>
+								</TouchableOpacity>
+							))
 						)}
-					/>
+					</ScrollView>
 				</>
 			)}
 		</ThemedView>

@@ -1,5 +1,6 @@
+import { usePreventRemove } from "@react-navigation/native";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import {
 	ActivityIndicator,
 	Keyboard,
@@ -21,10 +22,12 @@ import { showErrorToast, showSuccessToast } from "@/utils/toastUtils";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import AutocompleteInput from "@/components/ui/Autocomplete";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 import KeyPicker from "@/components/ui/KeyPicker";
 
 import { useTablet } from "@/context/TabletContext";
 import { useDevice } from "@/hooks/use-device";
+import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
 import { AutocompleteItem } from "@/types";
 import { Field, useForm } from "@tanstack/react-form";
 
@@ -65,11 +68,20 @@ export default function EditSongScreen() {
 	const colors = useColors();
 	const { isTablet } = useDevice();
 	const { id: paramId } = useLocalSearchParams();
-	const { selectedId, setIsEditing } = useTablet();
+	const { selectedId, setIsEditing, setIsAdding, discardRef } = useTablet();
 	const songId = isTablet ? (selectedId ?? undefined) : getSingleParam(paramId);
 
 	const router = useRouter();
 	const navigation = useNavigation();
+
+	const {
+		isDirty,
+		setIsDirty,
+		confirmDiscard,
+		isModalVisible,
+		handleConfirm,
+		handleCancel
+	} = useUnsavedChanges();
 
 	const { data: tags, isLoading: isTagsLoading } = useTags();
 	const { data: availableArtists, isLoading: isArtistsLoading } = useArtists();
@@ -82,12 +94,39 @@ export default function EditSongScreen() {
 	const [ogKeyOpen, setOGKeyOpen] = useState<boolean>(false);
 	const [spKeyOpen, setSPKeyOpen] = useState<boolean>(false);
 
+	usePreventRemove(!isTablet && isDirty, () => {
+		confirmDiscard(() => router.dismiss());
+	});
+
 	useLayoutEffect(() => {
 		if (isTablet) return;
 		navigation.setOptions({
 			title: paramId ? "Edit Song" : "Add new Song",
 		});
 	}, [navigation, paramId, isTablet]);
+
+	const handleDiscard = useCallback((onAfterDiscard?: () => void) => {
+		confirmDiscard(() => {
+			setIsDirty(false);
+			if (isTablet) {
+				setIsEditing(false);
+				setIsAdding(false);
+			} else {
+				router.back();
+			}
+			onAfterDiscard?.();
+		});
+	}, [confirmDiscard, isTablet, setIsEditing, setIsAdding, router, setIsDirty]);
+
+	useEffect(() => {
+		if (!isTablet) return;
+		discardRef.current = handleDiscard;
+		return () => {
+			discardRef.current = null;
+		};
+	}, [handleDiscard, isTablet, discardRef]);
+
+	const markDirty = () => setIsDirty(true);
 
 	const form = useForm({
 		defaultValues: {
@@ -141,8 +180,10 @@ export default function EditSongScreen() {
 				});
 
 				showSuccessToast("Song successfully saved!");
+				setIsDirty(false);
 				if (isTablet) {
 					setIsEditing(false);
+					setIsAdding(false);
 				} else {
 					router.back();
 				}
@@ -171,10 +212,7 @@ export default function EditSongScreen() {
 
 	const loadingComponent = (
 		<ThemedView style={{ flex: 1 }}>
-			<ActivityIndicator
-				size="large"
-				color={colors.text}
-			/>
+			<ActivityIndicator size="large" color={colors.text} />
 		</ThemedView>
 	);
 
@@ -192,17 +230,12 @@ export default function EditSongScreen() {
 					<ThemedView style={{ justifyContent: "space-between", flex: 1 }}>
 						<ThemedView>
 							<ThemedText>Title</ThemedText>
-							<Field
-								form={form}
-								name="title">
+							<Field form={form} name="title">
 								{(field) => (
 									<TextInput
-										style={[
-											styles.input,
-											{ color: colors.text, borderColor: colors.text },
-										]}
+										style={[styles.input, { color: colors.text, borderColor: colors.text }]}
 										value={field.state.value}
-										onChangeText={field.handleChange}
+										onChangeText={(text) => { field.handleChange(text); markDirty(); }}
 										placeholder="Enter title"
 										placeholderTextColor={colors.placeholder}
 									/>
@@ -210,23 +243,13 @@ export default function EditSongScreen() {
 							</Field>
 
 							<ThemedText>Artist</ThemedText>
-							<Field
-								form={form}
-								name="selectedArtists">
+							<Field form={form} name="selectedArtists">
 								{(field) =>
-									isArtistsLoading ? (
-										loadingComponent
-									) : (
+									isArtistsLoading ? loadingComponent : (
 										<AutocompleteInput
 											value={field.state.value}
-											onChange={field.setValue}
-											data={
-												availableArtists?.map((item) => ({
-													...item,
-													label: item.name,
-													isNew: false,
-												})) ?? []
-											}
+											onChange={(val) => { field.setValue(val); markDirty(); }}
+											data={availableArtists?.map((item) => ({ ...item, label: item.name, isNew: false })) ?? []}
 											placeholder="Select artist"
 										/>
 									)
@@ -236,23 +259,15 @@ export default function EditSongScreen() {
 							<ThemedView style={{ flexDirection: "row", gap: 12 }}>
 								<ThemedView style={{ flex: 1 }}>
 									<ThemedText>Duration (seconds)</ThemedText>
-									<Field
-										form={form}
-										name="duration">
+									<Field form={form} name="duration">
 										{(field) => (
 											<TextInput
-												style={[
-													styles.input,
-													{ borderColor: colors.tint, color: colors.text },
-												]}
-												value={
-													field.state.value > 0 ? String(field.state.value) : ""
-												}
+												style={[styles.input, { borderColor: colors.tint, color: colors.text }]}
+												value={field.state.value > 0 ? String(field.state.value) : ""}
 												onChangeText={(text) => {
 													const numericValue = parseInt(text, 10);
-													field.setValue(
-														!isNaN(numericValue) ? numericValue : 0,
-													);
+													field.setValue(!isNaN(numericValue) ? numericValue : 0);
+													markDirty();
 												}}
 												keyboardType="numeric"
 												placeholder="Enter duration"
@@ -264,23 +279,15 @@ export default function EditSongScreen() {
 
 								<ThemedView style={{ flex: 1 }}>
 									<ThemedText>BPM</ThemedText>
-									<Field
-										form={form}
-										name="bpm">
+									<Field form={form} name="bpm">
 										{(field) => (
 											<TextInput
-												style={[
-													styles.input,
-													{ borderColor: colors.tint, color: colors.text },
-												]}
-												value={
-													field.state.value > 0 ? String(field.state.value) : ""
-												}
+												style={[styles.input, { borderColor: colors.tint, color: colors.text }]}
+												value={field.state.value > 0 ? String(field.state.value) : ""}
 												onChangeText={(text) => {
 													const numericValue = parseInt(text, 10);
-													field.setValue(
-														!isNaN(numericValue) ? numericValue : 0,
-													);
+													field.setValue(!isNaN(numericValue) ? numericValue : 0);
+													markDirty();
 												}}
 												keyboardType="numeric"
 												placeholder="Enter BPM"
@@ -292,9 +299,7 @@ export default function EditSongScreen() {
 							</ThemedView>
 
 							<ThemedView style={styles.keysRow}>
-								<Field
-									form={form}
-									name="originalKey">
+								<Field form={form} name="originalKey">
 									{(field) => (
 										<KeyPicker
 											open={ogKeyOpen}
@@ -309,6 +314,7 @@ export default function EditSongScreen() {
 												field.setValue(val);
 												if (val === form.getFieldValue("spKey"))
 													form.setFieldValue("spKey", "");
+												markDirty();
 												Keyboard.dismiss();
 											}}
 											zIndex={5000}
@@ -317,9 +323,7 @@ export default function EditSongScreen() {
 									)}
 								</Field>
 
-								<Field
-									form={form}
-									name="spKey">
+								<Field form={form} name="spKey">
 									{(field) => (
 										<KeyPicker
 											open={spKeyOpen}
@@ -332,6 +336,7 @@ export default function EditSongScreen() {
 											value={field.state.value}
 											onChange={(val) => {
 												field.setValue(val === "none" ? "" : val);
+												markDirty();
 												Keyboard.dismiss();
 											}}
 											removeKey={form.getFieldValue("originalKey")}
@@ -339,9 +344,7 @@ export default function EditSongScreen() {
 												{
 													label: "None",
 													value: "none",
-													containerStyle: {
-														backgroundColor: colors.background,
-													},
+													containerStyle: { backgroundColor: colors.background },
 													labelStyle: { color: colors.text },
 												},
 											]}
@@ -353,47 +356,28 @@ export default function EditSongScreen() {
 							</ThemedView>
 
 							<ThemedText>Lyrics</ThemedText>
-							<Field
-								form={form}
-								name="lyrics">
+							<Field form={form} name="lyrics">
 								{(field) => (
 									<TextInput
-										style={[
-											styles.input,
-											{
-												height: 120,
-												borderColor: colors.tint,
-												color: colors.text,
-											},
-										]}
+										style={[styles.input, { height: 120, borderColor: colors.tint, color: colors.text }]}
 										value={field.state.value}
-										onChangeText={field.handleChange}
+										onChangeText={(text) => { field.handleChange(text); markDirty(); }}
 										multiline
 									/>
 								)}
 							</Field>
 
 							<ThemedText>Tags</ThemedText>
-							<Field
-								form={form}
-								name="selectedTagIds">
+							<Field form={form} name="selectedTagIds">
 								{(field) =>
-									isTagsLoading ? (
-										loadingComponent
-									) : (
-										<ThemedView
-											style={[
-												styles.tagsContainer,
-												{ backgroundColor: colors.background },
-											]}>
+									isTagsLoading ? loadingComponent : (
+										<ThemedView style={[styles.tagsContainer, { backgroundColor: colors.background }]}>
 											{tags?.map((tag) => (
 												<TouchableOpacity
 													key={tag.id}
 													style={[
 														styles.tagCheckbox,
-														field.state.value.includes(tag.id) && {
-															backgroundColor: tag.color || "#00F",
-														},
+														field.state.value.includes(tag.id) && { backgroundColor: tag.color || "#00F" },
 													]}
 													onPress={() => {
 														field.setValue((prev: string[]) =>
@@ -401,13 +385,9 @@ export default function EditSongScreen() {
 																? prev.filter((id) => id !== tag.id)
 																: [...prev, tag.id],
 														);
+														markDirty();
 													}}>
-													<ThemedText
-														style={{
-															color: field.state.value.includes(tag.id)
-																? "#FFF"
-																: "#999",
-														}}>
+													<ThemedText style={{ color: field.state.value.includes(tag.id) ? "#FFF" : "#999" }}>
 														{tag.name}
 													</ThemedText>
 												</TouchableOpacity>
@@ -429,6 +409,17 @@ export default function EditSongScreen() {
 					</ThemedView>
 				)}
 			</ScrollView>
+
+			<ConfirmModal
+				visible={isModalVisible}
+				title="Unsaved changes"
+				message="You have unsaved changes. Are you sure you want to discard them?"
+				confirmLabel="Discard"
+				cancelLabel="Keep editing"
+				destructive
+				onConfirm={handleConfirm}
+				onCancel={handleCancel}
+			/>
 		</KeyboardAvoidingView>
 	);
 }

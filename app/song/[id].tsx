@@ -169,13 +169,13 @@ export default function SongDetailScreen() {
 	return (
 		<ThemedView style={{ flex: 1, gap: "1%" }}>
 			<ThemedView
-				style={{
+				style={[{
 					flexDirection: "row",
 					flexWrap: "wrap",
 					gap: 4,
 					paddingHorizontal: "1.5%",
 					justifyContent: "center",
-				}}>
+				}, isTablet && { paddingVertical: "1.5%" }]}>
 				{infoBlocks.map((block, i) => (
 					<InfoBlock
 						key={i}

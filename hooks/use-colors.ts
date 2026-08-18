@@ -9,6 +9,8 @@ export interface ColorTheme {
 	buttonBg: string;
 	buttonText: string;
 	placeholder: string;
+	placeholderBorder: string;
+	placeholderBackground: string;
 }
 
 const common = {
@@ -24,6 +26,8 @@ export const lightColors: ColorTheme = {
 	buttonBg: "#007AFF",
 	buttonText: "#FFFFFF",
 	placeholder: "darkgray",
+	placeholderBorder: 'black',
+	placeholderBackground: 'grey'
 };
 
 export const darkColors: ColorTheme = {
@@ -35,6 +39,8 @@ export const darkColors: ColorTheme = {
 	buttonBg: "#0A84FF",
 	buttonText: "#FFFFFF",
 	placeholder: "#999",
+	placeholderBackground: 'grey',
+	placeholderBorder: 'white'
 };
 
 export const useColors = () => {

@@ -20,7 +20,14 @@ const PLACEHOLDER_ID = "__new_song__";
 export default function Songs() {
 	const colors = useColors();
 	const { isTablet } = useDevice();
-	const { clearSelected, selectedId, isAdding, setSelected } = useTablet();
+	const {
+		clearSelected,
+		selectedId,
+		isAdding,
+		isEditing,
+		setSelected,
+		discardRef
+	} = useTablet();
 
 	const sectionListRef = useRef<SectionList<Song>>(null);
 	const { data: rawSongs, isLoading, isError } = useSongs();
@@ -100,12 +107,12 @@ export default function Songs() {
 		const isSelected = item.id === selectedId || (isPlaceholder && isAdding);
 
 		const selectedStyle = isSelected && {
-			borderColor: colors.accent,
+			// borderColor: colors.accent,
 			borderWidth: 1,
 			borderRadius: 24,
-			borderBottomColor: colors.accent,
+			borderBottomColor: colors.placeholderBorder,
 			borderBottomWidth: 1,
-			backgroundColor: `${colors.accent}15`,
+			backgroundColor: colors.placeholderBackground,
 		};
 
 		const content = (
@@ -129,10 +136,21 @@ export default function Songs() {
 		if (isTablet) {
 			return (
 				<TouchableOpacity
-					style={[{ padding: 10 }, selectedStyle]}
+					style={[
+						{ padding: 10 },
+						selectedStyle,
+						isPlaceholder && {
+							marginTop: '2.5%'
+						}
+					]}
 					onPress={() => {
 						if (isPlaceholder) return;
-						setSelected(item.id, "song", { title: item.title });
+						const doSelect = () => setSelected(item.id, "song", { title: item.title });
+						if ((isEditing || isAdding) && discardRef.current) {
+							discardRef.current(doSelect);
+						} else {
+							doSelect();
+						}
 					}}>
 					{content}
 				</TouchableOpacity>
@@ -165,6 +183,7 @@ export default function Songs() {
 	return (
 		<ThemedView style={styles.container}>
 			<SectionList
+				style={{ marginTop: '2.5%' }}
 				ref={sectionListRef}
 				sections={sections}
 				keyExtractor={(item) => item.id}

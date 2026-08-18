@@ -32,6 +32,7 @@ export default function TabLayout() {
 		isAdding,
 		setIsEditing,
 		setIsAdding,
+		discardRef
 	} = useTablet();
 
 	const tabStyle = {
@@ -177,11 +178,14 @@ export default function TabLayout() {
 						backgroundColor: "transparent",
 					}}>
 					{isEditing || isAdding ? (
-						<TouchableOpacity
-							onPress={() => {
+						<TouchableOpacity onPress={() => {
+							if (discardRef.current) {
+								discardRef.current();
+							} else {
 								setIsEditing(false);
 								setIsAdding(false);
-							}}>
+							}
+						}}>
 							<MaterialIcons
 								size={24}
 								name="close"

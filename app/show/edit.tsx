@@ -24,6 +24,7 @@ import { Part, Song } from "@/types";
 import { useColors } from "@/hooks/use-colors";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
+import { useDevice } from "@/hooks/use-device";
 import { useShow, useUpsertShow } from "@/hooks/useShows";
 import { useSongs } from "@/hooks/useSongs";
 import { getTotalPartTime } from "@/utils/dateUtils";
@@ -53,6 +54,7 @@ const styles = StyleSheet.create({
 });
 
 export default function EditShowScreen() {
+	const { isTablet } = useDevice();
 	const colors = useColors();
 	const { id } = useLocalSearchParams();
 	const showId = getSingleParam(id);
@@ -171,7 +173,12 @@ export default function EditShowScreen() {
 
 	const FormHeader = () => {
 		return (
-			<ThemedView style={{ paddingHorizontal: 8 }}>
+			<ThemedView
+				style={[
+					{ paddingHorizontal: 8 },
+					isTablet && { paddingVertical: "1.5%" }
+				]}
+			>
 				<ThemedView
 					style={[
 						styles.formRow,
@@ -361,51 +368,18 @@ export default function EditShowScreen() {
 				<ThemedView
 					style={{
 						flexDirection: "row",
-						justifyContent: "space-between",
+						justifyContent: "space-around",
 						marginBottom: 16,
 					}}>
-					{[1, 2, 3].map((p, index) => {
-						const isSelected = form.getFieldValue("parts") === p;
-						return (
-							<TouchableOpacity
-								key={index}
-								style={[
-									styles.partSegment,
-									isSelected && { backgroundColor: "#da291cbf" },
-									{
-										borderRadius: 8,
-										borderColor: isSelected ? "#da291cbf" : colors.text,
-									},
-								]}
-								onPress={() => {
-									form.setFieldValue("parts", p);
-									if (p === 1) form.setFieldValue("breakDuration", 0);
-									setSongsByPart((prev) => {
-										if (prev.length === p) return prev;
-										if (prev.length < p) {
-											const newParts = Array.from(
-												{ length: p - prev.length },
-												(_, i) => ({
-													partNumber: prev.length + i + 1,
-													songs: [],
-												}),
-											);
-											return [...prev, ...newParts];
-										} else {
-											return prev.slice(0, p);
-										}
-									});
-								}}>
-								<ThemedText
-									style={[
-										styles.partSegmentText,
-										{ color: isSelected ? colors.text : "#FFF" },
-									]}>
-									{p} Part{p > 1 && "s"}
-								</ThemedText>
-							</TouchableOpacity>
-						);
-					})}
+					<ThemedView>
+						<ThemedText>-</ThemedText>
+					</ThemedView>
+					<ThemedView>
+						<ThemedText>Counter</ThemedText>
+					</ThemedView>
+					<ThemedView>
+						<ThemedText>+</ThemedText>
+					</ThemedView>
 				</ThemedView>
 
 				<form.Subscribe selector={(state) => state.values.parts}>
@@ -563,14 +537,14 @@ export default function EditShowScreen() {
 							}}>
 							<TouchableOpacity
 								style={{
-									backgroundColor: "#DA291C",
+									backgroundColor: "blue",
 									paddingVertical: 12,
 									borderRadius: 6,
 									alignItems: "center",
 								}}
 								onPress={() => form.handleSubmit()}
 								disabled={upsertShow.isPending}>
-								<ThemedText style={{ color: colors.text }}>
+								<ThemedText style={{ color: colors.background }}>
 									{upsertShow.isPending ? "Saving..." : "Save"}
 								</ThemedText>
 							</TouchableOpacity>

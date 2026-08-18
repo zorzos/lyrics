@@ -132,7 +132,7 @@ export default function ShowDetailScreen() {
 		<ThemedView
 			style={{
 				backgroundColor: colors.background,
-				paddingHorizontal: "2.5%",
+				paddingHorizontal: "2.5%"
 			}}>
 			<ThemedView
 				style={{ gap: 8, paddingVertical: 8, backgroundColor: "transparent" }}>
@@ -192,12 +192,12 @@ export default function ShowDetailScreen() {
 							label: "Starts (Soundcheck)",
 							value: showDate
 								? `${new Date(showDate).toLocaleTimeString("en-CY", {
-										timeStyle: "short",
-										hour12: false,
-									})} (${new Date().toLocaleTimeString("en-CY", {
-										timeStyle: "short",
-										hour12: false,
-									})})`
+									timeStyle: "short",
+									hour12: false,
+								})} (${new Date().toLocaleTimeString("en-CY", {
+									timeStyle: "short",
+									hour12: false,
+								})})`
 								: "N/A",
 							type: ShowInfoTypes.TIME,
 						},

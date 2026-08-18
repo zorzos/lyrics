@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useRef, useState } from "react";
 
 type SelectedType = "song" | "show" | null;
 
@@ -18,6 +18,7 @@ interface TabletContextType {
 	clearSelected: () => void;
 	setIsEditing: (value: boolean) => void;
 	setIsAdding: (value: boolean, type?: SelectedType) => void;
+	discardRef: React.MutableRefObject<((onAfterDiscard?: () => void) => void) | null>;
 }
 
 const TabletContext = createContext<TabletContextType | undefined>(undefined);
@@ -28,13 +29,14 @@ export const TabletProvider = ({ children }: { children: React.ReactNode }) => {
 	const [selectedMeta, setSelectedMeta] = useState<SelectedMeta | null>(null);
 	const [isEditing, setIsEditing] = useState(false);
 	const [isAdding, setIsAddingState] = useState(false);
+	const discardRef = useRef<(() => void) | null>(null);
 
 	const setSelected = (id: string, type: SelectedType, meta?: SelectedMeta) => {
 		setSelectedId(id);
 		setSelectedType(type);
 		setSelectedMeta(meta ?? null);
 		setIsEditing(false);
-		setIsAddingState(false); // clear adding state when selecting an existing item
+		setIsAddingState(false);
 	};
 
 	const clearSelected = () => {
@@ -48,7 +50,6 @@ export const TabletProvider = ({ children }: { children: React.ReactNode }) => {
 	const setIsAdding = (value: boolean, type?: SelectedType) => {
 		setIsAddingState(value);
 		if (value) {
-			// clear any existing selection when starting to add
 			setSelectedId(null);
 			setSelectedMeta(null);
 			setIsEditing(false);
@@ -57,18 +58,18 @@ export const TabletProvider = ({ children }: { children: React.ReactNode }) => {
 	};
 
 	return (
-		<TabletContext.Provider
-			value={{
-				selectedId,
-				selectedType,
-				selectedMeta,
-				isEditing,
-				isAdding,
-				setSelected,
-				clearSelected,
-				setIsEditing,
-				setIsAdding,
-			}}>
+		<TabletContext.Provider value={{
+			selectedId,
+			selectedType,
+			selectedMeta,
+			isEditing,
+			isAdding,
+			setSelected,
+			clearSelected,
+			setIsEditing,
+			setIsAdding,
+			discardRef,
+		}}>
 			{children}
 		</TabletContext.Provider>
 	);
@@ -76,7 +77,6 @@ export const TabletProvider = ({ children }: { children: React.ReactNode }) => {
 
 export const useTablet = () => {
 	const context = useContext(TabletContext);
-	if (!context)
-		throw new Error("useTablet must be used within a TabletProvider");
+	if (!context) throw new Error("useTablet must be used within a TabletProvider");
 	return context;
 };
